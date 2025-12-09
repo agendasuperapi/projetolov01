@@ -21,6 +21,7 @@ interface CreditPlan {
   credits: number;
   price_cents: number;
   stripe_price_id: string | null;
+  competitor_price_cents: number | null;
   active: boolean;
 }
 
@@ -345,7 +346,7 @@ export default function Admin() {
                             </Button>
                           </div>
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid sm:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label>Preço (R$)</Label>
                             <Input
@@ -356,6 +357,20 @@ export default function Admin() {
                                 const valueInCents = Math.round(parseFloat(e.target.value || '0') * 100);
                                 if (valueInCents !== plan.price_cents) {
                                   handleUpdatePlan(plan.id, { price_cents: valueInCents });
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Preço Concorrente (R$)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              defaultValue={(plan.competitor_price_cents ? plan.competitor_price_cents / 100 : 0).toFixed(2)}
+                              onBlur={(e) => {
+                                const valueInCents = Math.round(parseFloat(e.target.value || '0') * 100);
+                                if (valueInCents !== (plan.competitor_price_cents || 0)) {
+                                  handleUpdatePlan(plan.id, { competitor_price_cents: valueInCents });
                                 }
                               }}
                             />
