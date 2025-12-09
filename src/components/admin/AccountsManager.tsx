@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Plus, Trash2, Edit, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CreditPlan {
@@ -32,8 +33,11 @@ export default function AccountsManager() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [accountData, setAccountData] = useState('');
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [editAccountData, setEditAccountData] = useState('');
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
 
@@ -87,6 +91,46 @@ export default function AccountsManager() {
     }
   };
 
+  const handleEditAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccount || !editAccountData.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({ account_data: editAccountData.trim() })
+        .eq('id', editingAccount.id);
+
+      if (error) throw error;
+
+      toast({ title: 'Sucesso!', description: 'Conta atualizada.' });
+      setIsEditDialogOpen(false);
+      setEditingAccount(null);
+      setEditAccountData('');
+      await fetchAccounts();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao atualizar conta.', variant: 'destructive' });
+    }
+  };
+
+  const handleMarkAsUsed = async (accountId: string) => {
+    if (!confirm('Tem certeza que deseja marcar esta conta como utilizada?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({ is_used: true, used_at: new Date().toISOString() })
+        .eq('id', accountId);
+
+      if (error) throw error;
+
+      toast({ title: 'Sucesso!', description: 'Conta marcada como utilizada.' });
+      await fetchAccounts();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao atualizar conta.', variant: 'destructive' });
+    }
+  };
+
   const handleDeleteAccount = async (accountId: string) => {
     if (!confirm('Tem certeza que deseja excluir esta conta?')) return;
 
@@ -99,6 +143,16 @@ export default function AccountsManager() {
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao excluir conta.', variant: 'destructive' });
     }
+  };
+
+  const openEditDialog = (account: Account) => {
+    setEditingAccount(account);
+    setEditAccountData(account.account_data);
+    setIsEditDialogOpen(true);
+  };
+
+  const getAccountsByPlan = (planId: string) => {
+    return accounts.filter(a => a.plan_id === planId);
   };
 
   const getAccountsCountByPlan = (planId: string) => {
@@ -156,6 +210,33 @@ export default function AccountsManager() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Conta</DialogTitle>
+              <DialogDescription>
+                Atualize os dados desta conta
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleEditAccount} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Dados da Conta</Label>
+                <Textarea
+                  value={editAccountData}
+                  onChange={(e) => setEditAccountData(e.target.value)}
+                  placeholder="Digite os dados da conta"
+                  rows={5}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full gradient-primary">
+                Salvar Alterações
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Summary by Plan */}
@@ -180,59 +261,104 @@ export default function AccountsManager() {
         </CardContent>
       </Card>
 
-      {/* Accounts Table */}
+      {/* Accounts by Plan - Accordion */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle>Contas Cadastradas</CardTitle>
-          <CardDescription>Gerencie as contas disponíveis para cada plano</CardDescription>
+          <CardTitle>Contas por Plano</CardTitle>
+          <CardDescription>Gerencie as contas disponíveis separadas por plano</CardDescription>
         </CardHeader>
         <CardContent>
-          {accounts.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma conta cadastrada.</p>
+          {plans.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhum plano cadastrado.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Dados da Conta</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {accounts.map((account) => (
-                  <TableRow key={account.id}>
-                    <TableCell>
-                      <Badge variant="outline">{account.credit_plans?.name || 'N/A'}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[300px]">
-                      <p className="truncate text-sm font-mono">{account.account_data}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={account.is_used ? 'secondary' : 'default'}>
-                        {account.is_used ? 'Utilizada' : 'Disponível'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(account.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      {!account.is_used && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteAccount(account.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+            <Accordion type="multiple" className="w-full">
+              {plans.map((plan) => {
+                const planAccounts = getAccountsByPlan(plan.id);
+                const { available, total } = getAccountsCountByPlan(plan.id);
+                
+                return (
+                  <AccordionItem key={plan.id} value={plan.id}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-4">
+                        <span className="font-semibold">{plan.name}</span>
+                        <Badge variant="outline">
+                          {available}/{total} disponíveis
+                        </Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      {planAccounts.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">
+                          Nenhuma conta cadastrada para este plano.
+                        </p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Dados da Conta</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Data</TableHead>
+                              <TableHead className="w-[150px]">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {planAccounts.map((account) => (
+                              <TableRow key={account.id}>
+                                <TableCell className="max-w-[300px]">
+                                  <p className="truncate text-sm font-mono">{account.account_data}</p>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={account.is_used ? 'secondary' : 'default'}>
+                                    {account.is_used ? 'Utilizada' : 'Disponível'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {new Date(account.created_at).toLocaleDateString('pt-BR')}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => openEditDialog(account)}
+                                      title="Editar"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    {!account.is_used && (
+                                      <>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleMarkAsUsed(account.id)}
+                                          title="Marcar como utilizada"
+                                          className="text-amber-500 hover:text-amber-600"
+                                        >
+                                          <CheckCircle className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleDeleteAccount(account.id)}
+                                          className="text-destructive hover:text-destructive"
+                                          title="Excluir"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           )}
         </CardContent>
       </Card>
