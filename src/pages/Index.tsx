@@ -1,14 +1,263 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+interface CreditPlan {
+  id: string;
+  name: string;
+  credits: number;
+  price_cents: number;
+  stripe_price_id: string | null;
+}
+
+export default function Index() {
+  const { user, profile, isAdmin, signOut, loading } = useAuth();
+  const [plans, setPlans] = useState<CreditPlan[]>([]);
+  const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    const { data } = await supabase.from('credit_plans').select('*').eq('active', true).order('credits', { ascending: true });
+    if (data) setPlans(data);
+  };
+
+  const handlePurchase = async (plan: CreditPlan) => {
+    if (!user) {
+      toast({ title: 'Atenção', description: 'Faça login para comprar créditos.', variant: 'destructive' });
+      return;
+    }
+
+    if (!plan.stripe_price_id || plan.price_cents === 0) {
+      toast({ title: 'Indisponível', description: 'Este plano ainda não está configurado para venda.', variant: 'destructive' });
+      return;
+    }
+
+    setPurchaseLoading(plan.id);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId: plan.stripe_price_id, planId: plan.id },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao processar pagamento.', variant: 'destructive' });
+    } finally {
+      setPurchaseLoading(null);
+    }
+  };
+
+  const features = [
+    { icon: Zap, title: 'Acesso Instantâneo', description: 'Download imediato após a compra' },
+    { icon: Shield, title: 'Pagamento Seguro', description: 'Transações protegidas por Stripe' },
+    { icon: Download, title: 'Downloads Ilimitados', description: 'Baixe quantas vezes precisar' },
+  ];
+
+  const planFeatures = ['Acesso à biblioteca completa', 'Download instantâneo', 'Suporte prioritário', 'Atualizações incluídas'];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="font-display font-bold text-xl">CreditsHub</span>
+          </Link>
+
+          <nav className="flex items-center gap-4">
+            {user ? (
+              <>
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full">
+                  <Zap className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{profile?.credits || 0} créditos</span>
+                </div>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm">
+                    <User className="w-4 h-4 mr-2" />
+                    Minha Conta
+                  </Button>
+                </Link>
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Button variant="ghost" size="sm" onClick={signOut}>
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button className="gradient-primary">
+                  Entrar
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="gradient-hero py-20 lg:py-32">
+        <div className="container mx-auto px-4 text-center">
+          <Badge variant="secondary" className="mb-6 px-4 py-2">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Produtos digitais premium
+          </Badge>
+          
+          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in">
+            Acesse produtos digitais
+            <span className="block text-gradient">com créditos</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            Compre créditos e tenha acesso à nossa biblioteca completa de produtos digitais exclusivos. 
+            Simples, rápido e seguro.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <a href="#plans">
+              <Button size="lg" className="gradient-primary text-lg px-8 shadow-glow">
+                Ver Planos
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </a>
+            {!user && (
+              <Link to="/auth">
+                <Button size="lg" variant="outline" className="text-lg px-8">
+                  Criar Conta Grátis
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div 
+                key={index} 
+                className="text-center p-8 rounded-2xl bg-background shadow-card animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-6">
+                  <feature.icon className="w-8 h-8 text-primary-foreground" />
+                </div>
+                <h3 className="font-display text-xl font-bold mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Plans */}
+      <section id="plans" className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Escolha seu plano</h2>
+            <p className="text-muted-foreground text-lg">Quanto mais créditos, mais economia</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {plans.map((plan, index) => (
+              <Card 
+                key={plan.id} 
+                className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
+                  index === 1 ? 'border-primary shadow-glow' : 'border-border'
+                }`}
+              >
+                {index === 1 && (
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    POPULAR
+                  </div>
+                )}
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="font-display text-2xl">{plan.name}</CardTitle>
+                  <CardDescription className="text-lg">
+                    <span className="text-4xl font-bold text-foreground">
+                      {plan.price_cents === 0 ? 'A definir' : `R$ ${(plan.price_cents / 100).toFixed(2).replace('.', ',')}`}
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
+                      <Zap className="w-5 h-5 text-primary" />
+                      <span className="font-bold text-lg">{plan.credits.toLocaleString()} créditos</span>
+                    </div>
+                  </div>
+
+                  <ul className="space-y-3">
+                    {planFeatures.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-success" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button 
+                    onClick={() => handlePurchase(plan)}
+                    disabled={purchaseLoading === plan.id || plan.price_cents === 0}
+                    className={`w-full ${index === 1 ? 'gradient-primary' : ''}`}
+                    variant={index === 1 ? 'default' : 'outline'}
+                    size="lg"
+                  >
+                    {purchaseLoading === plan.id ? 'Processando...' : 'Comprar Agora'}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-card border-t border-border py-12">
+        <div className="container mx-auto px-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-display font-bold">CreditsHub</span>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            © {new Date().getFullYear()} CreditsHub. Todos os direitos reservados.
+          </p>
+        </div>
+      </footer>
     </div>
   );
-};
-
-export default Index;
+}
