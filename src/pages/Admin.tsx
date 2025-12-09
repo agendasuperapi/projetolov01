@@ -5,23 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Package, Users, DollarSign, Trash2, Upload } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  file_url: string;
-  credits_required: number;
-  created_at: string;
-}
 
 interface CreditPlan {
   id: string;
@@ -44,13 +34,11 @@ interface Transaction {
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [newProduct, setNewProduct] = useState({ name: '', description: '', credits_required: 0 });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '' });
+  const [creating, setCreating] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -62,16 +50,10 @@ export default function Admin() {
 
   useEffect(() => {
     if (isAdmin) {
-      fetchProducts();
       fetchPlans();
       fetchTransactions();
     }
   }, [isAdmin]);
-
-  const fetchProducts = async () => {
-    const { data } = await supabase.from('digital_products').select('*').order('created_at', { ascending: false });
-    if (data) setProducts(data);
-  };
 
   const fetchPlans = async () => {
     const { data } = await supabase.from('credit_plans').select('*').order('credits', { ascending: true });
@@ -86,7 +68,6 @@ export default function Admin() {
       .limit(50);
     
     if (data) {
-      // Fetch profiles separately
       const userIds = [...new Set(data.map(t => t.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -104,64 +85,37 @@ export default function Admin() {
     }
   };
 
-  const handleCreateProduct = async (e: React.FormEvent) => {
+  const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) {
-      toast({ title: 'Erro', description: 'Selecione um arquivo.', variant: 'destructive' });
-      return;
-    }
-
-    setUploading(true);
+    setCreating(true);
 
     try {
-      const fileName = `${Date.now()}-${selectedFile.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('digital-products')
-        .upload(fileName, selectedFile);
-
-      if (uploadError) throw uploadError;
-
-      const { error: insertError } = await supabase.from('digital_products').insert({
-        name: newProduct.name,
-        description: newProduct.description || null,
-        file_url: fileName,
-        credits_required: newProduct.credits_required,
+      const { error } = await supabase.from('credit_plans').insert({
+        name: newPlan.name,
+        credits: newPlan.credits,
+        price_cents: newPlan.price_cents,
+        stripe_price_id: newPlan.stripe_price_id || null,
+        active: true,
       });
 
-      if (insertError) throw insertError;
-
-      toast({ title: 'Sucesso!', description: 'Produto criado com sucesso.' });
-      setNewProduct({ name: '', description: '', credits_required: 0 });
-      setSelectedFile(null);
-      setIsDialogOpen(false);
-      await fetchProducts();
-    } catch (error: any) {
-      toast({ title: 'Erro', description: error.message || 'Erro ao criar produto.', variant: 'destructive' });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDeleteProduct = async (product: Product) => {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
-
-    try {
-      await supabase.storage.from('digital-products').remove([product.file_url]);
-      const { error } = await supabase.from('digital_products').delete().eq('id', product.id);
       if (error) throw error;
 
-      toast({ title: 'Sucesso!', description: 'Produto excluído.' });
-      await fetchProducts();
+      toast({ title: 'Sucesso!', description: 'Plano criado com sucesso.' });
+      setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '' });
+      setIsDialogOpen(false);
+      await fetchPlans();
     } catch (error: any) {
-      toast({ title: 'Erro', description: error.message || 'Erro ao excluir produto.', variant: 'destructive' });
+      toast({ title: 'Erro', description: error.message || 'Erro ao criar plano.', variant: 'destructive' });
+    } finally {
+      setCreating(false);
     }
   };
 
-  const handleUpdatePlan = async (planId: string, priceId: string, priceCents: number) => {
+  const handleUpdatePlan = async (planId: string, updates: Partial<CreditPlan>) => {
     try {
       const { error } = await supabase
         .from('credit_plans')
-        .update({ stripe_price_id: priceId, price_cents: priceCents })
+        .update(updates)
         .eq('id', planId);
 
       if (error) throw error;
@@ -170,6 +124,20 @@ export default function Admin() {
       await fetchPlans();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este plano?')) return;
+
+    try {
+      const { error } = await supabase.from('credit_plans').delete().eq('id', planId);
+      if (error) throw error;
+
+      toast({ title: 'Sucesso!', description: 'Plano excluído.' });
+      await fetchPlans();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Erro ao excluir plano.', variant: 'destructive' });
     }
   };
 
@@ -205,16 +173,12 @@ export default function Admin() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display text-3xl font-bold mb-2">Painel Admin</h1>
-            <p className="text-muted-foreground">Gerencie produtos, planos e transações</p>
+            <p className="text-muted-foreground">Gerencie planos e transações</p>
           </div>
         </div>
 
-        <Tabs defaultValue="products" className="space-y-8">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="products" className="gap-2">
-              <Package className="w-4 h-4" />
-              Produtos
-            </TabsTrigger>
+        <Tabs defaultValue="plans" className="space-y-8">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="plans" className="gap-2">
               <DollarSign className="w-4 h-4" />
               Planos
@@ -225,71 +189,68 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Products Tab */}
-          <TabsContent value="products" className="space-y-6">
+          {/* Plans Tab */}
+          <TabsContent value="plans" className="space-y-6">
             <div className="flex justify-end">
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="gradient-primary">
                     <Plus className="w-4 h-4 mr-2" />
-                    Novo Produto
+                    Novo Plano
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Criar Produto Digital</DialogTitle>
+                    <DialogTitle>Criar Plano de Créditos</DialogTitle>
                     <DialogDescription>
-                      Adicione um novo produto à biblioteca
+                      Adicione um novo plano de créditos
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleCreateProduct} className="space-y-4">
+                  <form onSubmit={handleCreatePlan} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Nome do Produto</Label>
+                      <Label htmlFor="name">Nome do Plano</Label>
                       <Input
                         id="name"
-                        value={newProduct.name}
-                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                        value={newPlan.name}
+                        onChange={(e) => setNewPlan({ ...newPlan, name: e.target.value })}
+                        placeholder="Ex: Plano Básico"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="description">Descrição</Label>
-                      <Textarea
-                        id="description"
-                        value={newProduct.description}
-                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="credits">Créditos Necessários</Label>
+                      <Label htmlFor="credits">Quantidade de Créditos</Label>
                       <Input
                         id="credits"
                         type="number"
-                        min="0"
-                        value={newProduct.credits_required}
-                        onChange={(e) => setNewProduct({ ...newProduct, credits_required: parseInt(e.target.value) || 0 })}
+                        min="1"
+                        value={newPlan.credits}
+                        onChange={(e) => setNewPlan({ ...newPlan, credits: parseInt(e.target.value) || 0 })}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="file">Arquivo</Label>
-                      <div className="flex items-center gap-4">
-                        <Input
-                          id="file"
-                          type="file"
-                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                          required
-                        />
-                      </div>
-                      {selectedFile && (
-                        <p className="text-sm text-muted-foreground">
-                          <Upload className="w-4 h-4 inline mr-1" />
-                          {selectedFile.name}
-                        </p>
-                      )}
+                      <Label htmlFor="price">Preço (centavos)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        min="0"
+                        value={newPlan.price_cents}
+                        onChange={(e) => setNewPlan({ ...newPlan, price_cents: parseInt(e.target.value) || 0 })}
+                        placeholder="Ex: 2990 = R$ 29,90"
+                        required
+                      />
                     </div>
-                    <Button type="submit" className="w-full gradient-primary" disabled={uploading}>
-                      {uploading ? 'Enviando...' : 'Criar Produto'}
+                    <div className="space-y-2">
+                      <Label htmlFor="stripe_price_id">Stripe Price ID</Label>
+                      <Input
+                        id="stripe_price_id"
+                        value={newPlan.stripe_price_id}
+                        onChange={(e) => setNewPlan({ ...newPlan, stripe_price_id: e.target.value })}
+                        placeholder="price_..."
+                      />
+                    </div>
+                    <Button type="submit" className="w-full gradient-primary" disabled={creating}>
+                      {creating ? 'Criando...' : 'Criar Plano'}
                     </Button>
                   </form>
                 </DialogContent>
@@ -298,106 +259,67 @@ export default function Admin() {
 
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle>Produtos Digitais</CardTitle>
-                <CardDescription>Gerencie os produtos disponíveis para download</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {products.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Nenhum produto cadastrado.</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Créditos</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead className="w-[100px]">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {products.map((product) => (
-                        <TableRow key={product.id}>
-                          <TableCell className="font-medium">{product.name}</TableCell>
-                          <TableCell className="text-muted-foreground max-w-xs truncate">
-                            {product.description || '-'}
-                          </TableCell>
-                          <TableCell>
-                            <Badge>{product.credits_required}</Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {new Date(product.created_at).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteProduct(product)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Plans Tab */}
-          <TabsContent value="plans" className="space-y-6">
-            <Card className="shadow-card">
-              <CardHeader>
                 <CardTitle>Planos de Créditos</CardTitle>
                 <CardDescription>Configure os preços e IDs do Stripe para cada plano</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  {plans.map((plan) => (
-                    <div key={plan.id} className="p-4 border rounded-lg space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold">{plan.name}</h3>
-                          <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
+                {plans.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nenhum plano cadastrado.</p>
+                ) : (
+                  <div className="space-y-6">
+                    {plans.map((plan) => (
+                      <div key={plan.id} className="p-4 border rounded-lg space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold">{plan.name}</h3>
+                            <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={plan.stripe_price_id ? 'default' : 'secondary'}>
+                              {plan.stripe_price_id ? 'Configurado' : 'Pendente'}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeletePlan(plan.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <Badge variant={plan.stripe_price_id ? 'default' : 'secondary'}>
-                          {plan.stripe_price_id ? 'Configurado' : 'Pendente'}
-                        </Badge>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Preço (centavos)</Label>
+                            <Input
+                              type="number"
+                              defaultValue={plan.price_cents}
+                              onBlur={(e) => {
+                                const value = parseInt(e.target.value) || 0;
+                                if (value !== plan.price_cents) {
+                                  handleUpdatePlan(plan.id, { price_cents: value });
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Stripe Price ID</Label>
+                            <Input
+                              placeholder="price_..."
+                              defaultValue={plan.stripe_price_id || ''}
+                              onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value !== plan.stripe_price_id) {
+                                  handleUpdatePlan(plan.id, { stripe_price_id: value || null });
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Preço (centavos)</Label>
-                          <Input
-                            type="number"
-                            defaultValue={plan.price_cents}
-                            onBlur={(e) => {
-                              const value = parseInt(e.target.value) || 0;
-                              if (value !== plan.price_cents) {
-                                handleUpdatePlan(plan.id, plan.stripe_price_id || '', value);
-                              }
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Stripe Price ID</Label>
-                          <Input
-                            placeholder="price_..."
-                            defaultValue={plan.stripe_price_id || ''}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              if (value !== plan.stripe_price_id) {
-                                handleUpdatePlan(plan.id, value, plan.price_cents);
-                              }
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -435,7 +357,9 @@ export default function Admin() {
                           <TableCell>
                             <Badge variant="secondary">{tx.credits_added}</Badge>
                           </TableCell>
-                          <TableCell>R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}</TableCell>
+                          <TableCell>
+                            R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
+                          </TableCell>
                           <TableCell>
                             <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
                               {tx.status === 'completed' ? 'Concluído' : tx.status}
