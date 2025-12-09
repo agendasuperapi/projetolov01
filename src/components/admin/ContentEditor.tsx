@@ -593,6 +593,98 @@ export default function ContentEditor() {
                   </div>
                 </div>
 
+                {/* Preview Ao Vivo Completo */}
+                <div className="border-t pt-6 space-y-4">
+                  <h4 className="font-medium">Preview Ao Vivo</h4>
+                  <p className="text-sm text-muted-foreground">Veja como as mudanças aparecerão no site</p>
+                  
+                  <div className="border rounded-xl overflow-hidden">
+                    {/* Mini Hero Preview */}
+                    <div 
+                      className="p-6 text-center"
+                      style={{
+                        background: heroContent?.gradientFrom || heroContent?.gradientTo 
+                          ? `linear-gradient(135deg, ${heroContent?.gradientFrom || '#1a1a2e'}, ${heroContent?.gradientTo || '#0f0f1a'})`
+                          : 'linear-gradient(135deg, #1a1a2e, #0f0f1a)'
+                      }}
+                    >
+                      <div className="text-xs text-white/70 mb-2">Seção Hero</div>
+                      <h3 className="text-white font-bold mb-3">Título de Exemplo</h3>
+                      <button 
+                        className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-transform hover:scale-105"
+                        style={{
+                          background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
+                        }}
+                      >
+                        Botão Principal
+                      </button>
+                    </div>
+
+                    {/* Mini Features Preview */}
+                    <div 
+                      className="p-6"
+                      style={{ backgroundColor: stylesContent?.featuresBackground || '#1f1f2e' }}
+                    >
+                      <div className="text-xs text-white/70 mb-3 text-center">Seção Features</div>
+                      <div className="flex justify-center gap-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="bg-background rounded-lg p-3 text-center w-24">
+                            <div 
+                              className="w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                              style={{
+                                background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
+                              }}
+                            >
+                              <span className="text-white text-xs">★</span>
+                            </div>
+                            <span className="text-xs font-medium">Feature {i}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mini Plans Preview */}
+                    <div className="p-6 bg-background">
+                      <div className="text-xs text-muted-foreground mb-3 text-center">Seção Planos</div>
+                      <div className="flex justify-center gap-3">
+                        {[1, 2].map((i) => (
+                          <div key={i} className={`border rounded-lg p-3 text-center w-28 ${i === 2 ? 'border-primary' : ''}`}>
+                            <span className="text-xs font-medium">Plano {i}</span>
+                            <div className="text-sm font-bold my-1">R$ 99</div>
+                            <button 
+                              className={`w-full px-2 py-1 rounded text-xs font-medium ${i === 2 ? 'text-white' : 'border'}`}
+                              style={i === 2 ? {
+                                background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
+                              } : undefined}
+                            >
+                              Comprar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mini Footer Preview */}
+                    <div 
+                      className="p-4 text-center border-t"
+                      style={{ backgroundColor: stylesContent?.footerBackground || '#1f1f2e' }}
+                    >
+                      <div className="text-xs text-white/70 mb-2">Footer</div>
+                      <div className="flex items-center justify-center gap-2">
+                        <div 
+                          className="w-5 h-5 rounded flex items-center justify-center"
+                          style={{
+                            background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
+                          }}
+                        >
+                          <span className="text-white text-[8px]">✦</span>
+                        </div>
+                        <span className="text-white text-xs font-medium">CreditsHub</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <Button 
                   onClick={() => saveSection('styles', stylesContent || {})} 
                   disabled={saving}
