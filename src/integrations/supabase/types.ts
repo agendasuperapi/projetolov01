@@ -14,16 +14,199 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      credit_plans: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          credits: number
+          id: string
+          name: string
+          price_cents: number
+          stripe_price_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          credits: number
+          id?: string
+          name: string
+          price_cents: number
+          stripe_price_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          credits?: number
+          id?: string
+          name?: string
+          price_cents?: number
+          stripe_price_id?: string | null
+        }
+        Relationships: []
+      }
+      digital_products: {
+        Row: {
+          created_at: string | null
+          credits_required: number
+          description: string | null
+          file_url: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits_required?: number
+          description?: string | null
+          file_url: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits_required?: number
+          description?: string | null
+          file_url?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string | null
+          credits_added: number
+          id: string
+          plan_id: string
+          status: string
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string | null
+          credits_added: number
+          id?: string
+          plan_id: string
+          status?: string
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string | null
+          credits_added?: number
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "credit_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          credits: number | null
+          email: string
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits?: number | null
+          email: string
+          id: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits?: number | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          credits_spent: number
+          id: string
+          product_id: string
+          purchased_at: string | null
+          user_id: string
+        }
+        Insert: {
+          credits_spent: number
+          id?: string
+          product_id: string
+          purchased_at?: string | null
+          user_id: string
+        }
+        Update: {
+          credits_spent?: number
+          id?: string
+          product_id?: string
+          purchased_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "digital_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +333,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
