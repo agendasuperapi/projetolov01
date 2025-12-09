@@ -327,7 +327,7 @@ export default function Index() {
       {/* Features */}
       <section className="py-20 bg-card relative group">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8 place-items-center">
             {featuresData.map((feature, index) => {
               const IconComponent = iconMap[feature.icon] || Zap;
               return (
