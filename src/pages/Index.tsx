@@ -78,6 +78,13 @@ interface FooterContent {
   copyright: string;
 }
 
+interface StylesContent {
+  buttonGradientFrom?: string;
+  buttonGradientTo?: string;
+  featuresBackground?: string;
+  footerBackground?: string;
+}
+
 export default function Index() {
   const { user, profile, isAdmin, signOut, loading } = useAuth();
   const [plans, setPlans] = useState<PlanWithAvailability[]>([]);
@@ -86,6 +93,7 @@ export default function Index() {
   const [featuresContent, setFeaturesContent] = useState<FeaturesContent | null>(null);
   const [plansContent, setPlansContent] = useState<PlansContent | null>(null);
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
+  const [stylesContent, setStylesContent] = useState<StylesContent | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanWithAvailability | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
@@ -140,6 +148,9 @@ export default function Index() {
             break;
           case 'footer':
             setFooterContent(content as unknown as FooterContent);
+            break;
+          case 'styles':
+            setStylesContent(content as unknown as StylesContent);
             break;
         }
       });
@@ -307,7 +318,15 @@ export default function Index() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <a href="#plans">
-              <Button size="lg" className="gradient-primary text-lg px-8 shadow-glow">
+              <Button 
+                size="lg" 
+                className="text-lg px-8 shadow-glow text-white"
+                style={{
+                  background: stylesContent?.buttonGradientFrom && stylesContent?.buttonGradientTo
+                    ? `linear-gradient(135deg, ${stylesContent.buttonGradientFrom}, ${stylesContent.buttonGradientTo})`
+                    : 'var(--gradient-primary)'
+                }}
+              >
                 {hero.ctaButton}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -325,7 +344,10 @@ export default function Index() {
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-card relative group">
+      <section 
+        className="py-20 relative group"
+        style={{ backgroundColor: stylesContent?.featuresBackground || undefined }}
+      >
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
             {featuresData.map((feature, index) => {
@@ -336,7 +358,14 @@ export default function Index() {
                   className="text-center p-8 rounded-2xl bg-background shadow-card animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-6">
+                  <div 
+                    className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6"
+                    style={{
+                      background: stylesContent?.buttonGradientFrom && stylesContent?.buttonGradientTo
+                        ? `linear-gradient(135deg, ${stylesContent.buttonGradientFrom}, ${stylesContent.buttonGradientTo})`
+                        : 'var(--gradient-primary)'
+                    }}
+                  >
                     <IconComponent className="w-8 h-8 text-primary-foreground" />
                   </div>
                   <h3 className="font-display text-xl font-bold mb-3">{feature.title}</h3>
@@ -378,7 +407,7 @@ export default function Index() {
                       {plansData.competitorLabel || 'Comprando no Concorrente'}: R$ {(competitorPrice / 100).toFixed(2).replace('.', ',')}
                     </div>
                     <div className="text-sm font-bold">
-                      Economize {discount}% comprando aqui!
+                      Economize {discount}% = R$ {((competitorPrice - plan.price_cents) / 100).toFixed(2).replace('.', ',')}
                     </div>
                   </div>
                 )}
@@ -425,9 +454,13 @@ export default function Index() {
                   <Button 
                     onClick={() => handleOpenPurchaseModal(plan)}
                     disabled={purchaseLoading === plan.id || plan.price_cents === 0}
-                    className={`w-full ${index === 1 ? 'gradient-primary' : ''}`}
+                    className={`w-full ${index === 1 ? '' : ''}`}
                     variant={index === 1 ? 'default' : 'outline'}
                     size="lg"
+                    style={index === 1 && stylesContent?.buttonGradientFrom && stylesContent?.buttonGradientTo ? {
+                      background: `linear-gradient(135deg, ${stylesContent.buttonGradientFrom}, ${stylesContent.buttonGradientTo})`,
+                      color: 'white'
+                    } : undefined}
                   >
                     {purchaseLoading === plan.id ? 'Processando...' : 'Comprar Agora'}
                   </Button>
@@ -453,10 +486,20 @@ export default function Index() {
       )}
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-12 relative group">
+      <footer 
+        className="border-t border-border py-12 relative group"
+        style={{ backgroundColor: stylesContent?.footerBackground || undefined }}
+      >
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{
+                background: stylesContent?.buttonGradientFrom && stylesContent?.buttonGradientTo
+                  ? `linear-gradient(135deg, ${stylesContent.buttonGradientFrom}, ${stylesContent.buttonGradientTo})`
+                  : 'var(--gradient-primary)'
+              }}
+            >
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="font-display font-bold">CreditsHub</span>

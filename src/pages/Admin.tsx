@@ -42,7 +42,7 @@ export default function Admin() {
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '' });
+  const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', competitor_price_cents: 0 });
   const [creating, setCreating] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const { toast } = useToast();
@@ -101,13 +101,14 @@ export default function Admin() {
         credits: newPlan.credits,
         price_cents: newPlan.price_cents,
         stripe_price_id: newPlan.stripe_price_id || null,
+        competitor_price_cents: newPlan.competitor_price_cents || 0,
         active: true,
       });
 
       if (error) throw error;
 
       toast({ title: 'Sucesso!', description: 'Plano criado com sucesso.' });
-      setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '' });
+      setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', competitor_price_cents: 0 });
       setIsDialogOpen(false);
       await fetchPlans();
     } catch (error: any) {
@@ -305,6 +306,18 @@ export default function Admin() {
                         value={newPlan.stripe_price_id}
                         onChange={(e) => setNewPlan({ ...newPlan, stripe_price_id: e.target.value })}
                         placeholder="price_..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="competitor_price">Preço Concorrente (R$)</Label>
+                      <Input
+                        id="competitor_price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={(newPlan.competitor_price_cents / 100).toFixed(2)}
+                        onChange={(e) => setNewPlan({ ...newPlan, competitor_price_cents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                        placeholder="Ex: 150.00"
                       />
                     </div>
                     <Button type="submit" className="w-full gradient-primary" disabled={creating}>
