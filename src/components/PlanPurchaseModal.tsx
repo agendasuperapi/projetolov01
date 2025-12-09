@@ -54,20 +54,6 @@ export default function PlanPurchaseModal({
             onValueChange={(value) => setPurchaseType(value as 'recharge' | 'new_account')}
             className="space-y-4"
           >
-            {/* Recharge Option */}
-            <div className="flex items-start space-x-3">
-              <RadioGroupItem value="recharge" id="recharge" className="mt-1" />
-              <Label htmlFor="recharge" className="flex-1 cursor-pointer">
-                <div className="flex items-center gap-2 mb-1">
-                  <RefreshCw className="w-4 h-4 text-primary" />
-                  <span className="font-semibold">Recarregue minha conta</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Adicione créditos a uma conta existente
-                </p>
-              </Label>
-            </div>
-
             {/* New Account Option */}
             <div className="flex items-start space-x-3">
               <RadioGroupItem 
@@ -95,6 +81,20 @@ export default function PlanPurchaseModal({
                     {availableAccounts} conta(s) disponível(is)
                   </p>
                 )}
+              </Label>
+            </div>
+
+            {/* Recharge Option */}
+            <div className="flex items-start space-x-3">
+              <RadioGroupItem value="recharge" id="recharge" className="mt-1" />
+              <Label htmlFor="recharge" className="flex-1 cursor-pointer">
+                <div className="flex items-center gap-2 mb-1">
+                  <RefreshCw className="w-4 h-4 text-primary" />
+                  <span className="font-semibold">Recarregue minha conta</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Adicione créditos a uma conta existente
+                </p>
               </Label>
             </div>
           </RadioGroup>
