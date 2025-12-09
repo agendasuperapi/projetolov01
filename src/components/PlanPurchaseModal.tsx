@@ -23,7 +23,7 @@ export default function PlanPurchaseModal({
   onPurchase,
   isLoading,
 }: PlanPurchaseModalProps) {
-  const [purchaseType, setPurchaseType] = useState<'recharge' | 'new_account'>('recharge');
+  const [purchaseType, setPurchaseType] = useState<'recharge' | 'new_account'>('new_account');
   const [rechargeLink, setRechargeLink] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
