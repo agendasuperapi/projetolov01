@@ -70,6 +70,8 @@ interface PlansContent {
   title: string;
   subtitle: string;
   features: string[];
+  competitorLabel?: string;
+  competitorPrice?: number;
 }
 
 interface FooterContent {
@@ -356,13 +358,31 @@ export default function Index() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {plans.map((plan, index) => (
+            {plans.map((plan, index) => {
+              const competitorPrice = plansData.competitorPrice || 0;
+              const discount = competitorPrice > 0 && plan.price_cents > 0
+                ? Math.round(((competitorPrice - plan.price_cents) / competitorPrice) * 100)
+                : 0;
+              
+              return (
               <Card 
                 key={plan.id} 
                 className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
                   index === 1 ? 'border-primary shadow-glow' : 'border-border'
                 }`}
               >
+                {/* Barra de Comparação com Concorrente */}
+                {competitorPrice > 0 && plan.price_cents > 0 && discount > 0 && (
+                  <div className="bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground px-4 py-2 text-center">
+                    <div className="text-xs font-medium opacity-90">
+                      {plansData.competitorLabel || 'Comprando no Concorrente'}: R$ {(competitorPrice / 100).toFixed(2).replace('.', ',')}
+                    </div>
+                    <div className="text-sm font-bold">
+                      Economize {discount}% comprando aqui!
+                    </div>
+                  </div>
+                )}
+                
                 {index === 1 && (
                   <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
                     POPULAR
@@ -413,7 +433,8 @@ export default function Index() {
                   </Button>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         </div>
         {isAdmin && <AdminEditButton section="plans" />}

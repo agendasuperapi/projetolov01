@@ -37,6 +37,8 @@ interface PlansContent {
   title: string;
   subtitle: string;
   features: string[];
+  competitorLabel?: string;
+  competitorPrice?: number;
 }
 
 interface FooterContent {
@@ -384,6 +386,32 @@ export default function ContentEditor() {
                     onChange={(e) => setPlansContent({ ...plansContent, subtitle: e.target.value })}
                   />
                 </div>
+
+                {/* Comparação com Concorrente */}
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium mb-4">Comparação com Concorrente</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Texto do Label</Label>
+                      <Input
+                        value={plansContent.competitorLabel || 'Comprando no Concorrente'}
+                        onChange={(e) => setPlansContent({ ...plansContent, competitorLabel: e.target.value })}
+                        placeholder="Comprando no Concorrente"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Preço do Concorrente (R$)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={(plansContent.competitorPrice || 0) / 100}
+                        onChange={(e) => setPlansContent({ ...plansContent, competitorPrice: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                        placeholder="0,00"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Benefícios (um por linha)</Label>
                   {plansContent.features.map((feature, index) => (
