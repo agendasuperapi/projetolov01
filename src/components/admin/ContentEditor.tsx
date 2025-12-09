@@ -17,6 +17,10 @@ interface HeroContent {
   description: string;
   ctaButton: string;
   secondaryButton: string;
+  backgroundColor?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
+  gradientDirection?: string;
 }
 
 interface FeatureItem {
@@ -174,7 +178,84 @@ export default function ContentEditor() {
                     />
                   </div>
                 </div>
-                <Button 
+
+                {/* Cores e Gradiente */}
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium mb-4">Cores do Fundo</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Cor Inicial do Gradiente</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={heroContent.gradientFrom || '#1a1a2e'}
+                          onChange={(e) => setHeroContent({ ...heroContent, gradientFrom: e.target.value })}
+                          className="w-14 h-10 p-1 cursor-pointer"
+                        />
+                        <Input
+                          value={heroContent.gradientFrom || '#1a1a2e'}
+                          onChange={(e) => setHeroContent({ ...heroContent, gradientFrom: e.target.value })}
+                          placeholder="#1a1a2e"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cor Final do Gradiente</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={heroContent.gradientTo || '#0f0f1a'}
+                          onChange={(e) => setHeroContent({ ...heroContent, gradientTo: e.target.value })}
+                          className="w-14 h-10 p-1 cursor-pointer"
+                        />
+                        <Input
+                          value={heroContent.gradientTo || '#0f0f1a'}
+                          onChange={(e) => setHeroContent({ ...heroContent, gradientTo: e.target.value })}
+                          placeholder="#0f0f1a"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2 mt-4">
+                    <Label>Direção do Gradiente</Label>
+                    <select
+                      value={heroContent.gradientDirection || 'to-b'}
+                      onChange={(e) => setHeroContent({ ...heroContent, gradientDirection: e.target.value })}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    >
+                      <option value="to-t">De baixo para cima</option>
+                      <option value="to-b">De cima para baixo</option>
+                      <option value="to-l">Da direita para esquerda</option>
+                      <option value="to-r">Da esquerda para direita</option>
+                      <option value="to-tl">Diagonal ↖</option>
+                      <option value="to-tr">Diagonal ↗</option>
+                      <option value="to-bl">Diagonal ↙</option>
+                      <option value="to-br">Diagonal ↘</option>
+                    </select>
+                  </div>
+                  
+                  {/* Preview */}
+                  <div className="mt-4">
+                    <Label>Preview do Gradiente</Label>
+                    <div 
+                      className="h-20 rounded-lg mt-2 border"
+                      style={{
+                        background: `linear-gradient(${
+                          heroContent.gradientDirection === 'to-t' ? '0deg' :
+                          heroContent.gradientDirection === 'to-b' ? '180deg' :
+                          heroContent.gradientDirection === 'to-l' ? '270deg' :
+                          heroContent.gradientDirection === 'to-r' ? '90deg' :
+                          heroContent.gradientDirection === 'to-tl' ? '315deg' :
+                          heroContent.gradientDirection === 'to-tr' ? '45deg' :
+                          heroContent.gradientDirection === 'to-bl' ? '225deg' :
+                          '135deg'
+                        }, ${heroContent.gradientFrom || '#1a1a2e'}, ${heroContent.gradientTo || '#0f0f1a'})`
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <Button
                   onClick={() => saveSection('hero', heroContent)} 
                   disabled={saving}
                   className="w-full gradient-primary"

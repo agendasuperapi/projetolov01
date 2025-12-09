@@ -50,6 +50,10 @@ interface HeroContent {
   description: string;
   ctaButton: string;
   secondaryButton: string;
+  backgroundColor?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
+  gradientDirection?: string;
 }
 
 interface FeatureItem {
@@ -267,7 +271,23 @@ export default function Index() {
       </header>
 
       {/* Hero Section */}
-      <section className="gradient-hero py-20 lg:py-32 relative group">
+      <section 
+        className="py-20 lg:py-32 relative group"
+        style={{
+          background: hero.gradientFrom || hero.gradientTo 
+            ? `linear-gradient(${
+                hero.gradientDirection === 'to-t' ? '0deg' :
+                hero.gradientDirection === 'to-b' ? '180deg' :
+                hero.gradientDirection === 'to-l' ? '270deg' :
+                hero.gradientDirection === 'to-r' ? '90deg' :
+                hero.gradientDirection === 'to-tl' ? '315deg' :
+                hero.gradientDirection === 'to-tr' ? '45deg' :
+                hero.gradientDirection === 'to-bl' ? '225deg' :
+                '135deg'
+              }, ${hero.gradientFrom || '#1a1a2e'}, ${hero.gradientTo || '#0f0f1a'})`
+            : undefined
+        }}
+      >
         <div className="container mx-auto px-4 text-center">
           <Badge variant="secondary" className="mb-6 px-4 py-2">
             <Sparkles className="w-4 h-4 mr-2" />
