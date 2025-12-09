@@ -41,9 +41,11 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { priceId, planId } = await req.json();
+    const { priceId, planId, purchaseType, rechargeLink } = await req.json();
     if (!priceId || !planId) throw new Error("priceId and planId are required");
-    logStep("Request body parsed", { priceId, planId });
+    if (!purchaseType) throw new Error("purchaseType is required");
+    if (purchaseType === 'recharge' && !rechargeLink) throw new Error("rechargeLink is required for recharge");
+    logStep("Request body parsed", { priceId, planId, purchaseType, rechargeLink });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -72,6 +74,8 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         plan_id: planId,
+        purchase_type: purchaseType,
+        recharge_link: rechargeLink || '',
       },
     });
 

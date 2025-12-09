@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil, Star, LucideIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import PlanPurchaseModal from '@/components/PlanPurchaseModal';
 
 const AdminEditButton = ({ section }: { section: string }) => (
   <Link 
@@ -36,6 +37,10 @@ interface CreditPlan {
   credits: number;
   price_cents: number;
   stripe_price_id: string | null;
+}
+
+interface PlanWithAvailability extends CreditPlan {
+  availableAccounts: number;
 }
 
 interface HeroContent {
@@ -69,12 +74,14 @@ interface FooterContent {
 
 export default function Index() {
   const { user, profile, isAdmin, signOut, loading } = useAuth();
-  const [plans, setPlans] = useState<CreditPlan[]>([]);
+  const [plans, setPlans] = useState<PlanWithAvailability[]>([]);
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
   const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
   const [featuresContent, setFeaturesContent] = useState<FeaturesContent | null>(null);
   const [plansContent, setPlansContent] = useState<PlansContent | null>(null);
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlanWithAvailability | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -83,8 +90,31 @@ export default function Index() {
   }, []);
 
   const fetchPlans = async () => {
-    const { data } = await supabase.from('credit_plans').select('*').eq('active', true).order('credits', { ascending: true });
-    if (data) setPlans(data);
+    const { data: plansData } = await supabase
+      .from('credit_plans')
+      .select('*')
+      .eq('active', true)
+      .order('credits', { ascending: true });
+    
+    if (plansData) {
+      // Fetch available accounts count for each plan
+      const plansWithAvailability = await Promise.all(
+        plansData.map(async (plan) => {
+          const { count } = await supabase
+            .from('accounts')
+            .select('*', { count: 'exact', head: true })
+            .eq('plan_id', plan.id)
+            .eq('is_used', false);
+          
+          return {
+            ...plan,
+            availableAccounts: count || 0,
+          };
+        })
+      );
+      
+      setPlans(plansWithAvailability);
+    }
   };
 
   const fetchContent = async () => {
@@ -110,7 +140,7 @@ export default function Index() {
     }
   };
 
-  const handlePurchase = async (plan: CreditPlan) => {
+  const handleOpenPurchaseModal = (plan: PlanWithAvailability) => {
     if (!user) {
       toast({ title: 'Atenção', description: 'Faça login para comprar créditos.', variant: 'destructive' });
       return;
@@ -121,17 +151,30 @@ export default function Index() {
       return;
     }
 
-    setPurchaseLoading(plan.id);
+    setSelectedPlan(plan);
+    setIsModalOpen(true);
+  };
+
+  const handlePurchase = async (type: 'recharge' | 'new_account', rechargeLink?: string) => {
+    if (!selectedPlan) return;
+
+    setPurchaseLoading(selectedPlan.id);
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId: plan.stripe_price_id, planId: plan.id },
+        body: { 
+          priceId: selectedPlan.stripe_price_id, 
+          planId: selectedPlan.id,
+          purchaseType: type,
+          rechargeLink: rechargeLink,
+        },
       });
 
       if (error) throw error;
       if (data?.url) {
         window.open(data.url, '_blank');
       }
+      setIsModalOpen(false);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento.';
       toast({ title: 'Erro', description: errorMessage, variant: 'destructive' });
@@ -314,11 +357,20 @@ export default function Index() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="text-center">
+                  <div className="text-center space-y-2">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
                       <Zap className="w-5 h-5 text-primary" />
                       <span className="font-bold text-lg">{plan.credits.toLocaleString()} créditos</span>
                     </div>
+                    {plan.availableAccounts > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        {plan.availableAccounts} conta(s) nova(s) disponível(is)
+                      </p>
+                    ) : (
+                      <p className="text-sm text-destructive font-medium">
+                        Contas novas esgotadas
+                      </p>
+                    )}
                   </div>
 
                   <ul className="space-y-3">
@@ -331,7 +383,7 @@ export default function Index() {
                   </ul>
 
                   <Button 
-                    onClick={() => handlePurchase(plan)}
+                    onClick={() => handleOpenPurchaseModal(plan)}
                     disabled={purchaseLoading === plan.id || plan.price_cents === 0}
                     className={`w-full ${index === 1 ? 'gradient-primary' : ''}`}
                     variant={index === 1 ? 'default' : 'outline'}
@@ -346,6 +398,18 @@ export default function Index() {
         </div>
         {isAdmin && <AdminEditButton section="plans" />}
       </section>
+
+      {/* Purchase Modal */}
+      {selectedPlan && (
+        <PlanPurchaseModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          planName={selectedPlan.name}
+          availableAccounts={selectedPlan.availableAccounts}
+          onPurchase={handlePurchase}
+          isLoading={purchaseLoading === selectedPlan.id}
+        />
+      )}
 
       {/* Footer */}
       <footer className="bg-card border-t border-border py-12 relative group">
