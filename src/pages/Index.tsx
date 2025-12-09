@@ -5,8 +5,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings } from 'lucide-react';
+import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+const AdminEditButton = ({ section }: { section: string }) => (
+  <Link 
+    to={`/admin?edit=${section}`}
+    className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+  >
+    <Button variant="outline" size="sm" className="gap-2 bg-background/80 backdrop-blur-sm">
+      <Pencil className="w-3 h-3" />
+      Editar
+    </Button>
+  </Link>
+);
 
 interface CreditPlan {
   id: string;
@@ -126,7 +138,7 @@ export default function Index() {
       </header>
 
       {/* Hero Section */}
-      <section className="gradient-hero py-20 lg:py-32">
+      <section className="gradient-hero py-20 lg:py-32 relative group">
         <div className="container mx-auto px-4 text-center">
           <Badge variant="secondary" className="mb-6 px-4 py-2">
             <Sparkles className="w-4 h-4 mr-2" />
@@ -159,10 +171,11 @@ export default function Index() {
             )}
           </div>
         </div>
+        {isAdmin && <AdminEditButton section="hero" />}
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-card">
+      <section className="py-20 bg-card relative group">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
@@ -180,10 +193,11 @@ export default function Index() {
             ))}
           </div>
         </div>
+        {isAdmin && <AdminEditButton section="features" />}
       </section>
 
       {/* Plans */}
-      <section id="plans" className="py-20">
+      <section id="plans" className="py-20 relative group">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Escolha seu plano</h2>
@@ -242,6 +256,7 @@ export default function Index() {
             ))}
           </div>
         </div>
+        {isAdmin && <AdminEditButton section="plans" />}
       </section>
 
       {/* Footer */}
