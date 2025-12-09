@@ -5,30 +5,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Zap, Download, ArrowLeft, Package, ShoppingCart } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Sparkles, Zap, ArrowLeft, History, CreditCard } from 'lucide-react';
 
-interface Product {
+interface Transaction {
   id: string;
-  name: string;
-  description: string | null;
-  file_url: string;
-  credits_required: number;
-}
-
-interface Purchase {
-  id: string;
-  credits_spent: number;
-  purchased_at: string;
-  product: Product;
+  credits_added: number;
+  amount_cents: number;
+  status: string;
+  created_at: string;
+  plan: { name: string } | null;
 }
 
 export default function Dashboard() {
-  const { user, profile, loading, refreshProfile } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { user, profile, loading } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,94 +30,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) {
-      fetchProducts();
-      fetchPurchases();
+      fetchTransactions();
     }
   }, [user]);
 
-  const fetchProducts = async () => {
-    const { data } = await supabase.from('digital_products').select('*').order('credits_required', { ascending: true });
-    if (data) setProducts(data);
-  };
-
-  const fetchPurchases = async () => {
+  const fetchTransactions = async () => {
     const { data } = await supabase
-      .from('purchases')
-      .select('*, product:digital_products(*)')
-      .order('purchased_at', { ascending: false });
+      .from('payment_transactions')
+      .select('*, plan:credit_plans(name)')
+      .eq('user_id', user!.id)
+      .order('created_at', { ascending: false });
     
     if (data) {
-      setPurchases(data.map(p => ({ ...p, product: p.product as Product })));
+      setTransactions(data.map(t => ({ ...t, plan: t.plan as { name: string } | null })));
     }
   };
-
-  const handlePurchaseProduct = async (product: Product) => {
-    if (!profile || profile.credits < product.credits_required) {
-      toast({ title: 'Créditos insuficientes', description: 'Compre mais créditos para adquirir este produto.', variant: 'destructive' });
-      return;
-    }
-
-    setPurchaseLoading(product.id);
-
-    try {
-      // Check if already purchased
-      const { data: existingPurchase } = await supabase
-        .from('purchases')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('product_id', product.id)
-        .maybeSingle();
-
-      if (existingPurchase) {
-        toast({ title: 'Já adquirido', description: 'Você já possui este produto.' });
-        setPurchaseLoading(null);
-        return;
-      }
-
-      // Deduct credits
-      const newCredits = profile.credits - product.credits_required;
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ credits: newCredits })
-        .eq('id', user!.id);
-
-      if (updateError) throw updateError;
-
-      // Create purchase record
-      const { error: purchaseError } = await supabase
-        .from('purchases')
-        .insert({
-          user_id: user!.id,
-          product_id: product.id,
-          credits_spent: product.credits_required,
-        });
-
-      if (purchaseError) throw purchaseError;
-
-      toast({ title: 'Sucesso!', description: 'Produto adquirido. Agora você pode fazer o download.' });
-      await refreshProfile();
-      await fetchPurchases();
-    } catch (error: any) {
-      toast({ title: 'Erro', description: error.message || 'Erro ao adquirir produto.', variant: 'destructive' });
-    } finally {
-      setPurchaseLoading(null);
-    }
-  };
-
-  const handleDownload = async (product: Product) => {
-    try {
-      const { data, error } = await supabase.storage.from('digital-products').createSignedUrl(product.file_url, 3600);
-      
-      if (error) throw error;
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
-      }
-    } catch (error: any) {
-      toast({ title: 'Erro', description: 'Erro ao gerar link de download.', variant: 'destructive' });
-    }
-  };
-
-  const isPurchased = (productId: string) => purchases.some(p => p.product.id === productId);
 
   if (loading) {
     return (
@@ -135,6 +53,9 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const totalCreditsAdded = transactions.filter(t => t.status === 'completed').reduce((acc, t) => acc + t.credits_added, 0);
+  const totalSpent = transactions.filter(t => t.status === 'completed').reduce((acc, t) => acc + t.amount_cents, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -168,7 +89,7 @@ export default function Dashboard() {
 
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">Olá, {profile?.name || 'Usuário'}!</h1>
-          <p className="text-muted-foreground">Gerencie seus produtos e créditos</p>
+          <p className="text-muted-foreground">Gerencie seus créditos e histórico</p>
         </div>
 
         {/* Stats */}
@@ -185,102 +106,80 @@ export default function Dashboard() {
           
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Produtos Adquiridos</CardTitle>
-              <Package className="w-5 h-5 text-primary" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Comprado</CardTitle>
+              <CreditCard className="w-5 h-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{purchases.length}</div>
+              <div className="text-3xl font-bold">{totalCreditsAdded.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">créditos</p>
             </CardContent>
           </Card>
 
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Créditos Utilizados</CardTitle>
-              <ShoppingCart className="w-5 h-5 text-primary" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Investido</CardTitle>
+              <History className="w-5 h-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{purchases.reduce((acc, p) => acc + p.credits_spent, 0)}</div>
+              <div className="text-3xl font-bold">R$ {(totalSpent / 100).toFixed(2).replace('.', ',')}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* My Products */}
-        {purchases.length > 0 && (
-          <section className="mb-12">
-            <h2 className="font-display text-2xl font-bold mb-6">Meus Produtos</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {purchases.map((purchase) => (
-                <Card key={purchase.id} className="shadow-card hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      {purchase.product.name}
-                      <Badge variant="secondary">Adquirido</Badge>
-                    </CardTitle>
-                    {purchase.product.description && (
-                      <CardDescription>{purchase.product.description}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <Button onClick={() => handleDownload(purchase.product)} className="w-full gradient-primary">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Available Products */}
+        {/* Transaction History */}
         <section>
-          <h2 className="font-display text-2xl font-bold mb-6">Produtos Disponíveis</h2>
-          {products.length === 0 ? (
-            <Card className="shadow-card text-center py-12">
-              <CardContent>
-                <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Nenhum produto disponível no momento.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => {
-                const owned = isPurchased(product.id);
-                return (
-                  <Card key={product.id} className="shadow-card hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        {product.name}
-                        <Badge className="gradient-primary text-primary-foreground">
-                          {product.credits_required} créditos
-                        </Badge>
-                      </CardTitle>
-                      {product.description && (
-                        <CardDescription>{product.description}</CardDescription>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      {owned ? (
-                        <Button onClick={() => handleDownload(product)} className="w-full gradient-primary">
-                          <Download className="w-4 h-4 mr-2" />
-                          Download
-                        </Button>
-                      ) : (
-                        <Button 
-                          onClick={() => handlePurchaseProduct(product)} 
-                          disabled={purchaseLoading === product.id}
-                          className="w-full"
-                          variant="outline"
-                        >
-                          {purchaseLoading === product.id ? 'Processando...' : 'Adquirir Produto'}
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+          <h2 className="font-display text-2xl font-bold mb-6">Histórico de Compras</h2>
+          
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Suas Transações</CardTitle>
+              <CardDescription>Histórico de créditos comprados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {transactions.length === 0 ? (
+                <div className="text-center py-12">
+                  <History className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">Nenhuma compra realizada ainda.</p>
+                  <Link to="/#plans">
+                    <Button className="gradient-primary">Comprar Créditos</Button>
+                  </Link>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Plano</TableHead>
+                      <TableHead>Créditos</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell className="font-medium">{tx.plan?.name || 'Plano'}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{tx.credits_added}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
+                            {tx.status === 'completed' ? 'Concluído' : tx.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(tx.created_at).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </section>
       </main>
     </div>
