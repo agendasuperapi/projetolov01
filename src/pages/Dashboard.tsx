@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check } from 'lucide-react';
+import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Transaction {
@@ -25,10 +25,21 @@ interface PurchasedAccount {
   plan: { name: string } | null;
 }
 
+interface RechargeRequest {
+  id: string;
+  recharge_link: string;
+  status: string;
+  credits_added: number;
+  created_at: string;
+  completed_at: string | null;
+  plan: { name: string } | null;
+}
+
 export default function Dashboard() {
   const { user, profile, loading } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [purchasedAccounts, setPurchasedAccounts] = useState<PurchasedAccount[]>([]);
+  const [rechargeRequests, setRechargeRequests] = useState<RechargeRequest[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -42,6 +53,7 @@ export default function Dashboard() {
     if (user) {
       fetchTransactions();
       fetchPurchasedAccounts();
+      fetchRechargeRequests();
     }
   }, [user]);
 
@@ -66,6 +78,18 @@ export default function Dashboard() {
     
     if (data) {
       setPurchasedAccounts(data.map(a => ({ ...a, plan: a.plan as { name: string } | null })));
+    }
+  };
+
+  const fetchRechargeRequests = async () => {
+    const { data } = await supabase
+      .from('recharge_requests')
+      .select('id, recharge_link, status, credits_added, created_at, completed_at, plan:credit_plans(name)')
+      .eq('user_id', user!.id)
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      setRechargeRequests(data.map(r => ({ ...r, plan: r.plan as { name: string } | null })));
     }
   };
 

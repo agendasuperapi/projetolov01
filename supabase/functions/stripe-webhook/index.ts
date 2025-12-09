@@ -154,6 +154,25 @@ serve(async (req) => {
             assignedAccountData = availableAccount.account_data;
             logStep("Account assigned to user", { accountId: availableAccount.id });
           }
+      }
+      }
+
+      // If purchase type is recharge, create a recharge request
+      if (purchaseType === 'recharge' && rechargeLink) {
+        const { error: rechargeError } = await supabaseAdmin
+          .from("recharge_requests")
+          .insert({
+            user_id: userId,
+            plan_id: planId,
+            recharge_link: rechargeLink,
+            status: 'pending',
+            credits_added: plan.credits,
+          });
+
+        if (rechargeError) {
+          logStep("Recharge request error", { error: rechargeError.message });
+        } else {
+          logStep("Recharge request created successfully");
         }
       }
 
