@@ -38,7 +38,6 @@ interface PlansContent {
   subtitle: string;
   features: string[];
   competitorLabel?: string;
-  competitorPrice?: number;
 }
 
 interface FooterContent {
@@ -390,25 +389,16 @@ export default function ContentEditor() {
                 {/* Comparação com Concorrente */}
                 <div className="border-t pt-4 mt-4">
                   <h4 className="font-medium mb-4">Comparação com Concorrente</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Texto do Label</Label>
-                      <Input
-                        value={plansContent.competitorLabel || 'Comprando no Concorrente'}
-                        onChange={(e) => setPlansContent({ ...plansContent, competitorLabel: e.target.value })}
-                        placeholder="Comprando no Concorrente"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Preço do Concorrente (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={(plansContent.competitorPrice || 0) / 100}
-                        onChange={(e) => setPlansContent({ ...plansContent, competitorPrice: Math.round(parseFloat(e.target.value || '0') * 100) })}
-                        placeholder="0,00"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Texto do Label</Label>
+                    <Input
+                      value={plansContent.competitorLabel || 'Comprando no Concorrente'}
+                      onChange={(e) => setPlansContent({ ...plansContent, competitorLabel: e.target.value })}
+                      placeholder="Comprando no Concorrente"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Os preços do concorrente são configurados individualmente em cada plano na aba "Contas".
+                    </p>
                   </div>
                 </div>
 

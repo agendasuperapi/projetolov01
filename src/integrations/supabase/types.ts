@@ -62,6 +62,7 @@ export type Database = {
       credit_plans: {
         Row: {
           active: boolean | null
+          competitor_price_cents: number | null
           created_at: string | null
           credits: number
           id: string
@@ -71,6 +72,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          competitor_price_cents?: number | null
           created_at?: string | null
           credits: number
           id?: string
@@ -80,6 +82,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          competitor_price_cents?: number | null
           created_at?: string | null
           credits?: number
           id?: string

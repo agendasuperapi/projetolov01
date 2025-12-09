@@ -37,6 +37,7 @@ interface CreditPlan {
   credits: number;
   price_cents: number;
   stripe_price_id: string | null;
+  competitor_price_cents: number | null;
 }
 
 interface PlanWithAvailability extends CreditPlan {
@@ -71,7 +72,6 @@ interface PlansContent {
   subtitle: string;
   features: string[];
   competitorLabel?: string;
-  competitorPrice?: number;
 }
 
 interface FooterContent {
@@ -359,7 +359,7 @@ export default function Index() {
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {plans.map((plan, index) => {
-              const competitorPrice = plansData.competitorPrice || 0;
+              const competitorPrice = plan.competitor_price_cents || 0;
               const discount = competitorPrice > 0 && plan.price_cents > 0
                 ? Math.round(((competitorPrice - plan.price_cents) / competitorPrice) * 100)
                 : 0;
