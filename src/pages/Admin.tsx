@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
 
@@ -42,6 +42,7 @@ export default function Admin() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '' });
   const [creating, setCreating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -144,6 +145,36 @@ export default function Admin() {
     }
   };
 
+  const handleSyncStripe = async () => {
+    setSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Não autenticado');
+
+      const { data, error } = await supabase.functions.invoke('sync-stripe-products', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({ 
+        title: 'Sincronização concluída!', 
+        description: data.message || 'Produtos sincronizados com sucesso.' 
+      });
+      await fetchPlans();
+    } catch (error: any) {
+      toast({ 
+        title: 'Erro na sincronização', 
+        description: error.message || 'Erro ao sincronizar com Stripe.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (loading || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -198,7 +229,16 @@ export default function Admin() {
 
           {/* Plans Tab */}
           <TabsContent value="plans" className="space-y-6">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleSyncStripe} 
+                disabled={syncing}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Sincronizando...' : 'Sincronizar Stripe'}
+              </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="gradient-primary">
