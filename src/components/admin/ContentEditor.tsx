@@ -44,16 +44,7 @@ interface FooterContent {
   copyright: string;
 }
 
-interface StylesContent {
-  primaryColor?: string;
-  accentColor?: string;
-  buttonGradientFrom?: string;
-  buttonGradientTo?: string;
-  featuresBackground?: string;
-  footerBackground?: string;
-}
-
-type SectionContent = HeroContent | FeaturesContent | PlansContent | FooterContent | StylesContent;
+type SectionContent = HeroContent | FeaturesContent | PlansContent | FooterContent;
 
 export default function ContentEditor() {
   const [searchParams] = useSearchParams();
@@ -63,7 +54,6 @@ export default function ContentEditor() {
   const [featuresContent, setFeaturesContent] = useState<FeaturesContent | null>(null);
   const [plansContent, setPlansContent] = useState<PlansContent | null>(null);
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
-  const [stylesContent, setStylesContent] = useState<StylesContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -91,9 +81,6 @@ export default function ContentEditor() {
             break;
           case 'footer':
             setFooterContent(content as unknown as FooterContent);
-            break;
-          case 'styles':
-            setStylesContent(content as unknown as StylesContent);
             break;
         }
       });
@@ -130,12 +117,11 @@ export default function ContentEditor() {
 
   return (
     <Tabs defaultValue={editSection} className="space-y-6">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="hero">Hero</TabsTrigger>
         <TabsTrigger value="features">Features</TabsTrigger>
         <TabsTrigger value="plans">Planos</TabsTrigger>
         <TabsTrigger value="footer">Footer</TabsTrigger>
-        <TabsTrigger value="styles">Estilos</TabsTrigger>
       </TabsList>
 
       {/* Hero Editor */}
@@ -492,231 +478,6 @@ export default function ContentEditor() {
                   Salvar Alterações
                 </Button>
               </>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {/* Styles Editor */}
-      <TabsContent value="styles">
-        <Card>
-          <CardHeader>
-            <CardTitle>Estilos Globais</CardTitle>
-            <CardDescription>Configure as cores e estilos do site</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {stylesContent !== null ? (
-              <>
-                {/* Cores dos Botões */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Cores do Botão Principal</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Cor Inicial do Gradiente</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          value={stylesContent?.buttonGradientFrom || '#6366f1'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, buttonGradientFrom: e.target.value })}
-                          className="w-14 h-10 p-1 cursor-pointer"
-                        />
-                        <Input
-                          value={stylesContent?.buttonGradientFrom || '#6366f1'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, buttonGradientFrom: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Cor Final do Gradiente</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          value={stylesContent?.buttonGradientTo || '#a855f7'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, buttonGradientTo: e.target.value })}
-                          className="w-14 h-10 p-1 cursor-pointer"
-                        />
-                        <Input
-                          value={stylesContent?.buttonGradientTo || '#a855f7'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, buttonGradientTo: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  {/* Preview do Botão */}
-                  <div className="mt-4">
-                    <Label>Preview do Botão</Label>
-                    <div 
-                      className="h-12 rounded-lg mt-2 flex items-center justify-center text-white font-medium"
-                      style={{
-                        background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
-                      }}
-                    >
-                      Exemplo de Botão
-                    </div>
-                  </div>
-                </div>
-
-                {/* Cor de Fundo das Seções */}
-                <div className="border-t pt-4 space-y-4">
-                  <h4 className="font-medium">Cores das Seções</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Fundo da Seção Features</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          value={stylesContent?.featuresBackground || '#1f1f2e'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, featuresBackground: e.target.value })}
-                          className="w-14 h-10 p-1 cursor-pointer"
-                        />
-                        <Input
-                          value={stylesContent?.featuresBackground || '#1f1f2e'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, featuresBackground: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Fundo do Footer</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          value={stylesContent?.footerBackground || '#1f1f2e'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, footerBackground: e.target.value })}
-                          className="w-14 h-10 p-1 cursor-pointer"
-                        />
-                        <Input
-                          value={stylesContent?.footerBackground || '#1f1f2e'}
-                          onChange={(e) => setStylesContent({ ...stylesContent, footerBackground: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Preview Ao Vivo Completo */}
-                <div className="border-t pt-6 space-y-4">
-                  <h4 className="font-medium">Preview Ao Vivo</h4>
-                  <p className="text-sm text-muted-foreground">Veja como as mudanças aparecerão no site</p>
-                  
-                  <div className="border rounded-xl overflow-hidden">
-                    {/* Mini Hero Preview */}
-                    <div 
-                      className="p-6 text-center"
-                      style={{
-                        background: heroContent?.gradientFrom || heroContent?.gradientTo 
-                          ? `linear-gradient(135deg, ${heroContent?.gradientFrom || '#1a1a2e'}, ${heroContent?.gradientTo || '#0f0f1a'})`
-                          : 'linear-gradient(135deg, #1a1a2e, #0f0f1a)'
-                      }}
-                    >
-                      <div className="text-xs text-white/70 mb-2">Seção Hero</div>
-                      <h3 className="text-white font-bold mb-3">Título de Exemplo</h3>
-                      <button 
-                        className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-transform hover:scale-105"
-                        style={{
-                          background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
-                        }}
-                      >
-                        Botão Principal
-                      </button>
-                    </div>
-
-                    {/* Mini Features Preview */}
-                    <div 
-                      className="p-6"
-                      style={{ backgroundColor: stylesContent?.featuresBackground || '#1f1f2e' }}
-                    >
-                      <div className="text-xs text-white/70 mb-3 text-center">Seção Features</div>
-                      <div className="flex justify-center gap-4">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="bg-background rounded-lg p-3 text-center w-24">
-                            <div 
-                              className="w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center"
-                              style={{
-                                background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
-                              }}
-                            >
-                              <span className="text-white text-xs">★</span>
-                            </div>
-                            <span className="text-xs font-medium">Feature {i}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Mini Plans Preview */}
-                    <div className="p-6 bg-background">
-                      <div className="text-xs text-muted-foreground mb-3 text-center">Seção Planos</div>
-                      <div className="flex justify-center gap-3">
-                        {[1, 2].map((i) => (
-                          <div key={i} className={`border rounded-lg p-3 text-center w-28 ${i === 2 ? 'border-primary' : ''}`}>
-                            <span className="text-xs font-medium">Plano {i}</span>
-                            <div className="text-sm font-bold my-1">R$ 99</div>
-                            <button 
-                              className={`w-full px-2 py-1 rounded text-xs font-medium ${i === 2 ? 'text-white' : 'border'}`}
-                              style={i === 2 ? {
-                                background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
-                              } : undefined}
-                            >
-                              Comprar
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Mini Footer Preview */}
-                    <div 
-                      className="p-4 text-center border-t"
-                      style={{ backgroundColor: stylesContent?.footerBackground || '#1f1f2e' }}
-                    >
-                      <div className="text-xs text-white/70 mb-2">Footer</div>
-                      <div className="flex items-center justify-center gap-2">
-                        <div 
-                          className="w-5 h-5 rounded flex items-center justify-center"
-                          style={{
-                            background: `linear-gradient(135deg, ${stylesContent?.buttonGradientFrom || '#6366f1'}, ${stylesContent?.buttonGradientTo || '#a855f7'})`
-                          }}
-                        >
-                          <span className="text-white text-[8px]">✦</span>
-                        </div>
-                        <span className="text-white text-xs font-medium">CreditsHub</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={() => saveSection('styles', stylesContent || {})} 
-                  disabled={saving}
-                  className="w-full gradient-primary"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  Salvar Alterações
-                </Button>
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Seção de estilos não encontrada.</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={async () => {
-                    const defaultStyles: StylesContent = {
-                      buttonGradientFrom: '#6366f1',
-                      buttonGradientTo: '#a855f7',
-                      featuresBackground: '#1f1f2e',
-                      footerBackground: '#1f1f2e',
-                    };
-                    await supabase.from('site_content').insert([{
-                      section_key: 'styles',
-                      content: JSON.parse(JSON.stringify(defaultStyles)),
-                    }]);
-                    setStylesContent(defaultStyles);
-                  }}
-                >
-                  Criar Seção de Estilos
-                </Button>
-              </div>
             )}
           </CardContent>
         </Card>
