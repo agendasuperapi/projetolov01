@@ -190,7 +190,7 @@ export default function Dashboard() {
                                 {account.used_at && new Date(account.used_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
-                            <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
+                            <div className="bg-background p-3 rounded-lg font-mono text-sm whitespace-pre-wrap break-all">
                               {account.account_data}
                             </div>
                           </div>
