@@ -250,7 +250,15 @@ export type Database = {
           status?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recharge_requests_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "credit_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_content: {
         Row: {
