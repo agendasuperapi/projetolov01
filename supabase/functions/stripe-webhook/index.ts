@@ -63,6 +63,8 @@ serve(async (req) => {
 
       const userId = session.metadata?.user_id;
       const planId = session.metadata?.plan_id;
+      const purchaseType = session.metadata?.purchase_type || 'recharge';
+      const rechargeLink = session.metadata?.recharge_link || '';
 
       if (!userId || !planId) {
         logStep("Missing metadata", { userId, planId });
@@ -71,6 +73,8 @@ serve(async (req) => {
           status: 400,
         });
       }
+
+      logStep("Purchase details", { purchaseType, rechargeLink });
 
       // Get plan details
       const { data: plan, error: planError } = await supabaseAdmin
@@ -92,7 +96,7 @@ serve(async (req) => {
       // Get current user credits
       const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .select("credits")
+        .select("credits, email")
         .eq("id", userId)
         .single();
 
@@ -119,7 +123,41 @@ serve(async (req) => {
 
       logStep("Credits updated", { userId, newCredits });
 
-      // Record the transaction
+      // If purchase type is new_account, assign an available account to the user
+      let assignedAccountData = null;
+      if (purchaseType === 'new_account') {
+        // Find an available account for this plan
+        const { data: availableAccount, error: accountError } = await supabaseAdmin
+          .from("accounts")
+          .select("*")
+          .eq("plan_id", planId)
+          .eq("is_used", false)
+          .limit(1)
+          .single();
+
+        if (accountError || !availableAccount) {
+          logStep("No available account found", { planId, error: accountError?.message });
+        } else {
+          // Mark account as used
+          const { error: markError } = await supabaseAdmin
+            .from("accounts")
+            .update({ 
+              is_used: true, 
+              used_by: userId, 
+              used_at: new Date().toISOString() 
+            })
+            .eq("id", availableAccount.id);
+
+          if (markError) {
+            logStep("Error marking account as used", { error: markError.message });
+          } else {
+            assignedAccountData = availableAccount.account_data;
+            logStep("Account assigned to user", { accountId: availableAccount.id });
+          }
+        }
+      }
+
+      // Record the transaction with purchase details
       const { error: txError } = await supabaseAdmin
         .from("payment_transactions")
         .insert({
@@ -135,6 +173,14 @@ serve(async (req) => {
         logStep("Transaction record error", { error: txError.message });
       } else {
         logStep("Transaction recorded successfully");
+      }
+
+      // Log the assigned account for now (in the future, send email)
+      if (assignedAccountData) {
+        logStep("Account data to be sent to user", { 
+          userEmail: profile?.email,
+          accountData: "REDACTED" // Don't log actual account data
+        });
       }
     }
 

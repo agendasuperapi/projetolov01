@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          account_data: string
+          created_at: string
+          id: string
+          is_used: boolean
+          plan_id: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          account_data: string
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          plan_id: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          account_data?: string
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          plan_id?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "credit_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_used_by_fkey"
+            columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_plans: {
         Row: {
           active: boolean | null
@@ -221,6 +266,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_available_accounts_count: {
+        Args: { p_plan_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
