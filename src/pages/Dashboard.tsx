@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Sparkles, Zap, ArrowLeft, History, CreditCard } from 'lucide-react';
+import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Transaction {
   id: string;
@@ -17,9 +18,18 @@ interface Transaction {
   plan: { name: string } | null;
 }
 
+interface PurchasedAccount {
+  id: string;
+  account_data: string;
+  used_at: string;
+  plan: { name: string } | null;
+}
+
 export default function Dashboard() {
   const { user, profile, loading } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [purchasedAccounts, setPurchasedAccounts] = useState<PurchasedAccount[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +41,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       fetchTransactions();
+      fetchPurchasedAccounts();
     }
   }, [user]);
 
@@ -44,6 +55,25 @@ export default function Dashboard() {
     if (data) {
       setTransactions(data.map(t => ({ ...t, plan: t.plan as { name: string } | null })));
     }
+  };
+
+  const fetchPurchasedAccounts = async () => {
+    const { data } = await supabase
+      .from('accounts')
+      .select('id, account_data, used_at, plan:credit_plans(name)')
+      .eq('used_by', user!.id)
+      .order('used_at', { ascending: false });
+    
+    if (data) {
+      setPurchasedAccounts(data.map(a => ({ ...a, plan: a.plan as { name: string } | null })));
+    }
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast.success('Dados copiados!');
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   if (loading) {
@@ -125,6 +155,66 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Purchased Accounts */}
+        <section className="mb-12">
+          <h2 className="font-display text-2xl font-bold mb-6">Meus Acessos</h2>
+          
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-primary" />
+                Contas Adquiridas
+              </CardTitle>
+              <CardDescription>Dados de acesso das suas contas compradas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {purchasedAccounts.length === 0 ? (
+                <div className="text-center py-12">
+                  <KeyRound className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">Nenhuma conta adquirida ainda.</p>
+                  <Link to="/#plans">
+                    <Button className="gradient-primary">Comprar Conta</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {purchasedAccounts.map((account) => (
+                    <Card key={account.id} className="bg-secondary/50 border-border">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline">{account.plan?.name || 'Plano'}</Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {account.used_at && new Date(account.used_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                            <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
+                              {account.account_data}
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(account.account_data, account.id)}
+                            className="shrink-0"
+                          >
+                            {copiedId === account.id ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
 
         {/* Transaction History */}
         <section>
