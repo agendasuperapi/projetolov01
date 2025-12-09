@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -146,20 +146,39 @@ export default function Index() {
     }
   };
 
+  const navigate = useNavigate();
+
   const handleOpenPurchaseModal = (plan: PlanWithAvailability) => {
-    if (!user) {
-      toast({ title: 'Atenção', description: 'Faça login para comprar créditos.', variant: 'destructive' });
+    if (!plan.stripe_price_id || plan.price_cents === 0) {
+      toast({ title: 'Indisponível', description: 'Este plano ainda não está configurado para venda.', variant: 'destructive' });
       return;
     }
 
-    if (!plan.stripe_price_id || plan.price_cents === 0) {
-      toast({ title: 'Indisponível', description: 'Este plano ainda não está configurado para venda.', variant: 'destructive' });
+    if (!user) {
+      // Salvar o plano no localStorage e redirecionar para auth
+      localStorage.setItem('pendingPurchasePlanId', plan.id);
+      navigate('/auth');
       return;
     }
 
     setSelectedPlan(plan);
     setIsModalOpen(true);
   };
+
+  // Verificar se há compra pendente após login
+  useEffect(() => {
+    if (user && plans.length > 0) {
+      const pendingPlanId = localStorage.getItem('pendingPurchasePlanId');
+      if (pendingPlanId) {
+        localStorage.removeItem('pendingPurchasePlanId');
+        const plan = plans.find(p => p.id === pendingPlanId);
+        if (plan && plan.stripe_price_id && plan.price_cents > 0) {
+          setSelectedPlan(plan);
+          setIsModalOpen(true);
+        }
+      }
+    }
+  }, [user, plans]);
 
   const handlePurchase = async (type: 'recharge' | 'new_account', rechargeLink?: string) => {
     if (!selectedPlan) return;
