@@ -280,14 +280,15 @@ export default function Admin() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="price">Preço (em Reais)</Label>
+                      <Label htmlFor="price">Preço (R$)</Label>
                       <Input
                         id="price"
                         type="number"
                         min="0"
-                        value={newPlan.price_cents}
-                        onChange={(e) => setNewPlan({ ...newPlan, price_cents: parseInt(e.target.value) || 0 })}
-                        placeholder="Ex: 2990 = R$ 29,90"
+                        step="0.01"
+                        value={(newPlan.price_cents / 100).toFixed(2)}
+                        onChange={(e) => setNewPlan({ ...newPlan, price_cents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                        placeholder="Ex: 100.00"
                         required
                       />
                     </div>
@@ -341,14 +342,15 @@ export default function Admin() {
                         </div>
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Preço (em Reais)</Label>
+                            <Label>Preço (R$)</Label>
                             <Input
                               type="number"
-                              defaultValue={plan.price_cents}
+                              step="0.01"
+                              defaultValue={(plan.price_cents / 100).toFixed(2)}
                               onBlur={(e) => {
-                                const value = parseInt(e.target.value) || 0;
-                                if (value !== plan.price_cents) {
-                                  handleUpdatePlan(plan.id, { price_cents: value });
+                                const valueInCents = Math.round(parseFloat(e.target.value || '0') * 100);
+                                if (valueInCents !== plan.price_cents) {
+                                  handleUpdatePlan(plan.id, { price_cents: valueInCents });
                                 }
                               }}
                             />
