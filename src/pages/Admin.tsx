@@ -236,7 +236,7 @@ export default function Admin() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="price">Preço (centavos)</Label>
+                      <Label htmlFor="price">Preço (em Reais)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -297,7 +297,7 @@ export default function Admin() {
                         </div>
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Preço (centavos)</Label>
+                            <Label>Preço (em Reais)</Label>
                             <Input
                               type="number"
                               defaultValue={plan.price_cents}
