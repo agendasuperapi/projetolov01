@@ -219,6 +219,39 @@ export type Database = {
           },
         ]
       }
+      recharge_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credits_added: number
+          id: string
+          plan_id: string
+          recharge_link: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credits_added: number
+          id?: string
+          plan_id: string
+          recharge_link: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credits_added?: number
+          id?: string
+          plan_id?: string
+          recharge_link?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           content: Json
