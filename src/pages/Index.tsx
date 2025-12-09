@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil } from 'lucide-react';
+import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil, Star, LucideIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const AdminEditButton = ({ section }: { section: string }) => (
@@ -20,6 +20,16 @@ const AdminEditButton = ({ section }: { section: string }) => (
   </Link>
 );
 
+// Icon mapping for dynamic features
+const iconMap: Record<string, LucideIcon> = {
+  Zap,
+  Shield,
+  Download,
+  Star,
+  Sparkles,
+  Check,
+};
+
 interface CreditPlan {
   id: string;
   name: string;
@@ -28,19 +38,76 @@ interface CreditPlan {
   stripe_price_id: string | null;
 }
 
+interface HeroContent {
+  badge: string;
+  title: string;
+  titleHighlight: string;
+  description: string;
+  ctaButton: string;
+  secondaryButton: string;
+}
+
+interface FeatureItem {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+interface FeaturesContent {
+  items: FeatureItem[];
+}
+
+interface PlansContent {
+  title: string;
+  subtitle: string;
+  features: string[];
+}
+
+interface FooterContent {
+  copyright: string;
+}
+
 export default function Index() {
   const { user, profile, isAdmin, signOut, loading } = useAuth();
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
+  const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
+  const [featuresContent, setFeaturesContent] = useState<FeaturesContent | null>(null);
+  const [plansContent, setPlansContent] = useState<PlansContent | null>(null);
+  const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchPlans();
+    fetchContent();
   }, []);
 
   const fetchPlans = async () => {
     const { data } = await supabase.from('credit_plans').select('*').eq('active', true).order('credits', { ascending: true });
     if (data) setPlans(data);
+  };
+
+  const fetchContent = async () => {
+    const { data } = await supabase.from('site_content').select('*');
+    if (data) {
+      data.forEach((item) => {
+        const content = item.content as Record<string, unknown>;
+        switch (item.section_key) {
+          case 'hero':
+            setHeroContent(content as unknown as HeroContent);
+            break;
+          case 'features':
+            setFeaturesContent(content as unknown as FeaturesContent);
+            break;
+          case 'plans':
+            setPlansContent(content as unknown as PlansContent);
+            break;
+          case 'footer':
+            setFooterContent(content as unknown as FooterContent);
+            break;
+        }
+      });
+    }
   };
 
   const handlePurchase = async (plan: CreditPlan) => {
@@ -65,20 +132,39 @@ export default function Index() {
       if (data?.url) {
         window.open(data.url, '_blank');
       }
-    } catch (error: any) {
-      toast({ title: 'Erro', description: error.message || 'Erro ao processar pagamento.', variant: 'destructive' });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento.';
+      toast({ title: 'Erro', description: errorMessage, variant: 'destructive' });
     } finally {
       setPurchaseLoading(null);
     }
   };
 
-  const features = [
-    { icon: Zap, title: 'Acesso Instantâneo', description: 'Download imediato após a compra' },
-    { icon: Shield, title: 'Pagamento Seguro', description: 'Transações protegidas por Stripe' },
-    { icon: Download, title: 'Downloads Ilimitados', description: 'Baixe quantas vezes precisar' },
+  // Default content fallbacks
+  const hero = heroContent || {
+    badge: 'Produtos digitais premium',
+    title: 'Acesse produtos digitais',
+    titleHighlight: 'com créditos',
+    description: 'Compre créditos e tenha acesso à nossa biblioteca completa de produtos digitais exclusivos. Simples, rápido e seguro.',
+    ctaButton: 'Ver Planos',
+    secondaryButton: 'Criar Conta Grátis',
+  };
+
+  const featuresData = featuresContent?.items || [
+    { icon: 'Zap', title: 'Acesso Instantâneo', description: 'Download imediato após a compra' },
+    { icon: 'Shield', title: 'Pagamento Seguro', description: 'Transações protegidas por Stripe' },
+    { icon: 'Download', title: 'Downloads Ilimitados', description: 'Baixe quantas vezes precisar' },
   ];
 
-  const planFeatures = ['Acesso à biblioteca completa', 'Download instantâneo', 'Suporte prioritário', 'Atualizações incluídas'];
+  const plansData = plansContent || {
+    title: 'Escolha seu plano',
+    subtitle: 'Quanto mais créditos, mais economia',
+    features: ['Acesso à biblioteca completa', 'Download instantâneo', 'Suporte prioritário', 'Atualizações incluídas'],
+  };
+
+  const footer = footerContent || {
+    copyright: `© ${new Date().getFullYear()} CreditsHub. Todos os direitos reservados.`,
+  };
 
   if (loading) {
     return (
@@ -142,30 +228,29 @@ export default function Index() {
         <div className="container mx-auto px-4 text-center">
           <Badge variant="secondary" className="mb-6 px-4 py-2">
             <Sparkles className="w-4 h-4 mr-2" />
-            Produtos digitais premium
+            {hero.badge}
           </Badge>
           
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in">
-            Acesse produtos digitais
-            <span className="block text-gradient">com créditos</span>
+            {hero.title}
+            <span className="block text-gradient">{hero.titleHighlight}</span>
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            Compre créditos e tenha acesso à nossa biblioteca completa de produtos digitais exclusivos. 
-            Simples, rápido e seguro.
+            {hero.description}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <a href="#plans">
               <Button size="lg" className="gradient-primary text-lg px-8 shadow-glow">
-                Ver Planos
+                {hero.ctaButton}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </a>
             {!user && (
               <Link to="/auth">
                 <Button size="lg" variant="outline" className="text-lg px-8">
-                  Criar Conta Grátis
+                  {hero.secondaryButton}
                 </Button>
               </Link>
             )}
@@ -178,19 +263,22 @@ export default function Index() {
       <section className="py-20 bg-card relative group">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="text-center p-8 rounded-2xl bg-background shadow-card animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-6">
-                  <feature.icon className="w-8 h-8 text-primary-foreground" />
+            {featuresData.map((feature, index) => {
+              const IconComponent = iconMap[feature.icon] || Zap;
+              return (
+                <div 
+                  key={index} 
+                  className="text-center p-8 rounded-2xl bg-background shadow-card animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-6">
+                    <IconComponent className="w-8 h-8 text-primary-foreground" />
+                  </div>
+                  <h3 className="font-display text-xl font-bold mb-3">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
-                <h3 className="font-display text-xl font-bold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         {isAdmin && <AdminEditButton section="features" />}
@@ -200,8 +288,8 @@ export default function Index() {
       <section id="plans" className="py-20 relative group">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Escolha seu plano</h2>
-            <p className="text-muted-foreground text-lg">Quanto mais créditos, mais economia</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">{plansData.title}</h2>
+            <p className="text-muted-foreground text-lg">{plansData.subtitle}</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -234,7 +322,7 @@ export default function Index() {
                   </div>
 
                   <ul className="space-y-3">
-                    {planFeatures.map((feature, idx) => (
+                    {plansData.features.map((feature, idx) => (
                       <li key={idx} className="flex items-center gap-3">
                         <Check className="w-5 h-5 text-success" />
                         <span>{feature}</span>
@@ -260,7 +348,7 @@ export default function Index() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-12">
+      <footer className="bg-card border-t border-border py-12 relative group">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
@@ -269,9 +357,10 @@ export default function Index() {
             <span className="font-display font-bold">CreditsHub</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} CreditsHub. Todos os direitos reservados.
+            {footer.copyright}
           </p>
         </div>
+        {isAdmin && <AdminEditButton section="footer" />}
       </footer>
     </div>
   );

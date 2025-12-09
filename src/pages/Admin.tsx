@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2 } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ContentEditor from '@/components/admin/ContentEditor';
 
 interface CreditPlan {
   id: string;
@@ -34,6 +35,8 @@ interface Transaction {
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const editSection = searchParams.get('edit');
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -177,8 +180,8 @@ export default function Admin() {
           </div>
         </div>
 
-        <Tabs defaultValue="plans" className="space-y-8">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+        <Tabs defaultValue={editSection ? 'content' : 'plans'} className="space-y-8">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="plans" className="gap-2">
               <DollarSign className="w-4 h-4" />
               Planos
@@ -186,6 +189,10 @@ export default function Admin() {
             <TabsTrigger value="transactions" className="gap-2">
               <Users className="w-4 h-4" />
               Transações
+            </TabsTrigger>
+            <TabsTrigger value="content" className="gap-2">
+              <FileText className="w-4 h-4" />
+              Conteúdo
             </TabsTrigger>
           </TabsList>
 
@@ -375,6 +382,11 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Content Editor Tab */}
+          <TabsContent value="content" className="space-y-6">
+            <ContentEditor />
           </TabsContent>
         </Tabs>
       </main>
