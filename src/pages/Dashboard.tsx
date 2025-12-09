@@ -82,14 +82,32 @@ export default function Dashboard() {
   };
 
   const fetchRechargeRequests = async () => {
-    const { data } = await supabase
+    const { data: recharges } = await supabase
       .from('recharge_requests')
-      .select('id, recharge_link, status, credits_added, created_at, completed_at, plan:credit_plans(name)')
+      .select('*')
       .eq('user_id', user!.id)
       .order('created_at', { ascending: false });
     
-    if (data) {
-      setRechargeRequests(data.map(r => ({ ...r, plan: r.plan as { name: string } | null })));
+    if (recharges && recharges.length > 0) {
+      const planIds = [...new Set(recharges.map(r => r.plan_id))];
+      const { data: plans } = await supabase
+        .from('credit_plans')
+        .select('id, name')
+        .in('id', planIds);
+      
+      const planMap = new Map(plans?.map(p => [p.id, p.name]) || []);
+      
+      setRechargeRequests(recharges.map(r => ({
+        id: r.id,
+        recharge_link: r.recharge_link,
+        status: r.status,
+        credits_added: r.credits_added,
+        created_at: r.created_at,
+        completed_at: r.completed_at,
+        plan: planMap.has(r.plan_id) ? { name: planMap.get(r.plan_id)! } : null
+      })));
+    } else {
+      setRechargeRequests([]);
     }
   };
 
@@ -225,6 +243,84 @@ export default function Dashboard() {
                             className="shrink-0"
                           >
                             {copiedId === account.id ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Recharge Requests */}
+        <section className="mb-12">
+          <h2 className="font-display text-2xl font-bold mb-6">Minhas Recargas</h2>
+          
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw className="w-5 h-5 text-primary" />
+                Solicitações de Recarga
+              </CardTitle>
+              <CardDescription>Acompanhe o status das suas recargas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {rechargeRequests.length === 0 ? (
+                <div className="text-center py-12">
+                  <RefreshCw className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">Nenhuma recarga solicitada ainda.</p>
+                  <Link to="/#plans">
+                    <Button className="gradient-primary">Solicitar Recarga</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {rechargeRequests.map((recharge) => (
+                    <Card key={recharge.id} className="bg-secondary/50 border-border">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
+                              <Badge 
+                                variant={recharge.status === 'completed' ? 'default' : 'secondary'}
+                                className={recharge.status === 'completed' ? 'bg-green-500' : ''}
+                              >
+                                {recharge.status === 'completed' ? (
+                                  <><CheckCircle className="w-3 h-3 mr-1" /> Recarregado</>
+                                ) : (
+                                  <><Clock className="w-3 h-3 mr-1" /> Pendente</>
+                                )}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                            <div className="text-sm text-muted-foreground mb-2">
+                              <span className="font-medium">+{recharge.credits_added} créditos</span>
+                            </div>
+                            <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
+                              {recharge.recharge_link}
+                            </div>
+                            {recharge.completed_at && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Recarregado em: {new Date(recharge.completed_at).toLocaleDateString('pt-BR')}
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(recharge.recharge_link, recharge.id)}
+                            className="shrink-0"
+                          >
+                            {copiedId === recharge.id ? (
                               <Check className="w-4 h-4 text-green-500" />
                             ) : (
                               <Copy className="w-4 h-4" />
