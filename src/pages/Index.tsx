@@ -386,12 +386,12 @@ export default function Index() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-full bg-primary/10">
-                <UserPlus className="w-8 h-8 text-primary" />
+              <div className="p-3 rounded-full bg-white/10">
+                <UserPlus className="w-8 h-8 text-white" />
               </div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold">Conta Nova</h2>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Conta Nova</h2>
             </div>
-            <p className="text-muted-foreground text-lg">Receba os dados de uma nova conta</p>
+            <p className="text-white/80 text-lg">Receba os dados de uma nova conta</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
@@ -413,6 +413,9 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="plans" />}
       </section>
 
+      {/* Separador visual */}
+      <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
       {/* Seção Recarregar */}
       <section 
         className="py-20 relative group"
@@ -423,12 +426,12 @@ export default function Index() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-full bg-primary/10">
-                <RefreshCw className="w-8 h-8 text-primary" />
+              <div className="p-3 rounded-full bg-white/10">
+                <RefreshCw className="w-8 h-8 text-white" />
               </div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold">Recarregar Conta</h2>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Recarregar Conta</h2>
             </div>
-            <p className="text-muted-foreground text-lg">Adicione créditos a uma conta existente</p>
+            <p className="text-white/80 text-lg">Adicione créditos a uma conta existente</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
