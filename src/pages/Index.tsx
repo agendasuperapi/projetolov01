@@ -375,7 +375,7 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="features" />}
       </section>
 
-      {/* Seção Conta Nova */}
+      {/* Seção Planos */}
       <section 
         id="plans" 
         className="py-20 relative group"
@@ -384,71 +384,83 @@ export default function Index() {
         }}
       >
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-full bg-white/10">
-                <UserPlus className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Conta Nova</h2>
-            </div>
-            <p className="text-white/80 text-lg">Receba os dados de uma nova conta</p>
+          {/* Botões de navegação */}
+          <div className="flex justify-center gap-4 mb-12">
+            <a href="#new-account-plans">
+              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
+                <UserPlus className="w-5 h-5" />
+                Conta Nova
+              </Button>
+            </a>
+            <a href="#recharge-plans">
+              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
+                <RefreshCw className="w-5 h-5" />
+                Recarregar Conta
+              </Button>
+            </a>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-            {newAccountPlans.filter(plan => plan.availableAccounts > 0).map((plan) => (
-              <PlanCard
-                key={plan.id}
-                planType="new_account"
-                planName={plan.name}
-                credits={plan.credits}
-                priceCents={plan.price_cents}
-                competitorPriceCents={plan.competitor_price_cents}
-                availableAccounts={plan.availableAccounts}
-                isLoading={purchaseLoading === plan.id}
-                onBuy={() => handleBuyNewAccount(plan)}
-              />
-            ))}
+          {/* Conta Nova */}
+          <div id="new-account-plans" className="mb-16">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-full bg-white/10">
+                  <UserPlus className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Conta Nova</h2>
+              </div>
+              <p className="text-white/80 text-lg">Receba os dados de uma nova conta</p>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+              {newAccountPlans.filter(plan => plan.availableAccounts > 0).map((plan) => (
+                <PlanCard
+                  key={plan.id}
+                  planType="new_account"
+                  planName={plan.name}
+                  credits={plan.credits}
+                  priceCents={plan.price_cents}
+                  competitorPriceCents={plan.competitor_price_cents}
+                  availableAccounts={plan.availableAccounts}
+                  isLoading={purchaseLoading === plan.id}
+                  onBuy={() => handleBuyNewAccount(plan)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Separador visual */}
+          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-8" />
+
+          {/* Recarregar Conta */}
+          <div id="recharge-plans">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-full bg-white/10">
+                  <RefreshCw className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Recarregar Conta</h2>
+              </div>
+              <p className="text-white/80 text-lg">Adicione créditos a uma conta existente</p>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+              {rechargePlans.map((plan) => (
+                <PlanCard
+                  key={plan.id}
+                  planType="recharge"
+                  planName={plan.name}
+                  credits={plan.credits}
+                  priceCents={plan.price_cents}
+                  competitorPriceCents={plan.competitor_price_cents}
+                  isLoading={purchaseLoading === plan.id}
+                  onBuy={() => handleBuyRecharge(plan)}
+                />
+              ))}
+            </div>
           </div>
         </div>
         {isAdmin && <AdminEditButton section="plans" />}
-      </section>
-
-      {/* Separador visual */}
-      <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-      {/* Seção Recarregar */}
-      <section 
-        className="py-20 relative group"
-        style={{
-          background: 'linear-gradient(180deg, hsl(230, 50%, 10%) 0%, hsl(230, 70%, 25%) 25%, hsl(260, 60%, 50%) 50%, hsl(330, 80%, 55%) 75%, hsl(20, 90%, 55%) 100%)'
-        }}
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-full bg-white/10">
-                <RefreshCw className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Recarregar Conta</h2>
-            </div>
-            <p className="text-white/80 text-lg">Adicione créditos a uma conta existente</p>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-            {rechargePlans.map((plan) => (
-              <PlanCard
-                key={plan.id}
-                planType="recharge"
-                planName={plan.name}
-                credits={plan.credits}
-                priceCents={plan.price_cents}
-                competitorPriceCents={plan.competitor_price_cents}
-                isLoading={purchaseLoading === plan.id}
-                onBuy={() => handleBuyRecharge(plan)}
-              />
-            ))}
-          </div>
-        </div>
       </section>
 
 

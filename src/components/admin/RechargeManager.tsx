@@ -20,6 +20,30 @@ interface RechargeRequest {
   plan?: { name: string } | null;
 }
 
+// Função para tocar som de notificação
+const playNotificationSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5
+    oscillator.frequency.setValueAtTime(1174.66, audioContext.currentTime + 0.1); // D6
+    oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.2); // E6
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.4);
+  } catch (error) {
+    console.log('Erro ao tocar som:', error);
+  }
+};
+
 export default function RechargeManager() {
   const [recharges, setRecharges] = useState<RechargeRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,6 +65,8 @@ export default function RechargeManager() {
         },
         (payload) => {
           console.log('Nova recarga recebida:', payload);
+          // Tocar som de notificação
+          playNotificationSound();
           toast.info('Nova solicitação de recarga!', {
             description: 'Uma nova recarga foi adicionada.',
             icon: <Bell className="w-4 h-4" />,
@@ -95,12 +121,14 @@ export default function RechargeManager() {
       
       // Notificar sobre recargas pendentes
       if (isInitialLoad.current && pendingCount > 0) {
+        playNotificationSound();
         toast.warning(`${pendingCount} recarga(s) pendente(s)!`, {
           description: 'Há recargas aguardando processamento.',
           icon: <Bell className="w-4 h-4" />,
           duration: 5000,
         });
       } else if (!isInitialLoad.current && pendingCount > previousPendingCount.current) {
+        playNotificationSound();
         toast.warning('Nova recarga pendente!', {
           description: 'Uma recarga está pronta para processamento.',
           icon: <Bell className="w-4 h-4" />,
