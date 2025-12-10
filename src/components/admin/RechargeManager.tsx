@@ -78,11 +78,66 @@ export default function RechargeManager() {
     }
   };
 
+  const pendingLinkRecharges = recharges.filter(r => r.status === 'pending_link');
   const pendingRecharges = recharges.filter(r => r.status === 'pending');
   const completedRecharges = recharges.filter(r => r.status === 'completed');
 
   return (
     <div className="space-y-6">
+      {/* Pending Link Recharges */}
+      <Card className="shadow-card border-orange-500/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 text-orange-500" />
+            Aguardando Link ({pendingLinkRecharges.length})
+          </CardTitle>
+          <CardDescription>Recargas pagas aguardando o link do usuário</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {pendingLinkRecharges.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhuma recarga aguardando link.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Plano</TableHead>
+                  <TableHead>Créditos</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingLinkRecharges.map((recharge) => (
+                  <TableRow key={recharge.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{recharge.user?.name || 'Usuário'}</p>
+                        <p className="text-sm text-muted-foreground">{recharge.user?.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">+{recharge.credits_added}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-orange-500 border-orange-500/50">
+                        Aguardando Link
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Pending Recharges */}
       <Card className="shadow-card border-yellow-500/20">
         <CardHeader>
@@ -90,7 +145,7 @@ export default function RechargeManager() {
             <Clock className="w-5 h-5 text-yellow-500" />
             Recargas Pendentes ({pendingRecharges.length})
           </CardTitle>
-          <CardDescription>Recargas aguardando processamento</CardDescription>
+          <CardDescription>Recargas com link recebido aguardando processamento</CardDescription>
         </CardHeader>
         <CardContent>
           {pendingRecharges.length === 0 ? (

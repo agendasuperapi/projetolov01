@@ -63,8 +63,7 @@ serve(async (req) => {
 
       const userId = session.metadata?.user_id;
       const planId = session.metadata?.plan_id;
-      const purchaseType = session.metadata?.purchase_type || 'recharge';
-      const rechargeLink = session.metadata?.recharge_link || '';
+      const purchaseType = session.metadata?.purchase_type || 'new_account';
 
       if (!userId || !planId) {
         logStep("Missing metadata", { userId, planId });
@@ -74,7 +73,7 @@ serve(async (req) => {
         });
       }
 
-      logStep("Purchase details", { purchaseType, rechargeLink });
+      logStep("Purchase details", { purchaseType });
 
       // Get plan details
       const { data: plan, error: planError } = await supabaseAdmin
@@ -157,22 +156,23 @@ serve(async (req) => {
       }
       }
 
-      // If purchase type is recharge, create a recharge request
-      if (purchaseType === 'recharge' && rechargeLink) {
+      // If purchase type is recharge, create a recharge request with pending_link status
+      // The user will provide the recharge link on the success page
+      if (purchaseType === 'recharge') {
         const { error: rechargeError } = await supabaseAdmin
           .from("recharge_requests")
           .insert({
             user_id: userId,
             plan_id: planId,
-            recharge_link: rechargeLink,
-            status: 'pending',
+            recharge_link: '', // Will be filled in by user on success page
+            status: 'pending_link',
             credits_added: plan.credits,
           });
 
         if (rechargeError) {
           logStep("Recharge request error", { error: rechargeError.message });
         } else {
-          logStep("Recharge request created successfully");
+          logStep("Recharge request created with pending_link status");
         }
       }
 
