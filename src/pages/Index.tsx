@@ -103,18 +103,15 @@ export default function Index() {
       .order('credits', { ascending: true });
     
     if (plansData) {
-      // Fetch available accounts count for each plan
+      // Fetch available accounts count for each plan using the SECURITY DEFINER function
       const plansWithAvailability = await Promise.all(
         plansData.map(async (plan) => {
-          const { count } = await supabase
-            .from('accounts')
-            .select('*', { count: 'exact', head: true })
-            .eq('plan_id', plan.id)
-            .eq('is_used', false);
+          const { data: countData } = await supabase
+            .rpc('get_available_accounts_count', { p_plan_id: plan.id });
           
           return {
             ...plan,
-            availableAccounts: count || 0,
+            availableAccounts: countData || 0,
           };
         })
       );
