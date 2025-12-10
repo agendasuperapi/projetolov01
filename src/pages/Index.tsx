@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw } from 'lucide-react';
+import { Sparkles, Zap, Shield, Download, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
+import PlanCard from '@/components/PlanCard';
 const AdminEditButton = ({ section }: { section: string }) => (
   <Link 
     to={`/admin?edit=${section}`}
@@ -388,85 +388,20 @@ export default function Index() {
             <p className="text-muted-foreground text-lg">Receba os dados de uma nova conta</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {newAccountPlans.map((plan, index) => {
-              const competitorPrice = plan.competitor_price_cents || 0;
-              const discount = competitorPrice > 0 && plan.price_cents > 0
-                ? Math.round(((competitorPrice - plan.price_cents) / competitorPrice) * 100)
-                : 0;
-              const isNewAccountDisabled = plan.availableAccounts === 0;
-              
-              return (
-              <Card 
-                key={plan.id} 
-                className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
-                  index === 1 ? 'border-primary shadow-glow' : 'border-border'
-                } ${isNewAccountDisabled ? 'opacity-60' : ''}`}
-              >
-                {competitorPrice > 0 && plan.price_cents > 0 && discount > 0 && (
-                  <div className="bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground px-4 py-2 text-center">
-                    <div className="text-xs font-medium opacity-90">
-                      {plansData.competitorLabel || 'Comprando no Concorrente'}: R$ {(competitorPrice / 100).toFixed(2).replace('.', ',')}
-                    </div>
-                    <div className="text-sm font-bold">
-                      Economize {discount}% comprando aqui!
-                    </div>
-                  </div>
-                )}
-                
-                {index === 1 && !isNewAccountDisabled && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-                    POPULAR
-                  </div>
-                )}
-                {isNewAccountDisabled && (
-                  <div className="absolute top-0 right-0 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-                    ESGOTADO
-                  </div>
-                )}
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="font-display text-2xl">{plan.name}</CardTitle>
-                  <CardDescription className="text-lg">
-                    <span className="text-4xl font-bold text-foreground">
-                      {plan.price_cents === 0 ? 'A definir' : `R$ ${(plan.price_cents / 100).toFixed(2).replace('.', ',')}`}
-                    </span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="text-center space-y-2">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
-                      <Zap className="w-5 h-5 text-primary" />
-                      <span className="font-bold text-lg">{plan.credits.toLocaleString()} créditos</span>
-                    </div>
-                    {!isNewAccountDisabled && (
-                      <p className="text-sm text-primary font-medium">
-                        {plan.availableAccounts} conta(s) disponível(is)
-                      </p>
-                    )}
-                  </div>
-
-                  <ul className="space-y-3">
-                    {plansData.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-3">
-                        <Check className="w-5 h-5 text-success" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button 
-                    onClick={() => handleBuyNewAccount(plan)}
-                    disabled={purchaseLoading === plan.id || plan.price_cents === 0 || isNewAccountDisabled}
-                    className={`w-full ${index === 1 && !isNewAccountDisabled ? 'gradient-primary' : ''}`}
-                    variant={index === 1 && !isNewAccountDisabled ? 'default' : 'outline'}
-                    size="lg"
-                  >
-                    {purchaseLoading === plan.id ? 'Processando...' : isNewAccountDisabled ? 'Esgotado' : 'Comprar Agora'}
-                  </Button>
-                </CardContent>
-              </Card>
-              );
-            })}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {newAccountPlans.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                planType="new_account"
+                planName={plan.name}
+                credits={plan.credits}
+                priceCents={plan.price_cents}
+                competitorPriceCents={plan.competitor_price_cents}
+                availableAccounts={plan.availableAccounts}
+                isLoading={purchaseLoading === plan.id}
+                onBuy={() => handleBuyNewAccount(plan)}
+              />
+            ))}
           </div>
         </div>
         {isAdmin && <AdminEditButton section="plans" />}
@@ -485,74 +420,19 @@ export default function Index() {
             <p className="text-muted-foreground text-lg">Adicione créditos a uma conta existente</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {rechargePlans.map((plan, index) => {
-              const competitorPrice = plan.competitor_price_cents || 0;
-              const discount = competitorPrice > 0 && plan.price_cents > 0
-                ? Math.round(((competitorPrice - plan.price_cents) / competitorPrice) * 100)
-                : 0;
-              
-              return (
-              <Card 
-                key={plan.id} 
-                className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
-                  index === 1 ? 'border-primary shadow-glow' : 'border-border'
-                }`}
-              >
-                {competitorPrice > 0 && plan.price_cents > 0 && discount > 0 && (
-                  <div className="bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground px-4 py-2 text-center">
-                    <div className="text-xs font-medium opacity-90">
-                      {plansData.competitorLabel || 'Comprando no Concorrente'}: R$ {(competitorPrice / 100).toFixed(2).replace('.', ',')}
-                    </div>
-                    <div className="text-sm font-bold">
-                      Economize {discount}% comprando aqui!
-                    </div>
-                  </div>
-                )}
-                
-                {index === 1 && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-                    POPULAR
-                  </div>
-                )}
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="font-display text-2xl">{plan.name}</CardTitle>
-                  <CardDescription className="text-lg">
-                    <span className="text-4xl font-bold text-foreground">
-                      {plan.price_cents === 0 ? 'A definir' : `R$ ${(plan.price_cents / 100).toFixed(2).replace('.', ',')}`}
-                    </span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
-                      <Zap className="w-5 h-5 text-primary" />
-                      <span className="font-bold text-lg">{plan.credits.toLocaleString()} créditos</span>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-3">
-                    {plansData.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-3">
-                        <Check className="w-5 h-5 text-success" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button 
-                    onClick={() => handleBuyRecharge(plan)}
-                    disabled={purchaseLoading === plan.id || plan.price_cents === 0}
-                    className={`w-full ${index === 1 ? 'gradient-primary' : ''}`}
-                    variant={index === 1 ? 'default' : 'outline'}
-                    size="lg"
-                  >
-                    {purchaseLoading === plan.id ? 'Processando...' : 'Recarregar Agora'}
-                  </Button>
-                </CardContent>
-              </Card>
-              );
-            })}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {rechargePlans.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                planType="recharge"
+                planName={plan.name}
+                credits={plan.credits}
+                priceCents={plan.price_cents}
+                competitorPriceCents={plan.competitor_price_cents}
+                isLoading={purchaseLoading === plan.id}
+                onBuy={() => handleBuyRecharge(plan)}
+              />
+            ))}
           </div>
         </div>
       </section>
