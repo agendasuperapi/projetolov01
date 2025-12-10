@@ -414,7 +414,12 @@ export default function Index() {
       </section>
 
       {/* Seção Recarregar */}
-      <section className="py-20 bg-card relative group">
+      <section 
+        className="py-20 relative group"
+        style={{
+          background: 'linear-gradient(180deg, hsl(230, 50%, 10%) 0%, hsl(230, 70%, 25%) 25%, hsl(260, 60%, 50%) 50%, hsl(330, 80%, 55%) 75%, hsl(20, 90%, 55%) 100%)'
+        }}
+      >
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-3 mb-4">
