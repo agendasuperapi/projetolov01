@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil, Star, LucideIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import PlanPurchaseModal from '@/components/PlanPurchaseModal';
-
+import AuthModal from '@/components/AuthModal';
 const AdminEditButton = ({ section }: { section: string }) => (
   <Link 
     to={`/admin?edit=${section}`}
@@ -88,6 +88,8 @@ export default function Index() {
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanWithAvailability | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<PlanWithAvailability | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -152,9 +154,9 @@ export default function Index() {
     }
 
     if (!user) {
-      // Salvar o plano no localStorage e redirecionar para auth
-      localStorage.setItem('pendingPurchasePlanId', plan.id);
-      navigate('/auth');
+      // Abrir modal de auth e guardar o plano pendente
+      setPendingPlan(plan);
+      setIsAuthModalOpen(true);
       return;
     }
 
@@ -162,9 +164,23 @@ export default function Index() {
     setIsModalOpen(true);
   };
 
-  // Verificar se há compra pendente após login
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    // O plano pendente será processado pelo useEffect quando o user mudar
+  };
+
+  // Verificar se há compra pendente após login (do modal ou do localStorage)
   useEffect(() => {
     if (user && plans.length > 0) {
+      // Primeiro verificar o plano pendente do modal
+      if (pendingPlan) {
+        setSelectedPlan(pendingPlan);
+        setPendingPlan(null);
+        setIsModalOpen(true);
+        return;
+      }
+      
+      // Depois verificar localStorage (fallback para redirecionamentos)
       const pendingPlanId = localStorage.getItem('pendingPurchasePlanId');
       if (pendingPlanId) {
         localStorage.removeItem('pendingPurchasePlanId');
@@ -175,7 +191,7 @@ export default function Index() {
         }
       }
     }
-  }, [user, plans]);
+  }, [user, plans, pendingPlan]);
 
   const handlePurchase = async (type: 'recharge' | 'new_account', rechargeLink?: string) => {
     if (!selectedPlan) return;
@@ -467,6 +483,16 @@ export default function Index() {
           isLoading={purchaseLoading === selectedPlan.id}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingPlan(null);
+        }}
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* Footer */}
       <footer className="bg-card border-t border-border py-12 relative group">
