@@ -306,30 +306,30 @@ export default function Index() {
         }}
       >
         <div className="container mx-auto px-4 text-center">
-          <Badge variant="secondary" className="mb-6 px-4 py-2">
+          <Badge variant="secondary" className="mb-6 px-4 py-2 bg-white/20 text-white border-white/30 backdrop-blur-sm animate-fade-in">
             <Sparkles className="w-4 h-4 mr-2" />
             {hero.badge}
           </Badge>
           
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in">
+          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in text-white drop-shadow-lg">
             {hero.title}
-            <span className="block text-gradient">{hero.titleHighlight}</span>
+            <span className="block text-white/90 drop-shadow-md">{hero.titleHighlight}</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto mb-10 animate-fade-in drop-shadow-sm" style={{ animationDelay: '0.2s' }}>
             {hero.description}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <a href="#plans">
-              <Button size="lg" className="gradient-primary text-lg px-8 shadow-glow">
+              <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90 text-lg px-8 shadow-xl transition-all duration-300 hover:scale-105">
                 {hero.ctaButton}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </a>
             {!user && (
               <Link to="/auth">
-                <Button size="lg" variant="outline" className="text-lg px-8">
+                <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   {hero.secondaryButton}
                 </Button>
               </Link>
@@ -340,7 +340,7 @@ export default function Index() {
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-card relative group">
+      <section className="py-20 bg-card relative group transition-all duration-500">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             {featuresData.map((feature, index) => {
