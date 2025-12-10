@@ -44,11 +44,48 @@ const playNotificationSound = () => {
   }
 };
 
+// Função para enviar notificação push do navegador
+const sendBrowserNotification = (title: string, body: string) => {
+  if (!('Notification' in window)) {
+    console.log('Este navegador não suporta notificações');
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    new Notification(title, {
+      body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'recharge-notification',
+      requireInteraction: true,
+    });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        new Notification(title, {
+          body,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'recharge-notification',
+          requireInteraction: true,
+        });
+      }
+    });
+  }
+};
+
 export default function RechargeManager() {
   const [recharges, setRecharges] = useState<RechargeRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const previousPendingCount = useRef<number>(0);
   const isInitialLoad = useRef(true);
+
+  // Solicitar permissão de notificação ao montar o componente
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   useEffect(() => {
     fetchRecharges();
@@ -67,6 +104,11 @@ export default function RechargeManager() {
           console.log('Nova recarga recebida:', payload);
           // Tocar som de notificação
           playNotificationSound();
+          // Enviar notificação push do navegador
+          sendBrowserNotification(
+            '🔔 Nova Recarga!',
+            'Uma nova solicitação de recarga foi adicionada.'
+          );
           toast.info('Nova solicitação de recarga!', {
             description: 'Uma nova recarga foi adicionada.',
             icon: <Bell className="w-4 h-4" />,
@@ -122,6 +164,10 @@ export default function RechargeManager() {
       // Notificar sobre recargas pendentes
       if (isInitialLoad.current && pendingCount > 0) {
         playNotificationSound();
+        sendBrowserNotification(
+          `⚠️ ${pendingCount} Recarga(s) Pendente(s)`,
+          'Há recargas aguardando processamento.'
+        );
         toast.warning(`${pendingCount} recarga(s) pendente(s)!`, {
           description: 'Há recargas aguardando processamento.',
           icon: <Bell className="w-4 h-4" />,
@@ -129,6 +175,10 @@ export default function RechargeManager() {
         });
       } else if (!isInitialLoad.current && pendingCount > previousPendingCount.current) {
         playNotificationSound();
+        sendBrowserNotification(
+          '🔔 Nova Recarga Pendente!',
+          'Uma recarga está pronta para processamento.'
+        );
         toast.warning('Nova recarga pendente!', {
           description: 'Uma recarga está pronta para processamento.',
           icon: <Bell className="w-4 h-4" />,
