@@ -412,7 +412,7 @@ export default function Index() {
               <p className="text-white/80 text-lg">Receba os dados de uma nova conta</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
               {newAccountPlans.filter(plan => plan.availableAccounts > 0).map((plan) => (
                 <PlanCard
                   key={plan.id}
@@ -444,7 +444,7 @@ export default function Index() {
               <p className="text-white/80 text-lg">Adicione créditos a uma conta existente</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
               {rechargePlans.map((plan) => (
                 <PlanCard
                   key={plan.id}

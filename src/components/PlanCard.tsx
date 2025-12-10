@@ -43,7 +43,7 @@ export default function PlanCard({
     : `Recarregue +${credits} créditos na sua conta`;
 
   return (
-    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card border-border ${isDisabled ? 'opacity-60' : ''}`}>
+    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card border-border w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] max-w-[280px] ${isDisabled ? 'opacity-60' : ''}`}>
       <CardContent className="p-3 md:p-5 space-y-2 md:space-y-4">
         {/* Badge */}
         <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] md:text-xs font-medium px-2 md:px-3 py-0.5 md:py-1">
