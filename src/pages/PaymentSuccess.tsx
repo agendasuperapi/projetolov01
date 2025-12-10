@@ -13,6 +13,7 @@ export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const { user, refreshProfile } = useAuth();
   const sessionId = searchParams.get('session_id');
+  const previewMode = searchParams.get('preview');
   const { toast } = useToast();
   
   const [pendingRecharge, setPendingRecharge] = useState<{id: string; credits_added: number} | null>(null);
@@ -20,6 +21,11 @@ export default function PaymentSuccess() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Preview mode for development - allows viewing recharge form without actual pending request
+  const isRechargePreview = previewMode === 'recharge';
+  const showRechargeForm = (pendingRecharge && !submitted) || (isRechargePreview && !submitted);
+  const displayCredits = pendingRecharge?.credits_added || 500;
 
   useEffect(() => {
     refreshProfile();
@@ -92,8 +98,8 @@ export default function PaymentSuccess() {
     );
   }
 
-  // Show recharge link form if there's a pending recharge
-  if (pendingRecharge && !submitted) {
+  // Show recharge link form if there's a pending recharge or in preview mode
+  if (showRechargeForm) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
         <Card className="max-w-md w-full shadow-card border-0">
@@ -109,7 +115,7 @@ export default function PaymentSuccess() {
           <CardContent className="space-y-6">
             <div className="p-4 bg-secondary/50 rounded-lg text-center">
               <p className="text-sm text-muted-foreground mb-1">Créditos a adicionar</p>
-              <p className="text-2xl font-bold text-primary">{pendingRecharge.credits_added.toLocaleString()} créditos</p>
+              <p className="text-2xl font-bold text-primary">{displayCredits.toLocaleString()} créditos</p>
             </div>
 
             <form onSubmit={handleSubmitRechargeLink} className="space-y-4">
