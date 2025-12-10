@@ -5,9 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
@@ -90,9 +87,6 @@ export default function Index() {
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState<{ plan: PlanWithAvailability; type: 'recharge' | 'new_account' } | null>(null);
-  const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
-  const [rechargeLink, setRechargeLink] = useState('');
-  const [selectedRechangePlan, setSelectedRechangePlan] = useState<PlanWithAvailability | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -177,17 +171,9 @@ export default function Index() {
       return;
     }
 
-    setSelectedRechangePlan(plan);
-    setRechargeLink('');
-    setIsRechargeModalOpen(true);
+    processPurchase(plan, 'recharge');
   };
 
-  const handleRechargeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRechangePlan || !rechargeLink.trim()) return;
-    setIsRechargeModalOpen(false);
-    processPurchase(selectedRechangePlan, 'recharge', rechargeLink.trim());
-  };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
@@ -198,14 +184,7 @@ export default function Index() {
     if (user && plans.length > 0 && pendingPurchase) {
       const { plan, type } = pendingPurchase;
       setPendingPurchase(null);
-      
-      if (type === 'recharge') {
-        setSelectedRechangePlan(plan);
-        setRechargeLink('');
-        setIsRechargeModalOpen(true);
-      } else {
-        processPurchase(plan, 'new_account');
-      }
+      processPurchase(plan, type);
     }
   }, [user, plans, pendingPurchase]);
 
@@ -576,42 +555,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Recharge Link Modal */}
-      <Dialog open={isRechargeModalOpen} onOpenChange={setIsRechargeModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Recarregar {selectedRechangePlan?.name}</DialogTitle>
-            <DialogDescription>
-              Digite o link da sua conta para adicionar créditos
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleRechargeSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="rechargeLink">Link da sua conta</Label>
-              <Input
-                id="rechargeLink"
-                type="url"
-                value={rechargeLink}
-                onChange={(e) => setRechargeLink(e.target.value)}
-                placeholder="https://..."
-                required
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => setIsRechargeModalOpen(false)} className="flex-1">
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                className="flex-1 gradient-primary" 
-                disabled={!rechargeLink.trim() || purchaseLoading === selectedRechangePlan?.id}
-              >
-                {purchaseLoading === selectedRechangePlan?.id ? 'Processando...' : 'Continuar'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Auth Modal */}
       <AuthModal
