@@ -6,8 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Sparkles, CheckCircle, ArrowRight, RefreshCw, Loader2 } from 'lucide-react';
+import { Sparkles, CheckCircle, ArrowRight, RefreshCw, Loader2, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+import instructionStep1 from '@/assets/instruction-step1.png';
+import instructionStep2 from '@/assets/instruction-step2.png';
+import instructionStep3 from '@/assets/instruction-step3.png';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -153,6 +158,36 @@ export default function PaymentSuccess() {
             <p className="text-xs text-muted-foreground text-center">
               Após o envio, nossa equipe processará a recarga e você receberá uma notificação.
             </p>
+
+            {/* Visual Instructions */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center justify-center gap-2 w-full text-sm text-primary hover:text-primary/80 transition-colors py-2">
+                <span>Como encontrar o link da sua conta?</span>
+                <ChevronDown className="w-4 h-4" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-4">
+                <div className="space-y-4">
+                  <div className="rounded-lg overflow-hidden border border-border">
+                    <img src={instructionStep1} alt="Passo 1: Clique no nome do projeto" className="w-full" />
+                    <p className="text-xs text-muted-foreground p-3 bg-muted/50">
+                      <strong>Passo 1:</strong> Clique no nome do seu projeto no canto superior esquerdo
+                    </p>
+                  </div>
+                  <div className="rounded-lg overflow-hidden border border-border">
+                    <img src={instructionStep2} alt="Passo 2: Copie o link da barra de endereços" className="w-full" />
+                    <p className="text-xs text-muted-foreground p-3 bg-muted/50">
+                      <strong>Passo 2:</strong> Copie o link completo da barra de endereços do navegador
+                    </p>
+                  </div>
+                  <div className="rounded-lg overflow-hidden border border-border">
+                    <img src={instructionStep3} alt="Passo 3: Cole o link no campo acima" className="w-full" />
+                    <p className="text-xs text-muted-foreground p-3 bg-muted/50">
+                      <strong>Passo 3:</strong> Cole o link no campo acima e clique em "Enviar Link"
+                    </p>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
       </div>
