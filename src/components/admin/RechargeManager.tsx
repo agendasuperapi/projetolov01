@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { RefreshCw, CheckCircle, Clock, ExternalLink } from 'lucide-react';
+import { RefreshCw, CheckCircle, Clock, ExternalLink, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface RechargeRequest {
@@ -23,9 +23,47 @@ interface RechargeRequest {
 export default function RechargeManager() {
   const [recharges, setRecharges] = useState<RechargeRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const previousPendingCount = useRef<number>(0);
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
     fetchRecharges();
+
+    // Real-time subscription para novas recargas
+    const channel = supabase
+      .channel('recharge-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'recharge_requests'
+        },
+        (payload) => {
+          console.log('Nova recarga recebida:', payload);
+          toast.info('Nova solicitação de recarga!', {
+            description: 'Uma nova recarga foi adicionada.',
+            icon: <Bell className="w-4 h-4" />,
+          });
+          fetchRecharges();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'recharge_requests'
+        },
+        () => {
+          fetchRecharges();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchRecharges = async () => {
@@ -51,6 +89,26 @@ export default function RechargeManager() {
         user: profileMap.get(r.user_id) || null,
         plan: planMap.get(r.plan_id) || null
       })));
+
+      // Contar recargas pendentes
+      const pendingCount = data.filter(r => r.status === 'pending').length;
+      
+      // Notificar sobre recargas pendentes
+      if (isInitialLoad.current && pendingCount > 0) {
+        toast.warning(`${pendingCount} recarga(s) pendente(s)!`, {
+          description: 'Há recargas aguardando processamento.',
+          icon: <Bell className="w-4 h-4" />,
+          duration: 5000,
+        });
+      } else if (!isInitialLoad.current && pendingCount > previousPendingCount.current) {
+        toast.warning('Nova recarga pendente!', {
+          description: 'Uma recarga está pronta para processamento.',
+          icon: <Bell className="w-4 h-4" />,
+        });
+      }
+
+      previousPendingCount.current = pendingCount;
+      isInitialLoad.current = false;
     } else {
       setRecharges([]);
     }
