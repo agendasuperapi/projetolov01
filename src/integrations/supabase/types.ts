@@ -67,6 +67,7 @@ export type Database = {
           credits: number
           id: string
           name: string
+          plan_type: string
           price_cents: number
           stripe_price_id: string | null
         }
@@ -77,6 +78,7 @@ export type Database = {
           credits: number
           id?: string
           name: string
+          plan_type?: string
           price_cents: number
           stripe_price_id?: string | null
         }
@@ -87,6 +89,7 @@ export type Database = {
           credits?: number
           id?: string
           name?: string
+          plan_type?: string
           price_cents?: number
           stripe_price_id?: string | null
         }
