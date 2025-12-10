@@ -5,9 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil, Star, LucideIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sparkles, Zap, Shield, Download, Check, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import PlanPurchaseModal from '@/components/PlanPurchaseModal';
 import AuthModal from '@/components/AuthModal';
 const AdminEditButton = ({ section }: { section: string }) => (
   <Link 
@@ -86,10 +88,11 @@ export default function Index() {
   const [featuresContent, setFeaturesContent] = useState<FeaturesContent | null>(null);
   const [plansContent, setPlansContent] = useState<PlansContent | null>(null);
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<PlanWithAvailability | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [pendingPlan, setPendingPlan] = useState<PlanWithAvailability | null>(null);
+  const [pendingPurchase, setPendingPurchase] = useState<{ plan: PlanWithAvailability; type: 'recharge' | 'new_account' } | null>(null);
+  const [isRechargeModalOpen, setIsRechargeModalOpen] = useState(false);
+  const [rechargeLink, setRechargeLink] = useState('');
+  const [selectedRechangePlan, setSelectedRechangePlan] = useState<PlanWithAvailability | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -147,64 +150,75 @@ export default function Index() {
 
   const navigate = useNavigate();
 
-  const handleOpenPurchaseModal = (plan: PlanWithAvailability) => {
+  const handleBuyNewAccount = (plan: PlanWithAvailability) => {
     if (!plan.stripe_price_id || plan.price_cents === 0) {
       toast({ title: 'Indisponível', description: 'Este plano ainda não está configurado para venda.', variant: 'destructive' });
       return;
     }
 
     if (!user) {
-      // Abrir modal de auth e guardar o plano pendente
-      setPendingPlan(plan);
+      setPendingPurchase({ plan, type: 'new_account' });
       setIsAuthModalOpen(true);
       return;
     }
 
-    setSelectedPlan(plan);
-    setIsModalOpen(true);
+    processPurchase(plan, 'new_account');
+  };
+
+  const handleBuyRecharge = (plan: PlanWithAvailability) => {
+    if (!plan.stripe_price_id || plan.price_cents === 0) {
+      toast({ title: 'Indisponível', description: 'Este plano ainda não está configurado para venda.', variant: 'destructive' });
+      return;
+    }
+
+    if (!user) {
+      setPendingPurchase({ plan, type: 'recharge' });
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    setSelectedRechangePlan(plan);
+    setRechargeLink('');
+    setIsRechargeModalOpen(true);
+  };
+
+  const handleRechargeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRechangePlan || !rechargeLink.trim()) return;
+    setIsRechargeModalOpen(false);
+    processPurchase(selectedRechangePlan, 'recharge', rechargeLink.trim());
   };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    // O plano pendente será processado pelo useEffect quando o user mudar
   };
 
-  // Verificar se há compra pendente após login (do modal ou do localStorage)
+  // Verificar se há compra pendente após login
   useEffect(() => {
-    if (user && plans.length > 0) {
-      // Primeiro verificar o plano pendente do modal
-      if (pendingPlan) {
-        setSelectedPlan(pendingPlan);
-        setPendingPlan(null);
-        setIsModalOpen(true);
-        return;
-      }
+    if (user && plans.length > 0 && pendingPurchase) {
+      const { plan, type } = pendingPurchase;
+      setPendingPurchase(null);
       
-      // Depois verificar localStorage (fallback para redirecionamentos)
-      const pendingPlanId = localStorage.getItem('pendingPurchasePlanId');
-      if (pendingPlanId) {
-        localStorage.removeItem('pendingPurchasePlanId');
-        const plan = plans.find(p => p.id === pendingPlanId);
-        if (plan && plan.stripe_price_id && plan.price_cents > 0) {
-          setSelectedPlan(plan);
-          setIsModalOpen(true);
-        }
+      if (type === 'recharge') {
+        setSelectedRechangePlan(plan);
+        setRechargeLink('');
+        setIsRechargeModalOpen(true);
+      } else {
+        processPurchase(plan, 'new_account');
       }
     }
-  }, [user, plans, pendingPlan]);
+  }, [user, plans, pendingPurchase]);
 
-  const handlePurchase = async (type: 'recharge' | 'new_account', rechargeLink?: string) => {
-    if (!selectedPlan) return;
-
-    setPurchaseLoading(selectedPlan.id);
+  const processPurchase = async (plan: PlanWithAvailability, type: 'recharge' | 'new_account', rechargeLinkValue?: string) => {
+    setPurchaseLoading(plan.id);
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
-          priceId: selectedPlan.stripe_price_id, 
-          planId: selectedPlan.id,
+          priceId: plan.stripe_price_id, 
+          planId: plan.id,
           purchaseType: type,
-          rechargeLink: rechargeLink,
+          rechargeLink: rechargeLinkValue,
         },
       });
 
@@ -212,7 +226,6 @@ export default function Index() {
       if (data?.url) {
         window.open(data.url, '_blank');
       }
-      setIsModalOpen(false);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento.';
       toast({ title: 'Erro', description: errorMessage, variant: 'destructive' });
@@ -381,12 +394,114 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="features" />}
       </section>
 
-      {/* Plans */}
+      {/* Seção Conta Nova */}
       <section id="plans" className="py-20 relative group">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">{plansData.title}</h2>
-            <p className="text-muted-foreground text-lg">{plansData.subtitle}</p>
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-full bg-primary/10">
+                <UserPlus className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-bold">Conta Nova</h2>
+            </div>
+            <p className="text-muted-foreground text-lg">Receba os dados de uma nova conta</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {plans.map((plan, index) => {
+              const competitorPrice = plan.competitor_price_cents || 0;
+              const discount = competitorPrice > 0 && plan.price_cents > 0
+                ? Math.round(((competitorPrice - plan.price_cents) / competitorPrice) * 100)
+                : 0;
+              const isNewAccountDisabled = plan.availableAccounts === 0;
+              
+              return (
+              <Card 
+                key={plan.id} 
+                className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
+                  index === 1 ? 'border-primary shadow-glow' : 'border-border'
+                } ${isNewAccountDisabled ? 'opacity-60' : ''}`}
+              >
+                {competitorPrice > 0 && plan.price_cents > 0 && discount > 0 && (
+                  <div className="bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground px-4 py-2 text-center">
+                    <div className="text-xs font-medium opacity-90">
+                      {plansData.competitorLabel || 'Comprando no Concorrente'}: R$ {(competitorPrice / 100).toFixed(2).replace('.', ',')}
+                    </div>
+                    <div className="text-sm font-bold">
+                      Economize {discount}% comprando aqui!
+                    </div>
+                  </div>
+                )}
+                
+                {index === 1 && !isNewAccountDisabled && (
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    POPULAR
+                  </div>
+                )}
+                {isNewAccountDisabled && (
+                  <div className="absolute top-0 right-0 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    ESGOTADO
+                  </div>
+                )}
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="font-display text-2xl">{plan.name}</CardTitle>
+                  <CardDescription className="text-lg">
+                    <span className="text-4xl font-bold text-foreground">
+                      {plan.price_cents === 0 ? 'A definir' : `R$ ${(plan.price_cents / 100).toFixed(2).replace('.', ',')}`}
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="text-center space-y-2">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
+                      <Zap className="w-5 h-5 text-primary" />
+                      <span className="font-bold text-lg">{plan.credits.toLocaleString()} créditos</span>
+                    </div>
+                    {!isNewAccountDisabled && (
+                      <p className="text-sm text-primary font-medium">
+                        {plan.availableAccounts} conta(s) disponível(is)
+                      </p>
+                    )}
+                  </div>
+
+                  <ul className="space-y-3">
+                    {plansData.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-success" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button 
+                    onClick={() => handleBuyNewAccount(plan)}
+                    disabled={purchaseLoading === plan.id || plan.price_cents === 0 || isNewAccountDisabled}
+                    className={`w-full ${index === 1 && !isNewAccountDisabled ? 'gradient-primary' : ''}`}
+                    variant={index === 1 && !isNewAccountDisabled ? 'default' : 'outline'}
+                    size="lg"
+                  >
+                    {purchaseLoading === plan.id ? 'Processando...' : isNewAccountDisabled ? 'Esgotado' : 'Comprar Agora'}
+                  </Button>
+                </CardContent>
+              </Card>
+              );
+            })}
+          </div>
+        </div>
+        {isAdmin && <AdminEditButton section="plans" />}
+      </section>
+
+      {/* Seção Recarregar */}
+      <section className="py-20 bg-card relative group">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-full bg-primary/10">
+                <RefreshCw className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-bold">Recarregar Conta</h2>
+            </div>
+            <p className="text-muted-foreground text-lg">Adicione créditos a uma conta existente</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -403,7 +518,6 @@ export default function Index() {
                   index === 1 ? 'border-primary shadow-glow' : 'border-border'
                 }`}
               >
-                {/* Barra de Comparação com Concorrente */}
                 {competitorPrice > 0 && plan.price_cents > 0 && discount > 0 && (
                   <div className="bg-gradient-to-r from-destructive to-destructive/80 text-destructive-foreground px-4 py-2 text-center">
                     <div className="text-xs font-medium opacity-90">
@@ -429,20 +543,11 @@ export default function Index() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="text-center space-y-2">
+                  <div className="text-center">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
                       <Zap className="w-5 h-5 text-primary" />
                       <span className="font-bold text-lg">{plan.credits.toLocaleString()} créditos</span>
                     </div>
-                    {plan.availableAccounts > 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        {plan.availableAccounts} conta(s) nova(s) disponível(is)
-                      </p>
-                    ) : (
-                      <p className="text-sm text-destructive font-medium">
-                        Contas novas esgotadas
-                      </p>
-                    )}
                   </div>
 
                   <ul className="space-y-3">
@@ -455,13 +560,13 @@ export default function Index() {
                   </ul>
 
                   <Button 
-                    onClick={() => handleOpenPurchaseModal(plan)}
+                    onClick={() => handleBuyRecharge(plan)}
                     disabled={purchaseLoading === plan.id || plan.price_cents === 0}
                     className={`w-full ${index === 1 ? 'gradient-primary' : ''}`}
                     variant={index === 1 ? 'default' : 'outline'}
                     size="lg"
                   >
-                    {purchaseLoading === plan.id ? 'Processando...' : 'Comprar Agora'}
+                    {purchaseLoading === plan.id ? 'Processando...' : 'Recarregar Agora'}
                   </Button>
                 </CardContent>
               </Card>
@@ -469,27 +574,51 @@ export default function Index() {
             })}
           </div>
         </div>
-        {isAdmin && <AdminEditButton section="plans" />}
       </section>
 
-      {/* Purchase Modal */}
-      {selectedPlan && (
-        <PlanPurchaseModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          planName={selectedPlan.name}
-          availableAccounts={selectedPlan.availableAccounts}
-          onPurchase={handlePurchase}
-          isLoading={purchaseLoading === selectedPlan.id}
-        />
-      )}
+      {/* Recharge Link Modal */}
+      <Dialog open={isRechargeModalOpen} onOpenChange={setIsRechargeModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recarregar {selectedRechangePlan?.name}</DialogTitle>
+            <DialogDescription>
+              Digite o link da sua conta para adicionar créditos
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRechargeSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rechargeLink">Link da sua conta</Label>
+              <Input
+                id="rechargeLink"
+                type="url"
+                value={rechargeLink}
+                onChange={(e) => setRechargeLink(e.target.value)}
+                placeholder="https://..."
+                required
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={() => setIsRechargeModalOpen(false)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                className="flex-1 gradient-primary" 
+                disabled={!rechargeLink.trim() || purchaseLoading === selectedRechangePlan?.id}
+              >
+                {purchaseLoading === selectedRechangePlan?.id ? 'Processando...' : 'Continuar'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => {
           setIsAuthModalOpen(false);
-          setPendingPlan(null);
+          setPendingPurchase(null);
         }}
         onSuccess={handleAuthSuccess}
       />
