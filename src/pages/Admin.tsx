@@ -46,6 +46,7 @@ export default function Admin() {
   const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'new_account' as 'new_account' | 'recharge' });
   const [creating, setCreating] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [pendingRechargesCount, setPendingRechargesCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -59,8 +60,38 @@ export default function Admin() {
     if (isAdmin) {
       fetchPlans();
       fetchTransactions();
+      fetchPendingRechargesCount();
+
+      // Real-time subscription para atualizar badge
+      const channel = supabase
+        .channel('admin-recharge-badge')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'recharge_requests'
+          },
+          () => {
+            fetchPendingRechargesCount();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [isAdmin]);
+
+  const fetchPendingRechargesCount = async () => {
+    const { count } = await supabase
+      .from('recharge_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    
+    setPendingRechargesCount(count || 0);
+  };
 
   const fetchPlans = async () => {
     const { data } = await supabase.from('credit_plans').select('*').order('credits', { ascending: true });
@@ -229,9 +260,17 @@ export default function Admin() {
               <Package className="w-4 h-4" />
               Contas
             </TabsTrigger>
-            <TabsTrigger value="recharges" className="gap-2">
+            <TabsTrigger value="recharges" className="gap-2 relative">
               <Zap className="w-4 h-4" />
               Recargas
+              {pendingRechargesCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs animate-pulse"
+                >
+                  {pendingRechargesCount}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="transactions" className="gap-2">
               <Users className="w-4 h-4" />
