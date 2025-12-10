@@ -302,18 +302,7 @@ export default function Index() {
       <section 
         className="py-20 lg:py-32 relative group"
         style={{
-          background: hero.gradientFrom || hero.gradientTo 
-            ? `linear-gradient(${
-                hero.gradientDirection === 'to-t' ? '0deg' :
-                hero.gradientDirection === 'to-b' ? '180deg' :
-                hero.gradientDirection === 'to-l' ? '270deg' :
-                hero.gradientDirection === 'to-r' ? '90deg' :
-                hero.gradientDirection === 'to-tl' ? '315deg' :
-                hero.gradientDirection === 'to-tr' ? '45deg' :
-                hero.gradientDirection === 'to-bl' ? '225deg' :
-                '135deg'
-              }, ${hero.gradientFrom || '#1a1a2e'}, ${hero.gradientTo || '#0f0f1a'})`
-            : undefined
+          background: 'linear-gradient(180deg, hsl(230, 50%, 10%) 0%, hsl(230, 70%, 25%) 25%, hsl(260, 60%, 50%) 50%, hsl(330, 80%, 55%) 75%, hsl(20, 90%, 55%) 100%)'
         }}
       >
         <div className="container mx-auto px-4 text-center">
