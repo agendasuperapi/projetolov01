@@ -302,7 +302,7 @@ export default function Index() {
       <section 
         className="py-20 lg:py-32 relative group"
         style={{
-          background: 'linear-gradient(180deg, hsl(230, 50%, 10%) 0%, hsl(230, 70%, 25%) 25%, hsl(260, 60%, 50%) 50%, hsl(330, 80%, 55%) 75%, hsl(20, 90%, 55%) 100%)'
+          background: 'linear-gradient(180deg, hsl(270, 70%, 50%) 0%, hsl(320, 80%, 55%) 50%, hsl(350, 85%, 60%) 100%)'
         }}
       >
         <div className="container mx-auto px-4 text-center">
@@ -369,7 +369,7 @@ export default function Index() {
         id="plans" 
         className="py-20 relative group"
         style={{
-          background: 'linear-gradient(180deg, hsl(230, 50%, 10%) 0%, hsl(230, 70%, 25%) 25%, hsl(260, 60%, 50%) 50%, hsl(330, 80%, 55%) 75%, hsl(20, 90%, 55%) 100%)'
+          background: 'linear-gradient(180deg, hsl(270, 70%, 50%) 0%, hsl(320, 80%, 55%) 50%, hsl(350, 85%, 60%) 100%)'
         }}
       >
         <div className="container mx-auto px-4">
