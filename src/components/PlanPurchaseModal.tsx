@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { RefreshCw, UserPlus } from 'lucide-react';
 
 interface PlanPurchaseModalProps {
@@ -48,56 +47,70 @@ export default function PlanPurchaseModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <RadioGroup
-            value={purchaseType}
-            onValueChange={(value) => setPurchaseType(value as 'recharge' | 'new_account')}
-            className="space-y-4"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* New Account Card */}
+          <div 
+            onClick={() => !isNewAccountDisabled && setPurchaseType('new_account')}
+            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              purchaseType === 'new_account' 
+                ? 'border-primary bg-primary/5' 
+                : 'border-border hover:border-primary/50'
+            } ${isNewAccountDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {/* New Account Option */}
-            <div className="flex items-start space-x-3">
-              <RadioGroupItem 
-                value="new_account" 
-                id="new_account" 
-                disabled={isNewAccountDisabled}
-                className="mt-1" 
-              />
-              <Label 
-                htmlFor="new_account" 
-                className={`flex-1 cursor-pointer ${isNewAccountDisabled ? 'opacity-50' : ''}`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <UserPlus className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-full ${purchaseType === 'new_account' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
                   <span className="font-semibold">Conta nova</span>
                   {isNewAccountDisabled && (
-                    <span className="text-xs text-destructive font-normal">(Esgotado)</span>
+                    <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">Esgotado</span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Receba os dados de uma nova conta
                 </p>
                 {!isNewAccountDisabled && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-primary mt-1 font-medium">
                     {availableAccounts} conta(s) disponível(is)
                   </p>
                 )}
-              </Label>
-            </div>
-
-            {/* Recharge Option */}
-            <div className="flex items-start space-x-3">
-              <RadioGroupItem value="recharge" id="recharge" className="mt-1" />
-              <Label htmlFor="recharge" className="flex-1 cursor-pointer">
-                <div className="flex items-center gap-2 mb-1">
-                  <RefreshCw className="w-4 h-4 text-primary" />
-                  <span className="font-semibold">Recarregue minha conta</span>
+              </div>
+              {purchaseType === 'new_account' && !isNewAccountDisabled && (
+                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                  <div className="w-2 h-2 bg-primary-foreground rounded-full" />
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recharge Card */}
+          <div 
+            onClick={() => setPurchaseType('recharge')}
+            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              purchaseType === 'recharge' 
+                ? 'border-primary bg-primary/5' 
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-full ${purchaseType === 'recharge' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                <RefreshCw className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <span className="font-semibold">Recarregue minha conta</span>
                 <p className="text-sm text-muted-foreground">
                   Adicione créditos a uma conta existente
                 </p>
-              </Label>
+              </div>
+              {purchaseType === 'recharge' && (
+                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                  <div className="w-2 h-2 bg-primary-foreground rounded-full" />
+                </div>
+              )}
             </div>
-          </RadioGroup>
+          </div>
 
           {/* Recharge Link Input */}
           {purchaseType === 'recharge' && (
