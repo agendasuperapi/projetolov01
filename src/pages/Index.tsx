@@ -37,6 +37,7 @@ interface CreditPlan {
   price_cents: number;
   stripe_price_id: string | null;
   competitor_price_cents: number | null;
+  plan_type: 'new_account' | 'recharge';
 }
 
 interface PlanWithAvailability extends CreditPlan {
@@ -79,7 +80,8 @@ interface FooterContent {
 
 export default function Index() {
   const { user, profile, isAdmin, signOut, loading } = useAuth();
-  const [plans, setPlans] = useState<PlanWithAvailability[]>([]);
+  const [newAccountPlans, setNewAccountPlans] = useState<PlanWithAvailability[]>([]);
+  const [rechargePlans, setRechargePlans] = useState<PlanWithAvailability[]>([]);
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
   const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
   const [featuresContent, setFeaturesContent] = useState<FeaturesContent | null>(null);
@@ -104,7 +106,7 @@ export default function Index() {
     if (plansData) {
       // Fetch available accounts count for each plan using the SECURITY DEFINER function
       const plansWithAvailability = await Promise.all(
-        plansData.map(async (plan) => {
+        (plansData as CreditPlan[]).map(async (plan) => {
           const { data: countData } = await supabase
             .rpc('get_available_accounts_count', { p_plan_id: plan.id });
           
@@ -115,7 +117,8 @@ export default function Index() {
         })
       );
       
-      setPlans(plansWithAvailability);
+      setNewAccountPlans(plansWithAvailability.filter(p => p.plan_type === 'new_account'));
+      setRechargePlans(plansWithAvailability.filter(p => p.plan_type === 'recharge'));
     }
   };
 
@@ -181,12 +184,12 @@ export default function Index() {
 
   // Verificar se há compra pendente após login
   useEffect(() => {
-    if (user && plans.length > 0 && pendingPurchase) {
+    if (user && (newAccountPlans.length > 0 || rechargePlans.length > 0) && pendingPurchase) {
       const { plan, type } = pendingPurchase;
       setPendingPurchase(null);
       processPurchase(plan, type);
     }
-  }, [user, plans, pendingPurchase]);
+  }, [user, newAccountPlans, rechargePlans, pendingPurchase]);
 
   const processPurchase = async (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
     setPurchaseLoading(plan.id);
@@ -386,7 +389,7 @@ export default function Index() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {plans.map((plan, index) => {
+            {newAccountPlans.map((plan, index) => {
               const competitorPrice = plan.competitor_price_cents || 0;
               const discount = competitorPrice > 0 && plan.price_cents > 0
                 ? Math.round(((competitorPrice - plan.price_cents) / competitorPrice) * 100)
@@ -483,7 +486,7 @@ export default function Index() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {plans.map((plan, index) => {
+            {rechargePlans.map((plan, index) => {
               const competitorPrice = plan.competitor_price_cents || 0;
               const discount = competitorPrice > 0 && plan.price_cents > 0
                 ? Math.round(((competitorPrice - plan.price_cents) / competitorPrice) * 100)

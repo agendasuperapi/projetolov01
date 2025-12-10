@@ -23,6 +23,7 @@ interface CreditPlan {
   stripe_price_id: string | null;
   competitor_price_cents: number | null;
   active: boolean;
+  plan_type: 'new_account' | 'recharge';
 }
 
 interface Transaction {
@@ -42,7 +43,7 @@ export default function Admin() {
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '' });
+  const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'new_account' as 'new_account' | 'recharge' });
   const [creating, setCreating] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const { toast } = useToast();
@@ -63,7 +64,7 @@ export default function Admin() {
 
   const fetchPlans = async () => {
     const { data } = await supabase.from('credit_plans').select('*').order('credits', { ascending: true });
-    if (data) setPlans(data);
+    if (data) setPlans(data as CreditPlan[]);
   };
 
   const fetchTransactions = async () => {
@@ -101,13 +102,14 @@ export default function Admin() {
         credits: newPlan.credits,
         price_cents: newPlan.price_cents,
         stripe_price_id: newPlan.stripe_price_id || null,
+        plan_type: newPlan.plan_type,
         active: true,
       });
 
       if (error) throw error;
 
       toast({ title: 'Sucesso!', description: 'Plano criado com sucesso.' });
-      setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '' });
+      setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'new_account' });
       setIsDialogOpen(false);
       await fetchPlans();
     } catch (error: any) {
@@ -214,10 +216,14 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue={editSection ? 'content' : 'plans'} className="space-y-8">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5">
+          <TabsList className="grid w-full max-w-4xl grid-cols-6">
             <TabsTrigger value="plans" className="gap-2">
               <DollarSign className="w-4 h-4" />
-              Planos
+              Conta Nova
+            </TabsTrigger>
+            <TabsTrigger value="recharge-plans" className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Recarga
             </TabsTrigger>
             <TabsTrigger value="accounts" className="gap-2">
               <Package className="w-4 h-4" />
@@ -237,7 +243,7 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Plans Tab */}
+          {/* Plans Tab - New Account */}
           <TabsContent value="plans" className="space-y-6">
             <div className="flex justify-end gap-2">
               <Button 
@@ -251,14 +257,14 @@ export default function Admin() {
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="gradient-primary">
+                  <Button className="gradient-primary" onClick={() => setNewPlan({ ...newPlan, plan_type: 'new_account' })}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Novo Plano
+                    Novo Plano Conta Nova
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Criar Plano de Créditos</DialogTitle>
+                    <DialogTitle>Criar Plano de {newPlan.plan_type === 'new_account' ? 'Conta Nova' : 'Recarga'}</DialogTitle>
                     <DialogDescription>
                       Adicione um novo plano de créditos
                     </DialogDescription>
@@ -317,15 +323,122 @@ export default function Admin() {
 
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle>Planos de Créditos</CardTitle>
-                <CardDescription>Configure os preços e IDs do Stripe para cada plano</CardDescription>
+                <CardTitle>Planos de Conta Nova</CardTitle>
+                <CardDescription>Configure os preços e IDs do Stripe para planos de conta nova</CardDescription>
               </CardHeader>
               <CardContent>
-                {plans.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Nenhum plano cadastrado.</p>
+                {plans.filter(p => p.plan_type === 'new_account').length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nenhum plano de conta nova cadastrado.</p>
                 ) : (
                   <div className="space-y-6">
-                    {plans.map((plan) => (
+                    {plans.filter(p => p.plan_type === 'new_account').map((plan) => (
+                      <div key={plan.id} className="p-4 border rounded-lg space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold">{plan.name}</h3>
+                            <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={plan.stripe_price_id ? 'default' : 'secondary'}>
+                              {plan.stripe_price_id ? 'Configurado' : 'Pendente'}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeletePlan(plan.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="grid sm:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label>Preço (R$)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              defaultValue={(plan.price_cents / 100).toFixed(2)}
+                              onBlur={(e) => {
+                                const valueInCents = Math.round(parseFloat(e.target.value || '0') * 100);
+                                if (valueInCents !== plan.price_cents) {
+                                  handleUpdatePlan(plan.id, { price_cents: valueInCents });
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Preço Concorrente (R$)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              defaultValue={(plan.competitor_price_cents ? plan.competitor_price_cents / 100 : 0).toFixed(2)}
+                              onBlur={(e) => {
+                                const valueInCents = Math.round(parseFloat(e.target.value || '0') * 100);
+                                if (valueInCents !== (plan.competitor_price_cents || 0)) {
+                                  handleUpdatePlan(plan.id, { competitor_price_cents: valueInCents });
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Stripe Price ID</Label>
+                            <Input
+                              placeholder="price_..."
+                              defaultValue={plan.stripe_price_id || ''}
+                              onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value !== plan.stripe_price_id) {
+                                  handleUpdatePlan(plan.id, { stripe_price_id: value || null });
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Recharge Plans Tab */}
+          <TabsContent value="recharge-plans" className="space-y-6">
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleSyncStripe} 
+                disabled={syncing}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Sincronizando...' : 'Sincronizar Stripe'}
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="gradient-primary" onClick={() => {
+                    setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'recharge' });
+                    setIsDialogOpen(true);
+                  }}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Plano Recarga
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
+            </div>
+
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle>Planos de Recarga</CardTitle>
+                <CardDescription>Configure os preços e IDs do Stripe para planos de recarga</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {plans.filter(p => p.plan_type === 'recharge').length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nenhum plano de recarga cadastrado.</p>
+                ) : (
+                  <div className="space-y-6">
+                    {plans.filter(p => p.plan_type === 'recharge').map((plan) => (
                       <div key={plan.id} className="p-4 border rounded-lg space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
