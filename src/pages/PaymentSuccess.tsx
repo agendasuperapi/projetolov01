@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import instructionStep1 from '@/assets/instruction-step1.png';
 import instructionStep2 from '@/assets/instruction-step2.png';
 import instructionStep3 from '@/assets/instruction-step3.png';
+import instructionStep4 from '@/assets/instruction-step4.png';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -183,6 +184,12 @@ export default function PaymentSuccess() {
                     <img src={instructionStep3} alt="Passo 3: Cole o link no campo acima" className="w-full" />
                     <p className="text-xs text-muted-foreground p-3 bg-muted/50">
                       <strong>Passo 3:</strong> Cole o link no campo acima e clique em "Enviar Link"
+                    </p>
+                  </div>
+                  <div className="rounded-lg overflow-hidden border border-border">
+                    <img src={instructionStep4} alt="Passo 4: Confirmação" className="w-full" />
+                    <p className="text-xs text-muted-foreground p-3 bg-muted/50">
+                      <strong>Passo 4:</strong> Aguarde a confirmação do processamento
                     </p>
                   </div>
                 </div>
