@@ -188,7 +188,7 @@ export default function Index() {
     }
   }, [user, plans, pendingPurchase]);
 
-  const processPurchase = async (plan: PlanWithAvailability, type: 'recharge' | 'new_account', rechargeLinkValue?: string) => {
+  const processPurchase = async (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
     setPurchaseLoading(plan.id);
 
     try {
@@ -197,7 +197,6 @@ export default function Index() {
           priceId: plan.stripe_price_id, 
           planId: plan.id,
           purchaseType: type,
-          rechargeLink: rechargeLinkValue,
         },
       });
 
