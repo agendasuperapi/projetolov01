@@ -116,37 +116,151 @@ export default function Index() {
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [couponInitialized, setCouponInitialized] = useState(false);
   
   const { toast } = useToast();
+
+  const COUPON_STORAGE_KEY = 'creditshub_last_coupon';
+
+  // Save coupon to localStorage and profile
+  const saveCouponToStorage = async (couponData: CouponData) => {
+    // Save to localStorage for non-logged users
+    localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify({
+      custom_code: couponData.custom_code,
+      affiliate_id: couponData.affiliate_id,
+      affiliate_coupon_id: couponData.coupon_id,
+      full_data: couponData
+    }));
+
+    // Save to profile if user is logged in
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({
+          last_coupon_code: couponData.custom_code,
+          last_affiliate_id: couponData.affiliate_id,
+          last_affiliate_coupon_id: couponData.coupon_id
+        })
+        .eq('id', user.id);
+    }
+  };
+
+  // Load saved coupon from localStorage or profile
+  const loadSavedCoupon = async () => {
+    // First check localStorage
+    const storedCoupon = localStorage.getItem(COUPON_STORAGE_KEY);
+    if (storedCoupon) {
+      try {
+        const parsed = JSON.parse(storedCoupon);
+        if (parsed.full_data) {
+          return parsed.full_data as CouponData;
+        }
+        // If we only have the code, validate it
+        if (parsed.custom_code) {
+          const validated = await validateCouponCode(parsed.custom_code);
+          if (validated) return validated;
+        }
+      } catch (e) {
+        console.error('Error parsing stored coupon:', e);
+      }
+    }
+
+    // If user is logged in, check profile
+    if (user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('last_coupon_code')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileData?.last_coupon_code) {
+        const validated = await validateCouponCode(profileData.last_coupon_code);
+        if (validated) return validated;
+      }
+    }
+
+    return null;
+  };
+
+  // Validate coupon code and return data
+  const validateCouponCode = async (code: string): Promise<CouponData | null> => {
+    try {
+      const response = await fetch(
+        'https://adpnzkvzvjbervzrqhhx.supabase.co/rest/v1/rpc/validate_coupon',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDAzODYsImV4cCI6MjA3OTA3NjM4Nn0.N7gETUDWj95yDCYdZTYWPoMJQcdx_Yjl51jxK-O1vrE',
+          },
+          body: JSON.stringify({ 
+            p_coupon_code: code,
+            p_product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1'
+          }),
+        }
+      );
+      const responseData = await response.json();
+      const data: CouponData | null = Array.isArray(responseData) ? responseData[0] : responseData;
+      
+      if (data && data.coupon_id && data.is_active) {
+        return data;
+      }
+    } catch (e) {
+      console.error('Error validating coupon:', e);
+    }
+    return null;
+  };
 
   useEffect(() => {
     fetchPlans();
     fetchContent();
   }, []);
 
-  // Handle coupon from URL navigation
+  // Initialize coupon: URL priority > saved coupon
   useEffect(() => {
-    const state = location.state as { couponData?: CouponData } | null;
-    if (state?.couponData) {
-      setAppliedCoupon(state.couponData);
+    const initializeCoupon = async () => {
+      if (couponInitialized) return;
       
-      // Trigger confetti animation
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#10b981', '#06b6d4', '#22c55e', '#14b8a6']
-      });
+      const state = location.state as { couponData?: CouponData } | null;
       
-      toast({ 
-        title: 'Cupom aplicado!', 
-        description: `${state.couponData.name} - ${state.couponData.type === 'percentage' ? `${state.couponData.value}% OFF` : `R$ ${state.couponData.value.toFixed(2)} OFF`}` 
-      });
-      
-      // Clear the state to prevent re-applying on refresh
-      navigate('/', { replace: true, state: {} });
-    }
-  }, [location.state]);
+      // URL coupon has priority
+      if (state?.couponData) {
+        setAppliedCoupon(state.couponData);
+        await saveCouponToStorage(state.couponData);
+        setCouponInitialized(true);
+        
+        // Trigger confetti animation
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#10b981', '#06b6d4', '#22c55e', '#14b8a6']
+        });
+        
+        toast({ 
+          title: 'Cupom aplicado!', 
+          description: `${state.couponData.name} - ${state.couponData.type === 'percentage' ? `${state.couponData.value}% OFF` : `R$ ${state.couponData.value.toFixed(2)} OFF`}` 
+        });
+        
+        // Clear the state to prevent re-applying on refresh
+        navigate('/', { replace: true, state: {} });
+        return;
+      }
+
+      // No URL coupon, try to load saved coupon
+      const savedCoupon = await loadSavedCoupon();
+      if (savedCoupon) {
+        setAppliedCoupon(savedCoupon);
+        toast({ 
+          title: 'Cupom restaurado', 
+          description: `${savedCoupon.name} foi aplicado automaticamente` 
+        });
+      }
+      setCouponInitialized(true);
+    };
+
+    initializeCoupon();
+  }, [location.state, user, couponInitialized]);
 
   const fetchPlans = async () => {
     const { data: plansData } = await supabase
@@ -249,26 +363,11 @@ export default function Index() {
 
     setCouponLoading(true);
     try {
-      const response = await fetch(
-        'https://adpnzkvzvjbervzrqhhx.supabase.co/rest/v1/rpc/validate_coupon',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDAzODYsImV4cCI6MjA3OTA3NjM4Nn0.N7gETUDWj95yDCYdZTYWPoMJQcdx_Yjl51jxK-O1vrE',
-          },
-          body: JSON.stringify({ 
-            p_coupon_code: couponInput.trim(),
-            p_product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1'
-          }),
-        }
-      );
-      const responseData = await response.json();
-      // API returns an array, get the first item
-      const data: CouponData | null = Array.isArray(responseData) ? responseData[0] : responseData;
+      const data = await validateCouponCode(couponInput.trim());
 
-      if (data && data.coupon_id && data.is_active) {
+      if (data) {
         setAppliedCoupon(data);
+        await saveCouponToStorage(data);
         setCouponInput('');
         
         // Trigger confetti animation
@@ -293,8 +392,21 @@ export default function Index() {
     }
   };
 
-  const removeCoupon = () => {
+  const removeCoupon = async () => {
     setAppliedCoupon(null);
+    // Clear from localStorage
+    localStorage.removeItem(COUPON_STORAGE_KEY);
+    // Clear from profile if logged in
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({
+          last_coupon_code: null,
+          last_affiliate_id: null,
+          last_affiliate_coupon_id: null
+        })
+        .eq('id', user.id);
+    }
     toast({ title: 'Cupom removido' });
   };
 

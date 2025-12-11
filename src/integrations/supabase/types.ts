@@ -179,6 +179,9 @@ export type Database = {
           credits: number | null
           email: string
           id: string
+          last_affiliate_coupon_id: string | null
+          last_affiliate_id: string | null
+          last_coupon_code: string | null
           name: string
           phone: string | null
         }
@@ -187,6 +190,9 @@ export type Database = {
           credits?: number | null
           email: string
           id: string
+          last_affiliate_coupon_id?: string | null
+          last_affiliate_id?: string | null
+          last_coupon_code?: string | null
           name: string
           phone?: string | null
         }
@@ -195,6 +201,9 @@ export type Database = {
           credits?: number | null
           email?: string
           id?: string
+          last_affiliate_coupon_id?: string | null
+          last_affiliate_id?: string | null
+          last_coupon_code?: string | null
           name?: string
           phone?: string | null
         }
