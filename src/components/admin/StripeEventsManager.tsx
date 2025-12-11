@@ -26,6 +26,9 @@ interface StripeEvent {
   environment: string | null;
   affiliate_id: string | null;
   affiliate_coupon_id: string | null;
+  sync_status: string | null;
+  sync_response: string | null;
+  synced_at: string | null;
 }
 
 interface Stats {
@@ -202,6 +205,19 @@ export default function StripeEventsManager() {
     return <Badge variant="outline">Teste</Badge>;
   };
 
+  const getSyncStatusBadge = (status: string | null) => {
+    if (status === 'synced') {
+      return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Sincronizado</Badge>;
+    }
+    if (status === 'error') {
+      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Erro</Badge>;
+    }
+    if (status === 'pending') {
+      return <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">Pendente</Badge>;
+    }
+    return <Badge variant="outline" className="text-muted-foreground">-</Badge>;
+  };
+
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -320,19 +336,20 @@ export default function StripeEventsManager() {
                 <TableHead>Ambiente</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Sync</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Carregando eventos...
                   </TableCell>
                 </TableRow>
               ) : events.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Nenhum evento encontrado.
                   </TableCell>
                 </TableRow>
@@ -354,6 +371,7 @@ export default function StripeEventsManager() {
                         <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">Pendente</Badge>
                       )}
                     </TableCell>
+                    <TableCell>{getSyncStatusBadge(event.sync_status)}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -496,7 +514,26 @@ export default function StripeEventsManager() {
                         <p className="font-mono text-sm break-all">{selectedEvent.affiliate_id}</p>
                       </div>
                     )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Status Sync</p>
+                      {getSyncStatusBadge(selectedEvent.sync_status)}
+                    </div>
+                    {selectedEvent.synced_at && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Data Sync</p>
+                        <p>{format(new Date(selectedEvent.synced_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</p>
+                      </div>
+                    )}
                   </div>
+
+                  {selectedEvent.sync_response && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Resposta da Sincronização</p>
+                      <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[150px]">
+                        {selectedEvent.sync_response}
+                      </pre>
+                    </div>
+                  )}
 
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Dados do Evento (JSON)</p>
