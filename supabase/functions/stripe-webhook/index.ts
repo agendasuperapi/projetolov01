@@ -7,9 +7,56 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
+// External sync configuration
+const EXTERNAL_SYNC_URL = 'https://adpnzkvzvjbervzrqhhx.supabase.co/functions/v1/sync-unified-data';
+const EXTERNAL_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDAzODYsImV4cCI6MjA3OTA3NjM4Nn0.N7gETUDWj95yDCYdZTYWPoMJQcdx_Yjl51jxK-O1vrE';
+const PRODUCT_ID = '9453f6dc-5257-43d9-9b04-3bdfd5188ed1';
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
+};
+
+// Helper function to sync payment to external server
+const syncPaymentToExternal = async (paymentData: {
+  external_payment_id: string;
+  external_user_id: string;
+  product_id: string;
+  plan_id: string | null;
+  amount: number;
+  billing_reason: string;
+  status: string;
+  affiliate_id: string | null;
+  affiliate_coupon_id: string | null;
+  environment: string;
+}) => {
+  const syncPayload = {
+    action: 'sync_payment',
+    payment: paymentData
+  };
+
+  logStep('Syncing payment to external server', { external_payment_id: paymentData.external_payment_id });
+
+  const response = await fetch(EXTERNAL_SYNC_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${EXTERNAL_ANON_KEY}`,
+    },
+    body: JSON.stringify(syncPayload),
+  });
+
+  const responseText = await response.text();
+  let responseData;
+  try {
+    responseData = JSON.parse(responseText);
+  } catch {
+    responseData = { raw: responseText };
+  }
+
+  logStep('External payment sync response', { status: response.status, response: responseData });
+
+  return { ok: response.ok, data: responseData };
 };
 
 serve(async (req) => {
@@ -81,7 +128,7 @@ serve(async (req) => {
         event_data: event.data.object,
         user_id: metadata.user_id || null,
         plan_id: metadata.plan_id || null,
-        product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1',
+        product_id: PRODUCT_ID,
         email: eventEmail,
         environment: environment,
         affiliate_id: metadata.affiliate_id || null,
@@ -90,6 +137,7 @@ serve(async (req) => {
         amount_discount: totalDiscount,
         amount_total: amountTotal,
         processed: false,
+        sync_status: 'pending',
       });
 
     if (eventInsertError) {
@@ -97,6 +145,11 @@ serve(async (req) => {
     } else {
       logStep("Stripe event logged successfully");
     }
+
+    // Variables to track sync status
+    let syncStatus = 'pending';
+    let syncResponse: string | null = null;
+    let syncedAt: string | null = null;
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -194,7 +247,7 @@ serve(async (req) => {
             assignedAccountData = availableAccount.account_data;
             logStep("Account assigned to user", { accountId: availableAccount.id });
           }
-      }
+        }
       }
 
       // If purchase type is recharge, create a recharge request with pending_link status
@@ -235,6 +288,40 @@ serve(async (req) => {
         logStep("Transaction recorded successfully");
       }
 
+      // Sync payment to external server
+      try {
+        const amountInReais = (session.amount_total || plan.price_cents) / 100;
+        
+        const syncResult = await syncPaymentToExternal({
+          external_payment_id: session.id,
+          external_user_id: userId,
+          product_id: PRODUCT_ID,
+          plan_id: planId,
+          amount: amountInReais,
+          billing_reason: 'one_time_purchase',
+          status: 'paid',
+          affiliate_id: metadata.affiliate_id || null,
+          affiliate_coupon_id: metadata.coupon_id || null,
+          environment: environment,
+        });
+
+        syncStatus = syncResult.ok ? 'synced' : 'error';
+        syncResponse = JSON.stringify(syncResult.data);
+        syncedAt = new Date().toISOString();
+
+        if (syncResult.ok) {
+          logStep('Payment synced to external server successfully');
+        } else {
+          logStep('Payment sync to external server failed', { response: syncResult.data });
+        }
+      } catch (syncError) {
+        syncStatus = 'error';
+        syncResponse = syncError instanceof Error ? syncError.message : String(syncError);
+        syncedAt = new Date().toISOString();
+        logStep('Error syncing payment to external server', { error: syncResponse });
+        // Don't throw - we don't want to fail the webhook if sync fails
+      }
+
       // Log the assigned account for now (in the future, send email)
       if (assignedAccountData) {
         logStep("Account data to be sent to user", { 
@@ -244,13 +331,18 @@ serve(async (req) => {
       }
     }
 
-    // Mark event as processed
+    // Mark event as processed and update sync status
     await supabaseAdmin
       .from("stripe_events")
-      .update({ processed: true })
+      .update({ 
+        processed: true,
+        sync_status: syncStatus,
+        sync_response: syncResponse,
+        synced_at: syncedAt,
+      })
       .eq("event_id", event.id);
 
-    logStep("Event marked as processed");
+    logStep("Event marked as processed", { syncStatus });
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
