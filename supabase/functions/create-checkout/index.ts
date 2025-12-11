@@ -12,6 +12,21 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
+interface CouponData {
+  coupon_id: string;
+  code: string;
+  name: string;
+  description: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  is_active: boolean;
+  product_id: string;
+  affiliate_id: string;
+  affiliate_name: string;
+  affiliate_avatar_url: string;
+  custom_code: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -41,10 +56,10 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { priceId, planId, purchaseType } = await req.json();
+    const { priceId, planId, purchaseType, couponCode } = await req.json();
     if (!priceId || !planId) throw new Error("priceId and planId are required");
     if (!purchaseType) throw new Error("purchaseType is required");
-    logStep("Request body parsed", { priceId, planId, purchaseType });
+    logStep("Request body parsed", { priceId, planId, purchaseType, couponCode });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -56,9 +71,77 @@ serve(async (req) => {
       logStep("Found existing customer", { customerId });
     }
 
+    // Coupon handling
+    let couponMetadata: {
+      coupon_id: string | null;
+      coupon_code: string | null;
+      affiliate_id: string | null;
+      affiliate_product_id: string | null;
+    } = {
+      coupon_id: null,
+      coupon_code: null,
+      affiliate_id: null,
+      affiliate_product_id: null,
+    };
+    let stripeCouponId: string | null = null;
+
+    if (couponCode) {
+      logStep("Validating coupon", { couponCode });
+      
+      try {
+        const couponResponse = await fetch(
+          'https://adpnzkvzvjbervzrqhhx.supabase.co/rest/v1/rpc/validate_coupon',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NTk1NTUsImV4cCI6MjA3NDIzNTU1NX0.MxL8GBrfaD7GZ2S_mFJFblWEt5xhANm27pYSAF-w6e8',
+            },
+            body: JSON.stringify({ p_code: couponCode }),
+          }
+        );
+        
+        const couponData: CouponData = await couponResponse.json();
+        logStep("Coupon API response", { couponData });
+
+        if (couponData && couponData.coupon_id && couponData.is_active) {
+          // Try to retrieve existing Stripe coupon or create new one
+          try {
+            const existingCoupon = await stripe.coupons.retrieve(couponData.coupon_id);
+            stripeCouponId = existingCoupon.id;
+            logStep("Found existing Stripe coupon", { stripeCouponId });
+          } catch {
+            // Coupon doesn't exist in Stripe, create it
+            const newCoupon = await stripe.coupons.create({
+              id: couponData.coupon_id,
+              percent_off: couponData.type === 'percentage' ? couponData.value : undefined,
+              amount_off: couponData.type === 'fixed' ? couponData.value * 100 : undefined,
+              currency: couponData.type === 'fixed' ? 'brl' : undefined,
+              name: couponData.name,
+            });
+            stripeCouponId = newCoupon.id;
+            logStep("Created new Stripe coupon", { stripeCouponId });
+          }
+
+          couponMetadata = {
+            coupon_id: couponData.coupon_id,
+            coupon_code: couponData.custom_code || couponData.code,
+            affiliate_id: couponData.affiliate_id,
+            affiliate_product_id: couponData.product_id,
+          };
+          logStep("Coupon metadata set", couponMetadata);
+        } else {
+          logStep("Coupon not valid or not active", { couponData });
+        }
+      } catch (couponError) {
+        logStep("Error validating coupon", { error: String(couponError) });
+        // Continue without coupon if validation fails
+      }
+    }
+
     const origin = req.headers.get("origin") || "https://lovableproject.com";
     
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -74,8 +157,20 @@ serve(async (req) => {
         user_id: user.id,
         plan_id: planId,
         purchase_type: purchaseType,
+        coupon_id: couponMetadata.coupon_id,
+        coupon_code: couponMetadata.coupon_code,
+        affiliate_id: couponMetadata.affiliate_id,
+        affiliate_product_id: couponMetadata.affiliate_product_id,
       },
-    });
+    };
+
+    // Add discount if coupon is valid
+    if (stripeCouponId) {
+      sessionConfig.discounts = [{ coupon: stripeCouponId }];
+      logStep("Discount applied to session", { stripeCouponId });
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     logStep("Checkout session created", { sessionId: session.id });
 

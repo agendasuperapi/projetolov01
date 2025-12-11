@@ -4,11 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Zap, Shield, Download, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Sparkles, Zap, Shield, Download, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw, Check, Tag, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
 import PlanCard from '@/components/PlanCard';
 import WaveDivider from '@/components/WaveDivider';
+
 const AdminEditButton = ({ section }: { section: string }) => (
   <Link 
     to={`/admin?edit=${section}`}
@@ -43,6 +45,21 @@ interface CreditPlan {
 
 interface PlanWithAvailability extends CreditPlan {
   availableAccounts: number;
+}
+
+interface CouponData {
+  coupon_id: string;
+  code: string;
+  name: string;
+  description: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  is_active: boolean;
+  product_id: string;
+  affiliate_id: string;
+  affiliate_name: string;
+  affiliate_avatar_url: string;
+  custom_code: string;
 }
 
 interface HeroContent {
@@ -90,6 +107,12 @@ export default function Index() {
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState<{ plan: PlanWithAvailability; type: 'recharge' | 'new_account' } | null>(null);
+  
+  // Coupon states
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -192,6 +215,49 @@ export default function Index() {
     }
   }, [user, newAccountPlans, rechargePlans, pendingPurchase]);
 
+  const validateCoupon = async () => {
+    if (!couponInput.trim()) {
+      toast({ title: 'Digite um código de cupom', variant: 'destructive' });
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      const response = await fetch(
+        'https://adpnzkvzvjbervzrqhhx.supabase.co/rest/v1/rpc/validate_coupon',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NTk1NTUsImV4cCI6MjA3NDIzNTU1NX0.MxL8GBrfaD7GZ2S_mFJFblWEt5xhANm27pYSAF-w6e8',
+          },
+          body: JSON.stringify({ p_code: couponInput.trim() }),
+        }
+      );
+      const data: CouponData = await response.json();
+
+      if (data && data.coupon_id && data.is_active) {
+        setAppliedCoupon(data);
+        setCouponInput('');
+        toast({ 
+          title: 'Cupom aplicado!', 
+          description: `${data.name} - ${data.type === 'percentage' ? `${data.value}% OFF` : `R$ ${(data.value).toFixed(2)} OFF`}` 
+        });
+      } else {
+        toast({ title: 'Cupom inválido ou expirado', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Erro ao validar cupom', variant: 'destructive' });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    toast({ title: 'Cupom removido' });
+  };
+
   const processPurchase = async (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
     setPurchaseLoading(plan.id);
 
@@ -201,6 +267,7 @@ export default function Index() {
           priceId: plan.stripe_price_id, 
           planId: plan.id,
           purchaseType: type,
+          couponCode: appliedCoupon?.custom_code || appliedCoupon?.code || null,
         },
       });
 
@@ -384,6 +451,65 @@ export default function Index() {
         }}
       >
         <div className="container mx-auto px-4">
+          {/* Campo de Cupom */}
+          <div className="max-w-md mx-auto mb-8">
+            {appliedCoupon ? (
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {appliedCoupon.affiliate_avatar_url && (
+                      <img 
+                        src={appliedCoupon.affiliate_avatar_url} 
+                        alt={appliedCoupon.affiliate_name}
+                        className="w-10 h-10 rounded-full border-2 border-white/30"
+                      />
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-green-400" />
+                        <span className="font-semibold text-white">{appliedCoupon.name}</span>
+                      </div>
+                      <p className="text-sm text-white/70">
+                        {appliedCoupon.type === 'percentage' 
+                          ? `${appliedCoupon.value}% de desconto` 
+                          : `R$ ${appliedCoupon.value.toFixed(2)} de desconto`}
+                        {appliedCoupon.affiliate_name && ` • Cupom de ${appliedCoupon.affiliate_name}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={removeCoupon}
+                    className="text-white/70 hover:text-white hover:bg-white/10"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                  <Input
+                    placeholder="Código do cupom"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === 'Enter' && validateCoupon()}
+                    className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40"
+                  />
+                </div>
+                <Button 
+                  onClick={validateCoupon}
+                  disabled={couponLoading}
+                  className="bg-white/20 hover:bg-white/30 text-white border border-white/20"
+                >
+                  {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Aplicar'}
+                </Button>
+              </div>
+            )}
+          </div>
+
           {/* Botões de navegação */}
           <div className="flex justify-center gap-4 mb-12">
             <a href="#new-account-plans">
