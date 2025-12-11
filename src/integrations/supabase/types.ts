@@ -294,6 +294,9 @@ export type Database = {
         Row: {
           affiliate_coupon_id: string | null
           affiliate_id: string | null
+          amount_discount: number | null
+          amount_subtotal: number | null
+          amount_total: number | null
           created_at: string | null
           email: string | null
           environment: string | null
@@ -309,6 +312,9 @@ export type Database = {
         Insert: {
           affiliate_coupon_id?: string | null
           affiliate_id?: string | null
+          amount_discount?: number | null
+          amount_subtotal?: number | null
+          amount_total?: number | null
           created_at?: string | null
           email?: string | null
           environment?: string | null
@@ -324,6 +330,9 @@ export type Database = {
         Update: {
           affiliate_coupon_id?: string | null
           affiliate_id?: string | null
+          amount_discount?: number | null
+          amount_subtotal?: number | null
+          amount_total?: number | null
           created_at?: string | null
           email?: string | null
           environment?: string | null
