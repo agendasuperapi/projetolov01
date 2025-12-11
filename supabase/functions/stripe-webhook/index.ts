@@ -67,6 +67,11 @@ serve(async (req) => {
     const metadata = eventObject.metadata || {};
     const eventEmail = metadata.user_email || eventObject.customer_email || eventObject.email || null;
 
+    // Extract amount fields from event object (available in checkout sessions)
+    const amountSubtotal = eventObject.amount_subtotal ?? null;
+    const amountTotal = eventObject.amount_total ?? null;
+    const totalDiscount = eventObject.total_details?.amount_discount ?? null;
+
     // Insert event into stripe_events table
     const { error: eventInsertError } = await supabaseAdmin
       .from("stripe_events")
@@ -81,6 +86,9 @@ serve(async (req) => {
         environment: environment,
         affiliate_id: metadata.affiliate_id || null,
         affiliate_coupon_id: metadata.coupon_id || null,
+        amount_subtotal: amountSubtotal,
+        amount_discount: totalDiscount,
+        amount_total: amountTotal,
         processed: false,
       });
 
