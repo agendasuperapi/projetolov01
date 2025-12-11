@@ -290,6 +290,54 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_events: {
+        Row: {
+          affiliate_coupon_id: string | null
+          affiliate_id: string | null
+          created_at: string | null
+          email: string | null
+          environment: string | null
+          event_data: Json
+          event_id: string
+          event_type: string
+          id: string
+          plan_id: string | null
+          processed: boolean | null
+          product_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_coupon_id?: string | null
+          affiliate_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          environment?: string | null
+          event_data: Json
+          event_id: string
+          event_type: string
+          id?: string
+          plan_id?: string | null
+          processed?: boolean | null
+          product_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_coupon_id?: string | null
+          affiliate_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          environment?: string | null
+          event_data?: Json
+          event_id?: string
+          event_type?: string
+          id?: string
+          plan_id?: string | null
+          processed?: boolean | null
+          product_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
