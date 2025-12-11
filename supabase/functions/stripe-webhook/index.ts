@@ -17,25 +17,40 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Helper function to sync payment to external server
-const syncPaymentToExternal = async (paymentData: {
-  external_payment_id: string;
-  external_user_id: string;
-  product_id: string;
-  plan_id: string | null;
-  amount: number;
-  billing_reason: string;
-  status: string;
-  affiliate_id: string | null;
-  affiliate_coupon_id: string | null;
-  environment: string;
+// Helper function to sync user and payment to external server
+const syncBothToExternal = async (data: {
+  user: {
+    external_user_id: string;
+    product_id: string;
+    email: string;
+    name: string;
+    phone: string;
+    affiliate_id: string | null;
+    affiliate_code: string | null;
+  };
+  payment: {
+    external_payment_id: string;
+    external_user_id: string;
+    product_id: string;
+    plan_id: string | null;
+    amount: number;
+    billing_reason: string;
+    status: string;
+    affiliate_id: string | null;
+    affiliate_coupon_id: string | null;
+    environment: string;
+  };
 }) => {
   const syncPayload = {
-    action: 'sync_payment',
-    payment: paymentData
+    action: 'sync_both',
+    user: data.user,
+    payment: data.payment
   };
 
-  logStep('Syncing payment to external server', { external_payment_id: paymentData.external_payment_id });
+  logStep('Syncing user and payment to external server', { 
+    external_user_id: data.user.external_user_id,
+    external_payment_id: data.payment.external_payment_id 
+  });
 
   const response = await fetch(EXTERNAL_SYNC_URL, {
     method: 'POST',
@@ -54,7 +69,7 @@ const syncPaymentToExternal = async (paymentData: {
     responseData = { raw: responseText };
   }
 
-  logStep('External payment sync response', { status: response.status, response: responseData });
+  logStep('External sync response', { status: response.status, response: responseData });
 
   return { ok: response.ok, data: responseData };
 };
@@ -189,7 +204,7 @@ serve(async (req) => {
       // Get current user credits
       const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .select("credits, email")
+        .select("credits, email, name, phone")
         .eq("id", userId)
         .single();
 
@@ -288,7 +303,7 @@ serve(async (req) => {
         logStep("Transaction recorded successfully");
       }
 
-      // Sync payment to external server
+      // Sync user and payment to external server
       try {
         const amountInReais = (session.amount_total || plan.price_cents) / 100;
         
@@ -298,18 +313,30 @@ serve(async (req) => {
         // Ensure affiliate fields are proper UUIDs or null (empty strings cause type errors)
         const affiliateId = metadata.affiliate_id && metadata.affiliate_id.trim() !== '' ? metadata.affiliate_id : null;
         const affiliateCouponId = metadata.coupon_id && metadata.coupon_id.trim() !== '' ? metadata.coupon_id : null;
+        const affiliateCode = metadata.coupon_code && metadata.coupon_code.trim() !== '' ? metadata.coupon_code : null;
         
-        const syncResult = await syncPaymentToExternal({
-          external_payment_id: externalPaymentId,
-          external_user_id: userId,
-          product_id: PRODUCT_ID,
-          plan_id: planId,
-          amount: amountInReais,
-          billing_reason: 'one_time_purchase',
-          status: 'paid',
-          affiliate_id: affiliateId,
-          affiliate_coupon_id: affiliateCouponId,
-          environment: environment,
+        const syncResult = await syncBothToExternal({
+          user: {
+            external_user_id: userId,
+            product_id: PRODUCT_ID,
+            email: profile?.email || '',
+            name: profile?.name || '',
+            phone: profile?.phone || '',
+            affiliate_id: affiliateId,
+            affiliate_code: affiliateCode,
+          },
+          payment: {
+            external_payment_id: externalPaymentId,
+            external_user_id: userId,
+            product_id: PRODUCT_ID,
+            plan_id: planId,
+            amount: amountInReais,
+            billing_reason: 'one_time_purchase',
+            status: 'paid',
+            affiliate_id: affiliateId,
+            affiliate_coupon_id: affiliateCouponId,
+            environment: environment,
+          }
         });
 
         syncStatus = syncResult.ok ? 'synced' : 'error';
@@ -317,15 +344,15 @@ serve(async (req) => {
         syncedAt = new Date().toISOString();
 
         if (syncResult.ok) {
-          logStep('Payment synced to external server successfully');
+          logStep('User and payment synced to external server successfully');
         } else {
-          logStep('Payment sync to external server failed', { response: syncResult.data });
+          logStep('Sync to external server failed', { response: syncResult.data });
         }
       } catch (syncError) {
         syncStatus = 'error';
         syncResponse = syncError instanceof Error ? syncError.message : String(syncError);
         syncedAt = new Date().toISOString();
-        logStep('Error syncing payment to external server', { error: syncResponse });
+        logStep('Error syncing to external server', { error: syncResponse });
         // Don't throw - we don't want to fail the webhook if sync fails
       }
 
