@@ -472,6 +472,8 @@ export default function Index() {
           setPendingPurchase(null);
         }}
         onSuccess={handleAuthSuccess}
+        planId={pendingPurchase?.plan?.id}
+        priceId={pendingPurchase?.plan?.stripe_price_id || undefined}
       />
 
       {/* Footer */}

@@ -24,9 +24,11 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  planId?: string;
+  priceId?: string;
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -81,7 +83,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { name: name.trim(), phone: phone.trim() },
+            data: { 
+              name: name.trim(), 
+              phone: phone.trim(),
+              planId: planId || null,
+              priceId: priceId || null
+            },
           },
         });
 
