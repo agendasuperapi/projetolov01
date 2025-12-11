@@ -17,8 +17,9 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Helper function to sync user and payment to external server
-const syncBothToExternal = async (data: {
+// Type for sync payload
+interface SyncPayload {
+  action: string;
   user: {
     external_user_id: string;
     product_id: string;
@@ -40,22 +41,17 @@ const syncBothToExternal = async (data: {
     affiliate_coupon_id: string | null;
     environment: string;
   };
-}) => {
-  const syncPayload = {
-    action: 'sync_both',
-    user: data.user,
-    payment: data.payment
-  };
+}
 
+// Helper function to sync user and payment to external server
+const syncBothToExternal = async (syncPayload: SyncPayload) => {
   logStep('========== SYNC PAYLOAD DEBUG ==========');
   logStep('Full sync payload being sent:', JSON.stringify(syncPayload, null, 2));
-  logStep('User data:', JSON.stringify(data.user, null, 2));
-  logStep('Payment data:', JSON.stringify(data.payment, null, 2));
   logStep('==========================================');
   
   logStep('Syncing user and payment to external server', { 
-    external_user_id: data.user.external_user_id,
-    external_payment_id: data.payment.external_payment_id 
+    external_user_id: syncPayload.user.external_user_id,
+    external_payment_id: syncPayload.payment.external_payment_id 
   });
 
   const response = await fetch(EXTERNAL_SYNC_URL, {
@@ -77,7 +73,7 @@ const syncBothToExternal = async (data: {
 
   logStep('External sync response', { status: response.status, response: responseData });
 
-  return { ok: response.ok, data: responseData };
+  return { ok: response.ok, data: responseData, payload: syncPayload };
 };
 
 serve(async (req) => {
@@ -171,6 +167,7 @@ serve(async (req) => {
     let syncStatus = 'pending';
     let syncResponse: string | null = null;
     let syncedAt: string | null = null;
+    let savedSyncPayload: SyncPayload | null = null;
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -321,7 +318,8 @@ serve(async (req) => {
         const affiliateCouponId = metadata.coupon_id && metadata.coupon_id.trim() !== '' ? metadata.coupon_id : null;
         const affiliateCode = metadata.coupon_code && metadata.coupon_code.trim() !== '' ? metadata.coupon_code : null;
         
-        const syncResult = await syncBothToExternal({
+        const syncPayload: SyncPayload = {
+          action: 'sync_both',
           user: {
             external_user_id: userId,
             product_id: PRODUCT_ID,
@@ -343,8 +341,11 @@ serve(async (req) => {
             affiliate_coupon_id: affiliateCouponId,
             environment: environment,
           }
-        });
+        };
 
+        const syncResult = await syncBothToExternal(syncPayload);
+
+        savedSyncPayload = syncPayload;
         syncStatus = syncResult.ok ? 'synced' : 'error';
         syncResponse = JSON.stringify(syncResult.data);
         syncedAt = new Date().toISOString();
@@ -378,6 +379,7 @@ serve(async (req) => {
         processed: true,
         sync_status: syncStatus,
         sync_response: syncResponse,
+        sync_payload: savedSyncPayload,
         synced_at: syncedAt,
       })
       .eq("event_id", event.id);

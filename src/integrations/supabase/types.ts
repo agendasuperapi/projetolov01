@@ -323,6 +323,7 @@ export type Database = {
           plan_id: string | null
           processed: boolean | null
           product_id: string | null
+          sync_payload: Json | null
           sync_response: string | null
           sync_status: string | null
           synced_at: string | null
@@ -344,6 +345,7 @@ export type Database = {
           plan_id?: string | null
           processed?: boolean | null
           product_id?: string | null
+          sync_payload?: Json | null
           sync_response?: string | null
           sync_status?: string | null
           synced_at?: string | null
@@ -365,6 +367,7 @@ export type Database = {
           plan_id?: string | null
           processed?: boolean | null
           product_id?: string | null
+          sync_payload?: Json | null
           sync_response?: string | null
           sync_status?: string | null
           synced_at?: string | null
