@@ -237,7 +237,9 @@ export default function Index() {
           }),
         }
       );
-      const data: CouponData = await response.json();
+      const responseData = await response.json();
+      // API returns an array, get the first item
+      const data: CouponData | null = Array.isArray(responseData) ? responseData[0] : responseData;
 
       if (data && data.coupon_id && data.is_active) {
         setAppliedCoupon(data);
