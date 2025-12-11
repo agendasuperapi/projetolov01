@@ -295,6 +295,10 @@ serve(async (req) => {
         // Generate a UUID for external_payment_id (external server expects UUID, not Stripe session ID)
         const externalPaymentId = crypto.randomUUID();
         
+        // Ensure affiliate fields are proper UUIDs or null (empty strings cause type errors)
+        const affiliateId = metadata.affiliate_id && metadata.affiliate_id.trim() !== '' ? metadata.affiliate_id : null;
+        const affiliateCouponId = metadata.coupon_id && metadata.coupon_id.trim() !== '' ? metadata.coupon_id : null;
+        
         const syncResult = await syncPaymentToExternal({
           external_payment_id: externalPaymentId,
           external_user_id: userId,
@@ -303,8 +307,8 @@ serve(async (req) => {
           amount: amountInReais,
           billing_reason: 'one_time_purchase',
           status: 'paid',
-          affiliate_id: metadata.affiliate_id || null,
-          affiliate_coupon_id: metadata.coupon_id || null,
+          affiliate_id: affiliateId,
+          affiliate_coupon_id: affiliateCouponId,
           environment: environment,
         });
 
