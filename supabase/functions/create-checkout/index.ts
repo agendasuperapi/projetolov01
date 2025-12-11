@@ -104,7 +104,9 @@ serve(async (req) => {
           }
         );
         
-        const couponData: CouponData = await couponResponse.json();
+        const responseData = await couponResponse.json();
+        // API returns an array, get the first item
+        const couponData: CouponData | null = Array.isArray(responseData) ? responseData[0] : responseData;
         logStep("Coupon API response", { couponData });
 
         if (couponData && couponData.coupon_id && couponData.is_active) {
