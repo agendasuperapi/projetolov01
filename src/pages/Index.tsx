@@ -501,7 +501,7 @@ export default function Index() {
                       <img 
                         src={appliedCoupon.affiliate_avatar_url} 
                         alt={appliedCoupon.affiliate_name}
-                        className="w-12 h-12 rounded-full border-2 border-white/30"
+                        className="w-16 h-16 rounded-full border-2 border-white/30"
                       />
                     )}
                     <div className="space-y-1">
