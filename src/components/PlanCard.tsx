@@ -67,7 +67,7 @@ export default function PlanCard({
     : `Recarregue +${credits} créditos na sua conta`;
 
   return (
-    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card border-border w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] max-w-[280px] ${isDisabled ? 'opacity-60' : ''} ${hasCouponDiscount ? 'ring-2 ring-emerald-500/50' : ''}`}>
+    <Card className={`relative overflow-hidden transition-all duration-500 ease-out hover:shadow-lg hover:-translate-y-1 bg-card border-border w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] max-w-[280px] ${isDisabled ? 'opacity-60' : ''} ${hasCouponDiscount ? 'ring-2 ring-emerald-500/50 shadow-emerald-500/20 shadow-lg scale-[1.02]' : ''}`}>
       {/* Coupon indicator */}
       {hasCouponDiscount && (
         <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] md:text-xs font-medium px-2 py-0.5 rounded-bl-lg flex items-center gap-1">
