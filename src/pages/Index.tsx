@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -99,6 +99,8 @@ interface FooterContent {
 
 export default function Index() {
   const { user, profile, isAdmin, signOut, loading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [newAccountPlans, setNewAccountPlans] = useState<PlanWithAvailability[]>([]);
   const [rechargePlans, setRechargePlans] = useState<PlanWithAvailability[]>([]);
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
@@ -120,6 +122,30 @@ export default function Index() {
     fetchPlans();
     fetchContent();
   }, []);
+
+  // Handle coupon from URL navigation
+  useEffect(() => {
+    const state = location.state as { couponData?: CouponData } | null;
+    if (state?.couponData) {
+      setAppliedCoupon(state.couponData);
+      
+      // Trigger confetti animation
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#06b6d4', '#22c55e', '#14b8a6']
+      });
+      
+      toast({ 
+        title: 'Cupom aplicado!', 
+        description: `${state.couponData.name} - ${state.couponData.type === 'percentage' ? `${state.couponData.value}% OFF` : `R$ ${state.couponData.value.toFixed(2)} OFF`}` 
+      });
+      
+      // Clear the state to prevent re-applying on refresh
+      navigate('/', { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   const fetchPlans = async () => {
     const { data: plansData } = await supabase
@@ -169,8 +195,6 @@ export default function Index() {
       });
     }
   };
-
-  const navigate = useNavigate();
 
   const handleBuyNewAccount = (plan: PlanWithAvailability) => {
     if (!plan.stripe_price_id || plan.price_cents === 0) {
