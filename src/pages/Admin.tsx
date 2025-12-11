@@ -10,12 +10,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
 import AccountsManager from '@/components/admin/AccountsManager';
 import RechargeManager from '@/components/admin/RechargeManager';
 import StripeEventsManager from '@/components/admin/StripeEventsManager';
+import UsersManager from '@/components/admin/UsersManager';
 interface CreditPlan {
   id: string;
   name: string;
@@ -248,7 +249,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue={editSection ? 'content' : 'plans'} className="space-y-8">
-          <TabsList className="grid w-full max-w-5xl grid-cols-7">
+          <TabsList className="grid w-full max-w-6xl grid-cols-8">
             <TabsTrigger value="plans" className="gap-2">
               <DollarSign className="w-4 h-4" />
               Conta Nova
@@ -273,6 +274,10 @@ export default function Admin() {
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <UserCheck className="w-4 h-4" />
+              Usuários
+            </TabsTrigger>
             <TabsTrigger value="transactions" className="gap-2">
               <Users className="w-4 h-4" />
               Transações
@@ -286,6 +291,7 @@ export default function Admin() {
               Conteúdo
             </TabsTrigger>
           </TabsList>
+
 
           {/* Plans Tab - New Account */}
           <TabsContent value="plans" className="space-y-6">
@@ -620,6 +626,11 @@ export default function Admin() {
           {/* Stripe Events Tab */}
           <TabsContent value="stripe-events" className="space-y-6">
             <StripeEventsManager />
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <UsersManager />
           </TabsContent>
 
           {/* Content Editor Tab */}
