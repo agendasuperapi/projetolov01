@@ -341,6 +341,7 @@ export default function Index() {
         <WaveDivider 
           topColor="transparent" 
           bottomColor="hsl(var(--card))" 
+          intensity="high"
         />
       </section>
 
@@ -458,6 +459,7 @@ export default function Index() {
         <WaveDivider 
           topColor="transparent" 
           bottomColor="hsl(var(--card))" 
+          intensity="high"
         />
       </section>
 
