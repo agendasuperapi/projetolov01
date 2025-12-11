@@ -206,7 +206,12 @@ export default function Index() {
 
       if (error) throw error;
       if (data?.url) {
-        window.location.href = data.url;
+        const isDevelopment = window.location.hostname.includes('lovable') || window.location.hostname === 'localhost';
+        if (isDevelopment) {
+          window.open(data.url, '_blank');
+        } else {
+          window.location.href = data.url;
+        }
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento.';
