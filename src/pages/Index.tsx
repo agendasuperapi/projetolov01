@@ -8,6 +8,7 @@ import { Sparkles, Zap, Shield, Download, ArrowRight, User, Settings, Pencil, St
 import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
 import PlanCard from '@/components/PlanCard';
+import WaveDivider from '@/components/WaveDivider';
 const AdminEditButton = ({ section }: { section: string }) => (
   <Link 
     to={`/admin?edit=${section}`}
@@ -337,10 +338,14 @@ export default function Index() {
           </div>
         </div>
         {isAdmin && <AdminEditButton section="hero" />}
+        <WaveDivider 
+          topColor="transparent" 
+          bottomColor="hsl(var(--card))" 
+        />
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-card relative group transition-all duration-500">
+      <section className="py-20 bg-card relative group transition-all duration-500" style={{ marginTop: '-1px' }}>
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             {featuresData.map((feature, index) => {
@@ -369,7 +374,7 @@ export default function Index() {
         id="plans" 
         className="py-20 relative group"
         style={{
-          background: 'linear-gradient(180deg, hsl(230, 50%, 10%) 0%, hsl(230, 70%, 25%) 25%, hsl(260, 60%, 50%) 50%, hsl(330, 80%, 55%) 75%, hsl(20, 90%, 55%) 100%)'
+          background: 'linear-gradient(180deg, hsl(var(--card)) 0%, hsl(230, 70%, 25%) 15%, hsl(260, 60%, 50%) 50%, hsl(330, 80%, 55%) 75%, hsl(20, 90%, 55%) 100%)'
         }}
       >
         <div className="container mx-auto px-4">
@@ -450,6 +455,10 @@ export default function Index() {
           </div>
         </div>
         {isAdmin && <AdminEditButton section="plans" />}
+        <WaveDivider 
+          topColor="transparent" 
+          bottomColor="hsl(var(--card))" 
+        />
       </section>
 
 
