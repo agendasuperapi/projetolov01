@@ -260,7 +260,45 @@ export default function Index() {
     };
 
     initializeCoupon();
-  }, [location.state, user, couponInitialized]);
+  }, [location.state, couponInitialized]);
+
+  // Sync localStorage coupon to profile when user logs in
+  useEffect(() => {
+    const syncCouponToProfile = async () => {
+      if (!user) return;
+
+      const storedCoupon = localStorage.getItem(COUPON_STORAGE_KEY);
+      if (!storedCoupon) return;
+
+      try {
+        const parsed = JSON.parse(storedCoupon);
+        if (parsed.custom_code) {
+          // Check if profile already has a coupon
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('last_coupon_code')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          // Only sync if profile doesn't have a coupon yet
+          if (!profileData?.last_coupon_code) {
+            await supabase
+              .from('profiles')
+              .update({
+                last_coupon_code: parsed.custom_code,
+                last_affiliate_id: parsed.affiliate_id || null,
+                last_affiliate_coupon_id: parsed.affiliate_coupon_id || null
+              })
+              .eq('id', user.id);
+          }
+        }
+      } catch (e) {
+        console.error('Error syncing coupon to profile:', e);
+      }
+    };
+
+    syncCouponToProfile();
+  }, [user]);
 
   const fetchPlans = async () => {
     const { data: plansData } = await supabase
