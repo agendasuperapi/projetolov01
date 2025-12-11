@@ -29,6 +29,7 @@ interface StripeEvent {
   affiliate_coupon_id: string | null;
   sync_status: string | null;
   sync_response: string | null;
+  sync_payload: any | null;
   synced_at: string | null;
 }
 
@@ -668,6 +669,15 @@ export default function StripeEventsManager() {
                       </div>
                     )}
                   </div>
+
+                  {selectedEvent.sync_payload && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Payload de Sincronização</p>
+                      <pre className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-xs overflow-auto max-h-[200px]">
+                        {JSON.stringify(selectedEvent.sync_payload, null, 2)}
+                      </pre>
+                    </div>
+                  )}
 
                   {selectedEvent.sync_response && (
                     <div>
