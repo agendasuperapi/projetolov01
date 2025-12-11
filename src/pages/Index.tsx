@@ -59,6 +59,7 @@ interface CouponData {
   product_id: string;
   affiliate_id: string;
   affiliate_name: string;
+  affiliate_username: string;
   affiliate_avatar_url: string;
   custom_code: string;
 }
@@ -500,20 +501,22 @@ export default function Index() {
                       <img 
                         src={appliedCoupon.affiliate_avatar_url} 
                         alt={appliedCoupon.affiliate_name}
-                        className="w-10 h-10 rounded-full border-2 border-white/30"
+                        className="w-12 h-12 rounded-full border-2 border-white/30"
                       />
                     )}
-                    <div>
+                    <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Tag className="w-4 h-4 text-green-400" />
-                        <span className="font-semibold text-white">{appliedCoupon.name}</span>
+                        <span className="font-bold text-white">{appliedCoupon.custom_code}</span>
                       </div>
-                      <p className="text-sm text-white/70">
-                        {appliedCoupon.type === 'percentage' 
-                          ? `${appliedCoupon.value}% de desconto` 
-                          : `R$ ${appliedCoupon.value.toFixed(2)} de desconto`}
-                        {appliedCoupon.affiliate_name && ` • Cupom de ${appliedCoupon.affiliate_name}`}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-yellow-400" />
+                        <span className="text-sm text-white/90">{appliedCoupon.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-cyan-400" />
+                        <span className="text-sm text-white/70">@{appliedCoupon.affiliate_username}</span>
+                      </div>
                     </div>
                   </div>
                   <Button 
