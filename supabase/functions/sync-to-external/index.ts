@@ -27,7 +27,9 @@ serve(async (req) => {
       throw new Error('user_id is required');
     }
 
-    console.log('Syncing user to external server:', user_id);
+    console.log('=== SYNC-TO-EXTERNAL ===');
+    console.log('User ID:', user_id);
+    console.log('Timestamp:', new Date().toISOString());
 
     // Buscar dados do usuário
     const { data: profile, error: profileError } = await supabase
@@ -74,7 +76,7 @@ serve(async (req) => {
       }
     };
 
-    console.log('Sync payload:', JSON.stringify(syncPayload));
+    console.log('Sync payload:', JSON.stringify(syncPayload, null, 2));
 
     // Chamar edge function externa
     const externalResponse = await fetch(EXTERNAL_SYNC_URL, {

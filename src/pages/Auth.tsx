@@ -56,6 +56,20 @@ export default function Auth() {
           toast({ title: 'Erro', description: error.message, variant: 'destructive' });
         }
       } else {
+        // Get the newly created user and sync to external server
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          try {
+            console.log('Auth.tsx: Syncing new user to external server:', user.id);
+            await supabase.functions.invoke('sync-to-external', {
+              body: { user_id: user.id }
+            });
+          } catch (syncError) {
+            console.error('Auth.tsx: Failed to sync user to external server:', syncError);
+            // Don't block signup flow if sync fails
+          }
+        }
+        
         toast({ title: 'Sucesso!', description: 'Conta criada! Verifique seu email para confirmar.' });
         navigate('/');
       }
