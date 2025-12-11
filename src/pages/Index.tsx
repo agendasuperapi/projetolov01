@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
 import PlanCard from '@/components/PlanCard';
 import WaveDivider from '@/components/WaveDivider';
+import confetti from 'canvas-confetti';
 
 const AdminEditButton = ({ section }: { section: string }) => (
   <Link 
@@ -244,6 +245,15 @@ export default function Index() {
       if (data && data.coupon_id && data.is_active) {
         setAppliedCoupon(data);
         setCouponInput('');
+        
+        // Trigger confetti animation
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#10b981', '#06b6d4', '#22c55e', '#14b8a6']
+        });
+        
         toast({ 
           title: 'Cupom aplicado!', 
           description: `${data.name} - ${data.type === 'percentage' ? `${data.value}% OFF` : `R$ ${(data.value).toFixed(2)} OFF`}` 
