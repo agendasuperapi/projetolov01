@@ -292,8 +292,11 @@ serve(async (req) => {
       try {
         const amountInReais = (session.amount_total || plan.price_cents) / 100;
         
+        // Generate a UUID for external_payment_id (external server expects UUID, not Stripe session ID)
+        const externalPaymentId = crypto.randomUUID();
+        
         const syncResult = await syncPaymentToExternal({
-          external_payment_id: session.id,
+          external_payment_id: externalPaymentId,
           external_user_id: userId,
           product_id: PRODUCT_ID,
           plan_id: planId,
