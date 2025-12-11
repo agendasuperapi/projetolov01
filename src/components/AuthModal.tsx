@@ -78,7 +78,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId 
         toast({ title: 'Bem-vindo!', description: 'Login realizado com sucesso.' });
         onSuccess();
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
@@ -100,6 +100,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId 
           }
           setLoading(false);
           return;
+        }
+
+        // Sincronizar usuário com servidor externo
+        if (signUpData.user) {
+          try {
+            await supabase.functions.invoke('sync-to-external', {
+              body: { user_id: signUpData.user.id }
+            });
+            console.log('User synced to external server');
+          } catch (syncError) {
+            console.error('Error syncing to external server:', syncError);
+          }
         }
 
         toast({ title: 'Conta criada!', description: 'Cadastro realizado com sucesso.' });
