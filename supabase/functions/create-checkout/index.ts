@@ -21,6 +21,7 @@ interface CouponData {
   value: number;
   is_active: boolean;
   product_id: string;
+  affiliate_coupon_id: string;
   affiliate_id: string;
   affiliate_name: string;
   affiliate_avatar_url: string;
@@ -129,7 +130,7 @@ serve(async (req) => {
           }
 
           couponMetadata = {
-            coupon_id: couponData.coupon_id,
+            coupon_id: couponData.affiliate_coupon_id,
             coupon_code: couponData.custom_code || couponData.code,
             affiliate_id: couponData.affiliate_id,
             affiliate_product_id: couponData.product_id,
