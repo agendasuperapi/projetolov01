@@ -57,6 +57,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accounts_used_by_fkey"
+            columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "view_users_with_roles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       credit_plans: {
@@ -388,7 +395,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      view_users_with_roles: {
+        Row: {
+          created_at: string | null
+          credits: number | null
+          email: string | null
+          id: string | null
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          sync_response: string | null
+          sync_status: string | null
+          synced_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_available_accounts_count: {
