@@ -38,6 +38,7 @@ interface Stats {
   failed: number;
   expired: number;
   production: number;
+  needsAttention: number;
 }
 
 const EVENT_TYPES = [
@@ -64,7 +65,8 @@ export default function StripeEventsManager() {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<StripeEvent | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [stats, setStats] = useState<Stats>({ total: 0, success: 0, failed: 0, expired: 0, production: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, success: 0, failed: 0, expired: 0, production: 0, needsAttention: 0 });
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [retrying, setRetrying] = useState<string | null>(null);
@@ -81,6 +83,17 @@ export default function StripeEventsManager() {
 
   const buildQuery = useCallback(() => {
     let query = supabase.from('stripe_events').select('*', { count: 'exact' });
+
+    // Quick filter takes precedence
+    if (activeQuickFilter === 'expired') {
+      query = query.ilike('event_type', '%expired%');
+      return query;
+    }
+    
+    if (activeQuickFilter === 'needsAttention') {
+      query = query.ilike('event_type', '%failed%').or('sync_status.eq.error,sync_status.eq.pending');
+      return query;
+    }
 
     if (filters.eventType !== 'all') {
       query = query.eq('event_type', filters.eventType);
@@ -107,7 +120,7 @@ export default function StripeEventsManager() {
     }
 
     return query;
-  }, [filters]);
+  }, [filters, activeQuickFilter]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -181,12 +194,20 @@ export default function StripeEventsManager() {
         .select('*', { count: 'exact', head: true })
         .eq('environment', 'production');
 
+      // Events that need attention (failed + not synced)
+      const { count: needsAttention } = await supabase
+        .from('stripe_events')
+        .select('*', { count: 'exact', head: true })
+        .ilike('event_type', '%failed%')
+        .or('sync_status.eq.error,sync_status.eq.pending');
+
       setStats({
         total: total || 0,
         success: success || 0,
         failed: failed || 0,
         expired: expired || 0,
         production: production || 0,
+        needsAttention: needsAttention || 0,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -204,7 +225,28 @@ export default function StripeEventsManager() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [filters.eventType, filters.environment, filters.syncStatus, filters.dateFrom, filters.dateTo, filters.search]);
+  }, [filters.eventType, filters.environment, filters.syncStatus, filters.dateFrom, filters.dateTo, filters.search, activeQuickFilter]);
+
+  const handleQuickFilter = (filterType: string) => {
+    if (activeQuickFilter === filterType) {
+      setActiveQuickFilter(null);
+    } else {
+      setActiveQuickFilter(filterType);
+      // Reset regular filters when using quick filter
+      setFilters({
+        eventType: 'all',
+        environment: 'all',
+        syncStatus: 'all',
+        search: '',
+        dateFrom: '',
+        dateTo: '',
+      });
+    }
+  };
+
+  const clearQuickFilter = () => {
+    setActiveQuickFilter(null);
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -360,7 +402,18 @@ export default function StripeEventsManager() {
         </form>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {activeQuickFilter && (
+          <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+            <span className="text-sm text-muted-foreground">Filtro ativo:</span>
+            <Badge variant="secondary">
+              {activeQuickFilter === 'expired' ? 'Checkouts Expirados' : 'Precisam de Atenção'}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={clearQuickFilter} className="ml-auto">
+              Limpar filtro
+            </Button>
+          </div>
+        )}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card className="bg-muted/50">
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">Total de eventos</p>
@@ -379,10 +432,22 @@ export default function StripeEventsManager() {
               <p className="text-2xl font-bold text-red-400">{stats.failed.toLocaleString()}</p>
             </CardContent>
           </Card>
-          <Card className="bg-yellow-500/10">
+          <Card 
+            className={`bg-yellow-500/10 cursor-pointer transition-all hover:bg-yellow-500/20 ${activeQuickFilter === 'expired' ? 'ring-2 ring-yellow-500' : ''}`}
+            onClick={() => handleQuickFilter('expired')}
+          >
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">Checkouts Expirados</p>
               <p className="text-2xl font-bold text-yellow-400">{stats.expired.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`bg-purple-500/10 cursor-pointer transition-all hover:bg-purple-500/20 ${activeQuickFilter === 'needsAttention' ? 'ring-2 ring-purple-500' : ''}`}
+            onClick={() => handleQuickFilter('needsAttention')}
+          >
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">Precisam Atenção</p>
+              <p className="text-2xl font-bold text-purple-400">{stats.needsAttention.toLocaleString()}</p>
             </CardContent>
           </Card>
           <Card className="bg-orange-500/10">
