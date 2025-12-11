@@ -1,7 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Zap } from 'lucide-react';
+import { ShoppingCart, Zap, Tag } from 'lucide-react';
+
+interface CouponDiscount {
+  type: 'percentage' | 'fixed';
+  value: number;
+  name: string;
+}
 
 interface PlanCardProps {
   planType: 'new_account' | 'recharge';
@@ -12,6 +18,7 @@ interface PlanCardProps {
   availableAccounts?: number;
   isLoading?: boolean;
   onBuy: () => void;
+  couponDiscount?: CouponDiscount | null;
 }
 
 export default function PlanCard({
@@ -23,18 +30,35 @@ export default function PlanCard({
   availableAccounts = 0,
   isLoading = false,
   onBuy,
+  couponDiscount,
 }: PlanCardProps) {
   const discount = competitorPriceCents && competitorPriceCents > 0 && priceCents > 0
     ? Math.round(((competitorPriceCents - priceCents) / competitorPriceCents) * 100)
     : 0;
 
   const isDisabled = planType === 'new_account' && availableAccounts === 0;
-  const priceFormatted = priceCents === 0 
+  
+  // Calculate discounted price if coupon is applied
+  let finalPriceCents = priceCents;
+  if (couponDiscount && priceCents > 0) {
+    if (couponDiscount.type === 'percentage') {
+      finalPriceCents = Math.round(priceCents * (1 - couponDiscount.value / 100));
+    } else {
+      finalPriceCents = Math.max(0, priceCents - couponDiscount.value * 100);
+    }
+  }
+  
+  const originalPriceFormatted = priceCents === 0 
     ? 'A definir' 
     : `R$ ${(priceCents / 100).toFixed(2).replace('.', ',')}`;
+  const priceFormatted = finalPriceCents === 0 
+    ? 'A definir' 
+    : `R$ ${(finalPriceCents / 100).toFixed(2).replace('.', ',')}`;
   const competitorPriceFormatted = competitorPriceCents 
     ? `R$ ${(competitorPriceCents / 100).toFixed(2).replace('.', ',')}` 
     : null;
+
+  const hasCouponDiscount = couponDiscount && priceCents > 0 && finalPriceCents < priceCents;
 
   const badgeLabel = planType === 'new_account' ? 'Conta Nova' : 'Recarga';
   const titleText = planType === 'new_account' ? 'NOVA CONTA' : 'RECARREGUE SUA CONTA';
@@ -43,7 +67,15 @@ export default function PlanCard({
     : `Recarregue +${credits} créditos na sua conta`;
 
   return (
-    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card border-border w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] max-w-[280px] ${isDisabled ? 'opacity-60' : ''}`}>
+    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card border-border w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] max-w-[280px] ${isDisabled ? 'opacity-60' : ''} ${hasCouponDiscount ? 'ring-2 ring-emerald-500/50' : ''}`}>
+      {/* Coupon indicator */}
+      {hasCouponDiscount && (
+        <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] md:text-xs font-medium px-2 py-0.5 rounded-bl-lg flex items-center gap-1">
+          <Tag className="w-3 h-3" />
+          {couponDiscount.type === 'percentage' ? `${couponDiscount.value}% OFF` : `R$ ${couponDiscount.value} OFF`}
+        </div>
+      )}
+      
       <CardContent className="p-3 md:p-5 space-y-2 md:space-y-4">
         {/* Badge */}
         <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] md:text-xs font-medium px-2 md:px-3 py-0.5 md:py-1">
@@ -80,7 +112,8 @@ export default function PlanCard({
 
         {/* Pricing */}
         <div className="space-y-0.5 md:space-y-1">
-          {competitorPriceFormatted && discount > 0 && (
+          {/* Competitor price (original comparison) */}
+          {competitorPriceFormatted && discount > 0 && !hasCouponDiscount && (
             <div className="flex items-center gap-1 md:gap-2">
               <span className="text-[10px] md:text-sm text-muted-foreground line-through">
                 {competitorPriceFormatted}
@@ -91,10 +124,25 @@ export default function PlanCard({
             </div>
           )}
           
+          {/* Show original price struck through when coupon is applied */}
+          {hasCouponDiscount && (
+            <div className="flex items-center gap-1 md:gap-2">
+              <span className="text-[10px] md:text-sm text-muted-foreground line-through">
+                {originalPriceFormatted}
+              </span>
+              <Badge variant="outline" className="text-[9px] md:text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-medium px-1 md:px-2">
+                <Tag className="w-2 h-2 md:w-3 md:h-3 mr-0.5" />
+                {couponDiscount!.type === 'percentage' ? `${couponDiscount!.value}%` : `R$ ${couponDiscount!.value}`}
+              </Badge>
+            </div>
+          )}
+          
           <div className="flex items-baseline gap-0.5 md:gap-1">
-            <span className="text-base md:text-2xl font-bold text-foreground">{priceFormatted}</span>
+            <span className={`text-base md:text-2xl font-bold ${hasCouponDiscount ? 'text-emerald-600' : 'text-foreground'}`}>
+              {priceFormatted}
+            </span>
             {priceCents > 0 && (
-              <Zap className="w-3 h-3 md:w-5 md:h-5 text-primary" />
+              <Zap className={`w-3 h-3 md:w-5 md:h-5 ${hasCouponDiscount ? 'text-emerald-500' : 'text-primary'}`} />
             )}
           </div>
           

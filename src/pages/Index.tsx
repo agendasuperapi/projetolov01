@@ -555,6 +555,7 @@ export default function Index() {
                   availableAccounts={plan.availableAccounts}
                   isLoading={purchaseLoading === plan.id}
                   onBuy={() => handleBuyNewAccount(plan)}
+                  couponDiscount={appliedCoupon ? { type: appliedCoupon.type, value: appliedCoupon.value, name: appliedCoupon.name } : null}
                 />
               ))}
             </div>
@@ -586,6 +587,7 @@ export default function Index() {
                   competitorPriceCents={plan.competitor_price_cents}
                   isLoading={purchaseLoading === plan.id}
                   onBuy={() => handleBuyRecharge(plan)}
+                  couponDiscount={appliedCoupon ? { type: appliedCoupon.type, value: appliedCoupon.value, name: appliedCoupon.name } : null}
                 />
               ))}
             </div>
