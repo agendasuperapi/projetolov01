@@ -36,6 +36,7 @@ interface Stats {
   total: number;
   success: number;
   failed: number;
+  expired: number;
   production: number;
 }
 
@@ -63,7 +64,7 @@ export default function StripeEventsManager() {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<StripeEvent | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [stats, setStats] = useState<Stats>({ total: 0, success: 0, failed: 0, production: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, success: 0, failed: 0, expired: 0, production: 0 });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [retrying, setRetrying] = useState<string | null>(null);
@@ -162,11 +163,17 @@ export default function StripeEventsManager() {
         .select('*', { count: 'exact', head: true })
         .or('event_type.ilike.%completed%,event_type.ilike.%succeeded%,event_type.ilike.%paid%');
 
-      // Failed events
+      // Failed events (only actual payment failures)
       const { count: failed } = await supabase
         .from('stripe_events')
         .select('*', { count: 'exact', head: true })
-        .or('event_type.ilike.%failed%,event_type.ilike.%expired%');
+        .ilike('event_type', '%failed%');
+
+      // Expired checkouts (abandoned carts)
+      const { count: expired } = await supabase
+        .from('stripe_events')
+        .select('*', { count: 'exact', head: true })
+        .ilike('event_type', '%expired%');
 
       // Production events
       const { count: production } = await supabase
@@ -178,6 +185,7 @@ export default function StripeEventsManager() {
         total: total || 0,
         success: success || 0,
         failed: failed || 0,
+        expired: expired || 0,
         production: production || 0,
       });
     } catch (error) {
@@ -352,7 +360,7 @@ export default function StripeEventsManager() {
         </form>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="bg-muted/50">
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">Total de eventos</p>
@@ -367,8 +375,14 @@ export default function StripeEventsManager() {
           </Card>
           <Card className="bg-red-500/10">
             <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Falhas</p>
+              <p className="text-sm text-muted-foreground">Falhas de Pagamento</p>
               <p className="text-2xl font-bold text-red-400">{stats.failed.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-yellow-500/10">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">Checkouts Expirados</p>
+              <p className="text-2xl font-bold text-yellow-400">{stats.expired.toLocaleString()}</p>
             </CardContent>
           </Card>
           <Card className="bg-orange-500/10">
