@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RefreshCw, Eye, Search, Calendar, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { RefreshCw, Eye, Search, Calendar, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface StripeEvent {
   id: string;
@@ -51,6 +52,12 @@ const EVENT_TYPES = [
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
+const SYNC_STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos sync status' },
+  { value: 'synced', label: 'Sincronizado' },
+  { value: 'error', label: 'Erro' },
+  { value: 'pending', label: 'Pendente' },
+];
 export default function StripeEventsManager() {
   const [events, setEvents] = useState<StripeEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,9 +66,11 @@ export default function StripeEventsManager() {
   const [stats, setStats] = useState<Stats>({ total: 0, success: 0, failed: 0, production: 0 });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [retrying, setRetrying] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     eventType: 'all',
     environment: 'all',
+    syncStatus: 'all',
     search: '',
     dateFrom: '',
     dateTo: '',
@@ -78,6 +87,10 @@ export default function StripeEventsManager() {
 
     if (filters.environment !== 'all') {
       query = query.eq('environment', filters.environment);
+    }
+
+    if (filters.syncStatus !== 'all') {
+      query = query.eq('sync_status', filters.syncStatus);
     }
 
     if (filters.dateFrom) {
@@ -127,6 +140,9 @@ export default function StripeEventsManager() {
       }
       if (filters.environment !== 'all') {
         baseQuery = baseQuery.eq('environment', filters.environment);
+      }
+      if (filters.syncStatus !== 'all') {
+        baseQuery = baseQuery.eq('sync_status', filters.syncStatus);
       }
       if (filters.dateFrom) {
         baseQuery = baseQuery.gte('created_at', filters.dateFrom);
@@ -180,12 +196,33 @@ export default function StripeEventsManager() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [filters.eventType, filters.environment, filters.dateFrom, filters.dateTo, filters.search]);
+  }, [filters.eventType, filters.environment, filters.syncStatus, filters.dateFrom, filters.dateTo, filters.search]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
     fetchEvents();
+  };
+
+  const handleRetrySync = async (event: StripeEvent) => {
+    if (retrying) return;
+    
+    setRetrying(event.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('retry-payment-sync', {
+        body: { event_id: event.id }
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Sincronização retentada com sucesso!');
+      fetchEvents();
+    } catch (error: any) {
+      console.error('Error retrying sync:', error);
+      toast.error('Erro ao retentar sincronização: ' + (error?.message || 'Erro desconhecido'));
+    } finally {
+      setRetrying(null);
+    }
   };
 
   const getEventTypeBadge = (eventType: string) => {
@@ -272,6 +309,22 @@ export default function StripeEventsManager() {
               <SelectItem value="all">Todos ambientes</SelectItem>
               <SelectItem value="test">Teste</SelectItem>
               <SelectItem value="production">Produção</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.syncStatus}
+            onValueChange={(value) => setFilters({ ...filters, syncStatus: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sync Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {SYNC_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -372,7 +425,18 @@ export default function StripeEventsManager() {
                       )}
                     </TableCell>
                     <TableCell>{getSyncStatusBadge(event.sync_status)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-1">
+                      {(event.sync_status === 'error' || event.sync_status === 'pending') && event.event_type === 'checkout.session.completed' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRetrySync(event)}
+                          disabled={retrying === event.id}
+                          title="Retentar sincronização"
+                        >
+                          <RotateCcw className={`w-4 h-4 ${retrying === event.id ? 'animate-spin' : ''}`} />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
