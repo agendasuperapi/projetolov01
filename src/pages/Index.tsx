@@ -229,9 +229,12 @@ export default function Index() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NTk1NTUsImV4cCI6MjA3NDIzNTU1NX0.MxL8GBrfaD7GZ2S_mFJFblWEt5xhANm27pYSAF-w6e8',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDAzODYsImV4cCI6MjA3OTA3NjM4Nn0.N7gETUDWj95yDCYdZTYWPoMJQcdx_Yjl51jxK-O1vrE',
           },
-          body: JSON.stringify({ p_code: couponInput.trim() }),
+          body: JSON.stringify({ 
+            p_coupon_code: couponInput.trim(),
+            p_product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1'
+          }),
         }
       );
       const data: CouponData = await response.json();
