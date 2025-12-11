@@ -358,6 +358,7 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           sync_response: string | null
@@ -366,6 +367,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           sync_response?: string | null
@@ -374,6 +376,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           sync_response?: string | null
