@@ -47,6 +47,12 @@ const syncBothToExternal = async (data: {
     payment: data.payment
   };
 
+  logStep('========== SYNC PAYLOAD DEBUG ==========');
+  logStep('Full sync payload being sent:', JSON.stringify(syncPayload, null, 2));
+  logStep('User data:', JSON.stringify(data.user, null, 2));
+  logStep('Payment data:', JSON.stringify(data.payment, null, 2));
+  logStep('==========================================');
+  
   logStep('Syncing user and payment to external server', { 
     external_user_id: data.user.external_user_id,
     external_payment_id: data.payment.external_payment_id 
