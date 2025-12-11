@@ -57,6 +57,39 @@ serve(async (req) => {
 
     logStep("Event type", { type: event.type });
 
+    // Detect environment based on Stripe key
+    const stripeKeyPrefix = stripeKey?.substring(0, 8) || '';
+    const environment = stripeKeyPrefix === 'sk_live_' ? 'production' : 'test';
+    logStep("Environment detected", { environment });
+
+    // Extract metadata from event object
+    const eventObject = event.data.object as any;
+    const metadata = eventObject.metadata || {};
+    const eventEmail = metadata.user_email || eventObject.customer_email || eventObject.email || null;
+
+    // Insert event into stripe_events table
+    const { error: eventInsertError } = await supabaseAdmin
+      .from("stripe_events")
+      .insert({
+        event_id: event.id,
+        event_type: event.type,
+        event_data: event.data.object,
+        user_id: metadata.user_id || null,
+        plan_id: metadata.plan_id || null,
+        product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1',
+        email: eventEmail,
+        environment: environment,
+        affiliate_id: metadata.affiliate_id || null,
+        affiliate_coupon_id: metadata.coupon_id || null,
+        processed: false,
+      });
+
+    if (eventInsertError) {
+      logStep("Error inserting stripe event", { error: eventInsertError.message });
+    } else {
+      logStep("Stripe event logged successfully");
+    }
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       logStep("Checkout session completed", { sessionId: session.id });
@@ -202,6 +235,14 @@ serve(async (req) => {
         });
       }
     }
+
+    // Mark event as processed
+    await supabaseAdmin
+      .from("stripe_events")
+      .update({ processed: true })
+      .eq("event_id", event.id);
+
+    logStep("Event marked as processed");
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
