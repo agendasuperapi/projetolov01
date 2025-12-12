@@ -463,7 +463,7 @@ export default function Index() {
 
       if (error) throw error;
       if (data?.url) {
-        const isDevelopment = window.location.hostname.includes('lovableproject.com') || window.location.hostname === 'localhost';
+        const isDevelopment = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('lovable.dev') || window.location.hostname === 'localhost';
         if (isDevelopment) {
           window.open(data.url, '_blank');
         } else {
