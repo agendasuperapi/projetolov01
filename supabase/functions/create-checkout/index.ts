@@ -99,7 +99,7 @@ serve(async (req) => {
       coupon_id: null,
       coupon_code: null,
       affiliate_id: null,
-      affiliate_product_id: null,
+      affiliate_product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1',
     };
     let stripeCouponId: string | null = null;
 
