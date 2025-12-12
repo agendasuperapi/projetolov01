@@ -137,6 +137,28 @@ serve(async (req) => {
       result: externalResult 
     });
 
+    const syncStatus = externalResponse.ok ? 'synced' : 'error';
+    const syncedAt = new Date().toISOString();
+
+    // Update sync tracking fields for each plan
+    for (const plan of plansToSync) {
+      const { error: updateError } = await supabaseAdmin
+        .from('credit_plans')
+        .update({
+          sync_status: syncStatus,
+          sync_response: JSON.stringify(externalResult),
+          synced_at: syncedAt,
+          sync_payload: payload,
+        })
+        .eq('id', plan.id);
+
+      if (updateError) {
+        logStep('Error updating sync status', { planId: plan.id, error: updateError });
+      } else {
+        logStep('Sync status updated', { planId: plan.id, status: syncStatus });
+      }
+    }
+
     if (!externalResponse.ok) {
       throw new Error(`External sync failed: ${externalResult.error || 'Unknown error'}`);
     }
