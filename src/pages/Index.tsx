@@ -282,14 +282,18 @@ export default function Index() {
 
           // Only sync if profile doesn't have a coupon yet
           if (!profileData?.last_coupon_code) {
-            await supabase
-              .from('profiles')
-              .update({
-                last_coupon_code: parsed.custom_code,
-                last_affiliate_id: parsed.affiliate_id || null,
-                last_affiliate_coupon_id: parsed.affiliate_coupon_id || null
-              })
-              .eq('id', user.id);
+            // Only include fields that have valid values - never set null
+            const updateData: Record<string, string> = {};
+            if (parsed.custom_code) updateData.last_coupon_code = parsed.custom_code;
+            if (parsed.affiliate_id) updateData.last_affiliate_id = parsed.affiliate_id;
+            if (parsed.affiliate_coupon_id) updateData.last_affiliate_coupon_id = parsed.affiliate_coupon_id;
+
+            if (Object.keys(updateData).length > 0) {
+              await supabase
+                .from('profiles')
+                .update(updateData)
+                .eq('id', user.id);
+            }
           }
         }
       } catch (e) {
