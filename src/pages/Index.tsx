@@ -122,8 +122,8 @@ export default function Index() {
 
   const COUPON_STORAGE_KEY = 'creditshub_last_coupon';
 
-  // Save coupon to localStorage and profile
-  const saveCouponToStorage = async (couponData: CouponData) => {
+  // Save coupon to localStorage only - profile is updated only after purchase via webhook
+  const saveCouponToStorage = (couponData: CouponData) => {
     // Only save if we have valid coupon data
     const hasValidData = couponData.custom_code || couponData.affiliate_id || couponData.coupon_id;
     
@@ -132,52 +132,19 @@ export default function Index() {
       return;
     }
 
-    console.log('[COUPON] saveCouponToStorage: Saving valid coupon data', {
+    console.log('[COUPON] saveCouponToStorage: Saving to localStorage only', {
       custom_code: couponData.custom_code,
       affiliate_id: couponData.affiliate_id,
       coupon_id: couponData.coupon_id
     });
 
-    // Save to localStorage for non-logged users
+    // Save to localStorage only - profile will be updated after purchase via webhook
     localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify({
       custom_code: couponData.custom_code,
       affiliate_id: couponData.affiliate_id,
       affiliate_coupon_id: couponData.coupon_id,
       full_data: couponData
     }));
-
-    // Save to profile if user is logged in - only update fields with valid values AND if different from current
-    if (user) {
-      // First fetch current profile data to compare
-      const { data: currentProfile } = await supabase
-        .from('profiles')
-        .select('last_coupon_code, last_affiliate_id, last_affiliate_coupon_id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const updateData: Record<string, string> = {};
-      
-      // Only update if the value is valid AND different from current
-      if (couponData.custom_code && couponData.custom_code !== currentProfile?.last_coupon_code) {
-        updateData.last_coupon_code = couponData.custom_code;
-      }
-      if (couponData.affiliate_id && couponData.affiliate_id !== currentProfile?.last_affiliate_id) {
-        updateData.last_affiliate_id = couponData.affiliate_id;
-      }
-      if (couponData.coupon_id && couponData.coupon_id !== currentProfile?.last_affiliate_coupon_id) {
-        updateData.last_affiliate_coupon_id = couponData.coupon_id;
-      }
-
-      if (Object.keys(updateData).length > 0) {
-        console.log('[COUPON] saveCouponToStorage: Updating profile with:', updateData);
-        await supabase
-          .from('profiles')
-          .update(updateData)
-          .eq('id', user.id);
-      } else {
-        console.log('[COUPON] saveCouponToStorage: No changes needed for profile');
-      }
-    }
   };
 
   // Load saved coupon from localStorage or profile
@@ -261,7 +228,7 @@ export default function Index() {
       // URL coupon has priority
       if (state?.couponData) {
         setAppliedCoupon(state.couponData);
-        await saveCouponToStorage(state.couponData);
+        saveCouponToStorage(state.couponData);
         setCouponInitialized(true);
         
         // Trigger confetti animation
@@ -297,65 +264,8 @@ export default function Index() {
     initializeCoupon();
   }, [location.state, couponInitialized]);
 
-  // Sync localStorage coupon to profile when user logs in
-  useEffect(() => {
-    const syncCouponToProfile = async () => {
-      if (!user) return;
-
-      const storedCoupon = localStorage.getItem(COUPON_STORAGE_KEY);
-      if (!storedCoupon) {
-        console.log('[COUPON] syncCouponToProfile: No stored coupon, skipping');
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(storedCoupon);
-        
-        // Verify we have valid data before attempting sync
-        const hasValidData = parsed.custom_code || parsed.affiliate_id || parsed.affiliate_coupon_id;
-        if (!hasValidData) {
-          console.log('[COUPON] syncCouponToProfile: No valid coupon data in localStorage, skipping');
-          return;
-        }
-
-        console.log('[COUPON] syncCouponToProfile: Found valid data', {
-          custom_code: parsed.custom_code,
-          affiliate_id: parsed.affiliate_id,
-          affiliate_coupon_id: parsed.affiliate_coupon_id
-        });
-
-        // Check if profile already has a coupon
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('last_coupon_code, last_affiliate_id, last_affiliate_coupon_id')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        // Only sync if profile doesn't have a coupon yet
-        if (!profileData?.last_coupon_code) {
-          // Only include fields that have valid values - never set null
-          const updateData: Record<string, string> = {};
-          if (parsed.custom_code) updateData.last_coupon_code = parsed.custom_code;
-          if (parsed.affiliate_id) updateData.last_affiliate_id = parsed.affiliate_id;
-          if (parsed.affiliate_coupon_id) updateData.last_affiliate_coupon_id = parsed.affiliate_coupon_id;
-
-          if (Object.keys(updateData).length > 0) {
-            console.log('[COUPON] syncCouponToProfile: Syncing to profile:', updateData);
-            await supabase
-              .from('profiles')
-              .update(updateData)
-              .eq('id', user.id);
-          }
-        } else {
-          console.log('[COUPON] syncCouponToProfile: Profile already has coupon, skipping');
-        }
-      } catch (e) {
-        console.error('[COUPON] syncCouponToProfile: Error syncing coupon to profile:', e);
-      }
-    };
-
-    syncCouponToProfile();
-  }, [user]);
+  // NOTE: Coupon is NO LONGER synced to profile on login
+  // Profile coupon fields are only updated after a successful purchase via webhook
 
   const fetchPlans = async () => {
     const { data: plansData } = await supabase
@@ -462,7 +372,7 @@ export default function Index() {
 
       if (data) {
         setAppliedCoupon(data);
-        await saveCouponToStorage(data);
+        saveCouponToStorage(data);
         setCouponInput('');
         
         // Trigger confetti animation
@@ -487,21 +397,12 @@ export default function Index() {
     }
   };
 
-  const removeCoupon = async () => {
+  const removeCoupon = () => {
     setAppliedCoupon(null);
-    // Clear from localStorage
+    // Clear from localStorage only - profile is NOT updated here
+    // Profile coupon fields are only managed after purchases via webhook
     localStorage.removeItem(COUPON_STORAGE_KEY);
-    // Clear from profile if logged in
-    if (user) {
-      await supabase
-        .from('profiles')
-        .update({
-          last_coupon_code: null,
-          last_affiliate_id: null,
-          last_affiliate_coupon_id: null
-        })
-        .eq('id', user.id);
-    }
+    console.log('[COUPON] removeCoupon: Cleared from localStorage only, profile untouched');
     toast({ title: 'Cupom removido' });
   };
 
