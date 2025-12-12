@@ -62,6 +62,23 @@ serve(async (req) => {
     if (!purchaseType) throw new Error("purchaseType is required");
     logStep("Request body parsed", { priceId, planId, purchaseType, couponCode });
 
+    // Fetch user profile for coupon data fallback
+    const { data: profileData, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('last_coupon_code, last_affiliate_id, last_affiliate_coupon_id')
+      .eq('id', user.id)
+      .single();
+    
+    if (profileError) {
+      logStep("Error fetching profile", { error: profileError.message });
+    } else {
+      logStep("Profile coupon data fetched", { 
+        last_coupon_code: profileData?.last_coupon_code,
+        last_affiliate_id: profileData?.last_affiliate_id,
+        last_affiliate_coupon_id: profileData?.last_affiliate_coupon_id
+      });
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Check for existing customer
@@ -142,6 +159,19 @@ serve(async (req) => {
       } catch (couponError) {
         logStep("Error validating coupon", { error: String(couponError) });
         // Continue without coupon if validation fails
+      }
+    }
+
+    // Fallback to profile coupon data if no coupon was applied from request
+    if (!couponMetadata.coupon_id && profileData) {
+      if (profileData.last_affiliate_coupon_id || profileData.last_affiliate_id || profileData.last_coupon_code) {
+        couponMetadata = {
+          coupon_id: profileData.last_affiliate_coupon_id,
+          coupon_code: profileData.last_coupon_code,
+          affiliate_id: profileData.last_affiliate_id,
+          affiliate_product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1',
+        };
+        logStep("Using profile coupon data for metadata (no discount applied)", couponMetadata);
       }
     }
 
