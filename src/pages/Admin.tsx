@@ -125,21 +125,48 @@ export default function Admin() {
     }
   };
 
+  // Helper function to sync plan to external server
+  const syncPlanToExternal = async (planId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-plans-to-external', {
+        body: { action: 'sync_plan', plan_id: planId }
+      });
+      
+      if (error) {
+        console.error('Erro ao sincronizar plano com servidor externo:', error);
+        toast({ 
+          title: 'Aviso', 
+          description: 'Plano salvo, mas falha ao sincronizar com servidor externo.', 
+          variant: 'default' 
+        });
+      } else {
+        console.log('Plano sincronizado com servidor externo:', data);
+      }
+    } catch (err) {
+      console.error('Falha na sincronização do plano:', err);
+    }
+  };
+
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
 
     try {
-      const { error } = await supabase.from('credit_plans').insert({
+      const { data: createdPlan, error } = await supabase.from('credit_plans').insert({
         name: newPlan.name,
         credits: newPlan.credits,
         price_cents: newPlan.price_cents,
         stripe_price_id: newPlan.stripe_price_id || null,
         plan_type: newPlan.plan_type,
         active: true,
-      });
+      }).select('id').single();
 
       if (error) throw error;
+
+      // Sync to external server
+      if (createdPlan?.id) {
+        await syncPlanToExternal(createdPlan.id);
+      }
 
       toast({ title: 'Sucesso!', description: 'Plano criado com sucesso.' });
       setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'new_account' });
@@ -160,6 +187,9 @@ export default function Admin() {
         .eq('id', planId);
 
       if (error) throw error;
+
+      // Sync to external server
+      await syncPlanToExternal(planId);
 
       toast({ title: 'Sucesso!', description: 'Plano atualizado.' });
       await fetchPlans();
