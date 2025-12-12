@@ -132,16 +132,19 @@ export default function Index() {
       full_data: couponData
     }));
 
-    // Save to profile if user is logged in
+    // Save to profile if user is logged in - only update fields with valid values
     if (user) {
-      await supabase
-        .from('profiles')
-        .update({
-          last_coupon_code: couponData.custom_code,
-          last_affiliate_id: couponData.affiliate_id,
-          last_affiliate_coupon_id: couponData.coupon_id
-        })
-        .eq('id', user.id);
+      const updateData: Record<string, string> = {};
+      if (couponData.custom_code) updateData.last_coupon_code = couponData.custom_code;
+      if (couponData.affiliate_id) updateData.last_affiliate_id = couponData.affiliate_id;
+      if (couponData.coupon_id) updateData.last_affiliate_coupon_id = couponData.coupon_id;
+
+      if (Object.keys(updateData).length > 0) {
+        await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('id', user.id);
+      }
     }
   };
 
