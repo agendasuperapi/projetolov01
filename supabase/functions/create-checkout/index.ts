@@ -45,6 +45,12 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
+    // Admin client for operations that need to bypass RLS
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
     logStep("Authorization header found");
@@ -62,8 +68,8 @@ serve(async (req) => {
     if (!purchaseType) throw new Error("purchaseType is required");
     logStep("Request body parsed", { priceId, planId, purchaseType, couponCode });
 
-    // Fetch user profile for coupon data fallback
-    const { data: profileData, error: profileError } = await supabaseClient
+    // Fetch user profile for coupon data fallback (using admin client to bypass RLS)
+    const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('last_coupon_code, last_affiliate_id, last_affiliate_coupon_id')
       .eq('id', user.id)
