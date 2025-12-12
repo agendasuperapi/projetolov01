@@ -204,10 +204,10 @@ serve(async (req) => {
 
       logStep("Plan found", { planName: plan.name, credits: plan.credits });
 
-      // Get current user credits
+      // Get current user credits and coupon data
       const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .select("credits, email, name, phone")
+        .select("credits, email, name, phone, last_coupon_code, last_affiliate_id, last_affiliate_coupon_id")
         .eq("id", userId)
         .single();
 
@@ -221,10 +221,40 @@ serve(async (req) => {
 
       const newCredits = (profile?.credits || 0) + plan.credits;
 
-      // Update user credits
+      // Prepare coupon data update only if coupon was applied and is different from saved
+      const couponCode = session.metadata?.coupon_code && session.metadata.coupon_code.trim() !== '' ? session.metadata.coupon_code : null;
+      const affiliateIdFromMeta = session.metadata?.affiliate_id && session.metadata.affiliate_id.trim() !== '' ? session.metadata.affiliate_id : null;
+      const affiliateCouponIdFromMeta = session.metadata?.coupon_id && session.metadata.coupon_id.trim() !== '' ? session.metadata.coupon_id : null;
+
+      const profileUpdateData: Record<string, any> = { credits: newCredits };
+
+      // Only update coupon fields if a coupon was applied in this purchase and is different from current
+      if (couponCode || affiliateIdFromMeta || affiliateCouponIdFromMeta) {
+        if (couponCode && couponCode !== profile?.last_coupon_code) {
+          profileUpdateData.last_coupon_code = couponCode;
+        }
+        if (affiliateIdFromMeta && affiliateIdFromMeta !== profile?.last_affiliate_id) {
+          profileUpdateData.last_affiliate_id = affiliateIdFromMeta;
+        }
+        if (affiliateCouponIdFromMeta && affiliateCouponIdFromMeta !== profile?.last_affiliate_coupon_id) {
+          profileUpdateData.last_affiliate_coupon_id = affiliateCouponIdFromMeta;
+        }
+        
+        const couponFieldsUpdating = Object.keys(profileUpdateData).filter(k => k !== 'credits');
+        if (couponFieldsUpdating.length > 0) {
+          logStep("Coupon data to update in profile", { 
+            couponCode, 
+            affiliateIdFromMeta, 
+            affiliateCouponIdFromMeta,
+            updating: couponFieldsUpdating
+          });
+        }
+      }
+
+      // Update user credits and coupon data
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
-        .update({ credits: newCredits })
+        .update(profileUpdateData)
         .eq("id", userId);
 
       if (updateError) {
