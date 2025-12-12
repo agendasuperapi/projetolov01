@@ -37,5 +37,5 @@ jobs:
           username: ${{ secrets.HOSTINGER_FTP_USER }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: ${{ secrets.HOSTINGER_FTP_PATH }}/
+          server-dir: ${{ secrets.HOSTINGER_FTP_PATH }}/public_html/
           dangerous-clean-slate: false
