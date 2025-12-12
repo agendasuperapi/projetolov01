@@ -591,7 +591,13 @@ export default function Index() {
       </section>
 
       {/* Seção Cupom */}
-      <section className="py-12 bg-gradient-to-b from-card to-primary/20 relative">
+      <section className="py-12 pb-20 bg-gradient-to-br from-primary/15 via-primary/10 to-accent/20 relative overflow-hidden">
+        {/* Onda rasa no fundo */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-8 fill-background">
+            <path d="M0,60 L0,30 Q300,0 600,30 T1200,30 L1200,60 Z" />
+          </svg>
+        </div>
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 mb-2">
