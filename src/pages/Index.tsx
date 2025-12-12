@@ -124,6 +124,20 @@ export default function Index() {
 
   // Save coupon to localStorage and profile
   const saveCouponToStorage = async (couponData: CouponData) => {
+    // Only save if we have valid coupon data
+    const hasValidData = couponData.custom_code || couponData.affiliate_id || couponData.coupon_id;
+    
+    if (!hasValidData) {
+      console.log('[COUPON] saveCouponToStorage: No valid data to save, skipping');
+      return;
+    }
+
+    console.log('[COUPON] saveCouponToStorage: Saving valid coupon data', {
+      custom_code: couponData.custom_code,
+      affiliate_id: couponData.affiliate_id,
+      coupon_id: couponData.coupon_id
+    });
+
     // Save to localStorage for non-logged users
     localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify({
       custom_code: couponData.custom_code,
@@ -132,18 +146,36 @@ export default function Index() {
       full_data: couponData
     }));
 
-    // Save to profile if user is logged in - only update fields with valid values
+    // Save to profile if user is logged in - only update fields with valid values AND if different from current
     if (user) {
+      // First fetch current profile data to compare
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('last_coupon_code, last_affiliate_id, last_affiliate_coupon_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
       const updateData: Record<string, string> = {};
-      if (couponData.custom_code) updateData.last_coupon_code = couponData.custom_code;
-      if (couponData.affiliate_id) updateData.last_affiliate_id = couponData.affiliate_id;
-      if (couponData.coupon_id) updateData.last_affiliate_coupon_id = couponData.coupon_id;
+      
+      // Only update if the value is valid AND different from current
+      if (couponData.custom_code && couponData.custom_code !== currentProfile?.last_coupon_code) {
+        updateData.last_coupon_code = couponData.custom_code;
+      }
+      if (couponData.affiliate_id && couponData.affiliate_id !== currentProfile?.last_affiliate_id) {
+        updateData.last_affiliate_id = couponData.affiliate_id;
+      }
+      if (couponData.coupon_id && couponData.coupon_id !== currentProfile?.last_affiliate_coupon_id) {
+        updateData.last_affiliate_coupon_id = couponData.coupon_id;
+      }
 
       if (Object.keys(updateData).length > 0) {
+        console.log('[COUPON] saveCouponToStorage: Updating profile with:', updateData);
         await supabase
           .from('profiles')
           .update(updateData)
           .eq('id', user.id);
+      } else {
+        console.log('[COUPON] saveCouponToStorage: No changes needed for profile');
       }
     }
   };
@@ -271,36 +303,54 @@ export default function Index() {
       if (!user) return;
 
       const storedCoupon = localStorage.getItem(COUPON_STORAGE_KEY);
-      if (!storedCoupon) return;
+      if (!storedCoupon) {
+        console.log('[COUPON] syncCouponToProfile: No stored coupon, skipping');
+        return;
+      }
 
       try {
         const parsed = JSON.parse(storedCoupon);
-        if (parsed.custom_code) {
-          // Check if profile already has a coupon
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('last_coupon_code')
-            .eq('id', user.id)
-            .maybeSingle();
+        
+        // Verify we have valid data before attempting sync
+        const hasValidData = parsed.custom_code || parsed.affiliate_id || parsed.affiliate_coupon_id;
+        if (!hasValidData) {
+          console.log('[COUPON] syncCouponToProfile: No valid coupon data in localStorage, skipping');
+          return;
+        }
 
-          // Only sync if profile doesn't have a coupon yet
-          if (!profileData?.last_coupon_code) {
-            // Only include fields that have valid values - never set null
-            const updateData: Record<string, string> = {};
-            if (parsed.custom_code) updateData.last_coupon_code = parsed.custom_code;
-            if (parsed.affiliate_id) updateData.last_affiliate_id = parsed.affiliate_id;
-            if (parsed.affiliate_coupon_id) updateData.last_affiliate_coupon_id = parsed.affiliate_coupon_id;
+        console.log('[COUPON] syncCouponToProfile: Found valid data', {
+          custom_code: parsed.custom_code,
+          affiliate_id: parsed.affiliate_id,
+          affiliate_coupon_id: parsed.affiliate_coupon_id
+        });
 
-            if (Object.keys(updateData).length > 0) {
-              await supabase
-                .from('profiles')
-                .update(updateData)
-                .eq('id', user.id);
-            }
+        // Check if profile already has a coupon
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('last_coupon_code, last_affiliate_id, last_affiliate_coupon_id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        // Only sync if profile doesn't have a coupon yet
+        if (!profileData?.last_coupon_code) {
+          // Only include fields that have valid values - never set null
+          const updateData: Record<string, string> = {};
+          if (parsed.custom_code) updateData.last_coupon_code = parsed.custom_code;
+          if (parsed.affiliate_id) updateData.last_affiliate_id = parsed.affiliate_id;
+          if (parsed.affiliate_coupon_id) updateData.last_affiliate_coupon_id = parsed.affiliate_coupon_id;
+
+          if (Object.keys(updateData).length > 0) {
+            console.log('[COUPON] syncCouponToProfile: Syncing to profile:', updateData);
+            await supabase
+              .from('profiles')
+              .update(updateData)
+              .eq('id', user.id);
           }
+        } else {
+          console.log('[COUPON] syncCouponToProfile: Profile already has coupon, skipping');
         }
       } catch (e) {
-        console.error('Error syncing coupon to profile:', e);
+        console.error('[COUPON] syncCouponToProfile: Error syncing coupon to profile:', e);
       }
     };
 
