@@ -67,7 +67,7 @@ serve(async (req) => {
       .from('profiles')
       .select('last_coupon_code, last_affiliate_id, last_affiliate_coupon_id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
     
     if (profileError) {
       logStep("Error fetching profile", { error: profileError.message });
