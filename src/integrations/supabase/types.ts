@@ -77,6 +77,10 @@ export type Database = {
           plan_type: string
           price_cents: number
           stripe_price_id: string | null
+          sync_payload: Json | null
+          sync_response: string | null
+          sync_status: string | null
+          synced_at: string | null
         }
         Insert: {
           active?: boolean | null
@@ -88,6 +92,10 @@ export type Database = {
           plan_type?: string
           price_cents: number
           stripe_price_id?: string | null
+          sync_payload?: Json | null
+          sync_response?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
         }
         Update: {
           active?: boolean | null
@@ -99,6 +107,10 @@ export type Database = {
           plan_type?: string
           price_cents?: number
           stripe_price_id?: string | null
+          sync_payload?: Json | null
+          sync_response?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
         }
         Relationships: []
       }
