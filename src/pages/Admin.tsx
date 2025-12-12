@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
 import AccountsManager from '@/components/admin/AccountsManager';
@@ -26,6 +27,9 @@ interface CreditPlan {
   competitor_price_cents: number | null;
   active: boolean;
   plan_type: 'new_account' | 'recharge';
+  sync_status: string | null;
+  sync_response: string | null;
+  synced_at: string | null;
 }
 
 interface Transaction {
@@ -48,6 +52,7 @@ export default function Admin() {
   const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'new_account' as 'new_account' | 'recharge' });
   const [creating, setCreating] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncingPlanId, setSyncingPlanId] = useState<string | null>(null);
   const [pendingRechargesCount, setPendingRechargesCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -126,7 +131,8 @@ export default function Admin() {
   };
 
   // Helper function to sync plan to external server
-  const syncPlanToExternal = async (planId: string) => {
+  const syncPlanToExternal = async (planId: string, showToast = false) => {
+    setSyncingPlanId(planId);
     try {
       const { data, error } = await supabase.functions.invoke('sync-plans-to-external', {
         body: { action: 'sync_plan', plan_id: planId }
@@ -134,17 +140,116 @@ export default function Admin() {
       
       if (error) {
         console.error('Erro ao sincronizar plano com servidor externo:', error);
-        toast({ 
-          title: 'Aviso', 
-          description: 'Plano salvo, mas falha ao sincronizar com servidor externo.', 
-          variant: 'default' 
-        });
+        if (showToast) {
+          toast({ 
+            title: 'Erro na sincronização', 
+            description: 'Falha ao sincronizar com servidor externo.', 
+            variant: 'destructive' 
+          });
+        }
       } else {
         console.log('Plano sincronizado com servidor externo:', data);
+        if (showToast) {
+          toast({ 
+            title: 'Sincronizado!', 
+            description: 'Plano sincronizado com sucesso.' 
+          });
+        }
+        await fetchPlans();
       }
     } catch (err) {
       console.error('Falha na sincronização do plano:', err);
+      if (showToast) {
+        toast({ 
+          title: 'Erro', 
+          description: 'Falha ao sincronizar plano.', 
+          variant: 'destructive' 
+        });
+      }
+    } finally {
+      setSyncingPlanId(null);
     }
+  };
+
+  // Helper to get sync status indicator
+  const getSyncStatusBadge = (plan: CreditPlan) => {
+    const status = plan.sync_status;
+    const isSyncing = syncingPlanId === plan.id;
+
+    if (isSyncing) {
+      return (
+        <Badge variant="outline" className="gap-1">
+          <RefreshCw className="w-3 h-3 animate-spin" />
+          Sincronizando...
+        </Badge>
+      );
+    }
+
+    if (status === 'synced') {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className="gap-1 border-green-500 text-green-600 bg-green-50">
+                <CheckCircle className="w-3 h-3" />
+                Sincronizado
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Sincronizado em: {plan.synced_at ? new Date(plan.synced_at).toLocaleString('pt-BR') : 'N/A'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    if (status === 'error') {
+      return (
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="destructive" className="gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Erro
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="break-words">{plan.sync_response || 'Erro desconhecido'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => syncPlanToExternal(plan.id, true)}
+            className="h-6 px-2 text-xs"
+          >
+            <RefreshCw className="w-3 h-3 mr-1" />
+            Retry
+          </Button>
+        </div>
+      );
+    }
+
+    // pending or null
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant="secondary" className="gap-1">
+          <Clock className="w-3 h-3" />
+          Pendente
+        </Badge>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => syncPlanToExternal(plan.id, true)}
+          className="h-6 px-2 text-xs"
+        >
+          <RefreshCw className="w-3 h-3 mr-1" />
+          Sincronizar
+        </Button>
+      </div>
+    );
   };
 
   const handleCreatePlan = async (e: React.FormEvent) => {
@@ -413,15 +518,16 @@ export default function Admin() {
                   <div className="space-y-6">
                     {plans.filter(p => p.plan_type === 'new_account').map((plan) => (
                       <div key={plan.id} className="p-4 border rounded-lg space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                           <div>
                             <h3 className="font-semibold">{plan.name}</h3>
                             <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Badge variant={plan.stripe_price_id ? 'default' : 'secondary'}>
                               {plan.stripe_price_id ? 'Configurado' : 'Pendente'}
                             </Badge>
+                            {getSyncStatusBadge(plan)}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -520,15 +626,16 @@ export default function Admin() {
                   <div className="space-y-6">
                     {plans.filter(p => p.plan_type === 'recharge').map((plan) => (
                       <div key={plan.id} className="p-4 border rounded-lg space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                           <div>
                             <h3 className="font-semibold">{plan.name}</h3>
                             <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Badge variant={plan.stripe_price_id ? 'default' : 'secondary'}>
                               {plan.stripe_price_id ? 'Configurado' : 'Pendente'}
                             </Badge>
+                            {getSyncStatusBadge(plan)}
                             <Button
                               variant="ghost"
                               size="icon"
