@@ -27,8 +27,7 @@ export default function WaveDivider({
 
   return (
     <div 
-      className={`w-full overflow-hidden leading-none ${flip ? 'rotate-180' : ''} ${className}`}
-      style={{ marginTop: '-1px', marginBottom: '-1px' }}
+      className={`absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none ${flip ? 'rotate-180' : ''} ${className}`}
     >
       <svg 
         viewBox="0 0 1200 120" 
