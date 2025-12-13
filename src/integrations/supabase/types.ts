@@ -262,6 +262,7 @@ export type Database = {
           plan_id: string
           recharge_link: string
           status: string
+          stripe_session_id: string | null
           user_id: string
         }
         Insert: {
@@ -272,6 +273,7 @@ export type Database = {
           plan_id: string
           recharge_link: string
           status?: string
+          stripe_session_id?: string | null
           user_id: string
         }
         Update: {
@@ -282,6 +284,7 @@ export type Database = {
           plan_id?: string
           recharge_link?: string
           status?: string
+          stripe_session_id?: string | null
           user_id?: string
         }
         Relationships: [

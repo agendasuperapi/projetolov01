@@ -39,20 +39,19 @@ export default function PaymentSuccess() {
   }, [user]);
 
   const checkPendingRecharge = async () => {
-    if (!user) {
+    if (!user || !sessionId) {
       setLoading(false);
       return;
     }
 
     try {
-      // Find the most recent pending_link recharge request for this user
+      // Find the recharge request linked to this specific Stripe session
       const { data, error } = await supabase
         .from('recharge_requests')
         .select('id, credits_added')
         .eq('user_id', user.id)
+        .eq('stripe_session_id', sessionId)
         .eq('status', 'pending_link')
-        .order('created_at', { ascending: false })
-        .limit(1)
         .maybeSingle();
 
       if (error) throw error;

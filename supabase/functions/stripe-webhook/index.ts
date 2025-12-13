@@ -309,12 +309,13 @@ serve(async (req) => {
             recharge_link: '', // Will be filled in by user on success page
             status: 'pending_link',
             credits_added: plan.credits,
+            stripe_session_id: session.id, // Link to Stripe session for lookup on success page
           });
 
         if (rechargeError) {
           logStep("Recharge request error", { error: rechargeError.message });
         } else {
-          logStep("Recharge request created with pending_link status");
+          logStep("Recharge request created with pending_link status", { sessionId: session.id });
         }
       }
 
