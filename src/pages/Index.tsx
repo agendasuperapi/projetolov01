@@ -593,14 +593,14 @@ export default function Index() {
       {/* Seção Cupom */}
       <section className="py-12 pt-16 pb-20 bg-gradient-to-br from-primary/15 via-primary/10 to-accent/20 relative overflow-hidden">
         {/* Onda rasa no topo */}
-        <div className="absolute top-0 left-0 right-0">
-          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-8 fill-background">
+        <div className="absolute top-0 left-0 right-0 animate-wave-slow">
+          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-[110%] -ml-[5%] h-8 fill-background">
             <path d="M0,0 L0,30 Q300,60 600,30 T1200,30 L1200,0 Z" />
           </svg>
         </div>
         {/* Onda rasa no fundo */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-8 fill-background">
+        <div className="absolute bottom-0 left-0 right-0 animate-wave-slow-reverse">
+          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-[110%] -ml-[5%] h-8 fill-background">
             <path d="M0,60 L0,30 Q300,0 600,30 T1200,30 L1200,60 Z" />
           </svg>
         </div>
