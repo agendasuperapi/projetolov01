@@ -27,7 +27,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/cupom/:code" element={<CouponHandler />} />
+            <Route path="/:code" element={<CouponHandler />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
