@@ -648,7 +648,8 @@ export default function Index() {
               Planos
             </span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">Pronto para finalizar seus projetos?
-Escolha seu plano ideal.<span className="text-white/90">plano ideal</span>
+Escolha seu plano ideal.
+​plano ideal.
             </h2>
             <p className="text-white/80 text-lg max-w-2xl mx-auto">
               Quanto mais créditos, maior o desconto. Escolha o melhor para você.
