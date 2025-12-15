@@ -305,8 +305,11 @@ export default function Dashboard() {
                             <div className="text-sm text-muted-foreground mb-2">
                               <span className="font-medium">+{recharge.credits_added} créditos</span>
                             </div>
-                            <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
-                              {recharge.recharge_link}
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium">Link cadastrado:</p>
+                              <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
+                                {recharge.recharge_link}
+                              </div>
                             </div>
                             {recharge.completed_at && (
                               <p className="text-xs text-muted-foreground mt-2">
