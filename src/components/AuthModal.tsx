@@ -76,8 +76,25 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
         });
 
         if (error) {
+          // Check if user doesn't exist - redirect to signup with email pre-filled
           if (error.message.includes('Invalid login credentials')) {
-            toast({ title: 'Erro', description: 'Email ou senha incorretos.', variant: 'destructive' });
+            // Check if user exists by trying to get user info
+            const { data: existingUsers } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('email', email.trim())
+              .limit(1);
+            
+            if (!existingUsers || existingUsers.length === 0) {
+              // User doesn't exist, switch to signup with email preserved
+              toast({ title: 'Email não cadastrado', description: 'Redirecionando para cadastro...', variant: 'default' });
+              setPassword('');
+              setIsLogin(false);
+              setLoading(false);
+              return;
+            }
+            
+            toast({ title: 'Erro', description: 'Senha incorreta.', variant: 'destructive' });
           } else {
             toast({ title: 'Erro', description: error.message, variant: 'destructive' });
           }
