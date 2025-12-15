@@ -433,7 +433,7 @@ export default function Index() {
     badge: 'Produtos digitais premium',
     title: 'Acesse produtos digitais',
     titleHighlight: 'com créditos',
-    description: 'Compre créditos e tenha acesso à nossa biblioteca completa de produtos digitais exclusivos. Simples, rápido e seguro.',
+    description: 'Adquira créditos em Reais com o melhor preço do mercado e tire seus projetos do papel. É simples, rápido e seguro.',
     ctaButton: 'Ver Planos',
     secondaryButton: 'Criar Conta Grátis'
   };
