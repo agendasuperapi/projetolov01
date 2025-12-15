@@ -542,19 +542,6 @@ export default function Index() {
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </a>
-                {!user && (
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="text-lg px-8 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                    onClick={() => {
-                      setAuthModalDefaultTab('signup');
-                      setIsAuthModalOpen(true);
-                    }}
-                  >
-                    {hero.secondaryButton}
-                  </Button>
-                )}
               </div>
 
               {/* Trust badges */}
