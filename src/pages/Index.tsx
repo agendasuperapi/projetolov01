@@ -571,13 +571,22 @@ export default function Index() {
         </div>
         {isAdmin && <AdminEditButton section="hero" />}
         
+        {/* Fade gradient overlay */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 md:h-48 bg-gradient-to-b from-transparent via-transparent to-card pointer-events-none"></div>
+        
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
           <svg 
             viewBox="0 0 1200 120" 
             preserveAspectRatio="none" 
-            className="w-full h-16 md:h-24"
+            className="w-full h-12 md:h-20"
           >
+            <defs>
+              <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="0.5"/>
+                <stop offset="100%" stopColor="hsl(var(--card))" stopOpacity="1"/>
+              </linearGradient>
+            </defs>
             <path 
               d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" 
               fill="hsl(var(--card))"
@@ -800,13 +809,22 @@ export default function Index() {
         </div>
         {isAdmin && <AdminEditButton section="plans" />}
         
+        {/* Fade gradient overlay */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 md:h-48 bg-gradient-to-b from-transparent via-transparent to-card pointer-events-none"></div>
+        
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
           <svg 
             viewBox="0 0 1200 120" 
             preserveAspectRatio="none" 
-            className="w-full h-16 md:h-24"
+            className="w-full h-12 md:h-20"
           >
+            <defs>
+              <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="0.5"/>
+                <stop offset="100%" stopColor="hsl(var(--card))" stopOpacity="1"/>
+              </linearGradient>
+            </defs>
             <path 
               d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" 
               fill="hsl(var(--card))"
