@@ -570,10 +570,10 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="hero" />}
         
         {/* Fade gradient overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-72 bg-gradient-to-b from-transparent via-card/30 to-card pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-72 bg-gradient-to-b from-transparent via-card/30 to-card pointer-events-none z-20"></div>
         
         {/* Wave divider */}
-        <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
+        <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none z-20">
           <svg 
             viewBox="0 0 1200 120" 
             preserveAspectRatio="none" 
