@@ -5,8 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle } from 'lucide-react';
+import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Transaction {
@@ -41,6 +42,8 @@ export default function Dashboard() {
   const [purchasedAccounts, setPurchasedAccounts] = useState<PurchasedAccount[]>([]);
   const [rechargeRequests, setRechargeRequests] = useState<RechargeRequest[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [linkInputs, setLinkInputs] = useState<Record<string, string>>({});
+  const [submittingLink, setSubmittingLink] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -116,6 +119,32 @@ export default function Dashboard() {
     setCopiedId(id);
     toast.success('Dados copiados!');
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSubmitRechargeLink = async (rechargeId: string) => {
+    const link = linkInputs[rechargeId]?.trim();
+    if (!link) return;
+
+    setSubmittingLink(rechargeId);
+    try {
+      const { error } = await supabase
+        .from('recharge_requests')
+        .update({ 
+          recharge_link: link,
+          status: 'pending'
+        })
+        .eq('id', rechargeId);
+
+      if (error) throw error;
+
+      toast.success('Link enviado com sucesso!');
+      setLinkInputs(prev => ({ ...prev, [rechargeId]: '' }));
+      fetchRechargeRequests();
+    } catch (error) {
+      toast.error('Erro ao enviar link');
+    } finally {
+      setSubmittingLink(null);
+    }
   };
 
   if (loading) {
@@ -289,11 +318,13 @@ export default function Dashboard() {
                             <div className="flex items-center gap-2 mb-2">
                               <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
                               <Badge 
-                                variant={recharge.status === 'completed' ? 'default' : 'secondary'}
+                                variant={recharge.status === 'completed' ? 'default' : recharge.status === 'pending_link' ? 'destructive' : 'secondary'}
                                 className={recharge.status === 'completed' ? 'bg-green-500' : ''}
                               >
                                 {recharge.status === 'completed' ? (
                                   <><CheckCircle className="w-3 h-3 mr-1" /> Recarregado</>
+                                ) : recharge.status === 'pending_link' ? (
+                                  <><Clock className="w-3 h-3 mr-1" /> Aguardando Link</>
                                 ) : (
                                   <><Clock className="w-3 h-3 mr-1" /> Pendente</>
                                 )}
@@ -305,30 +336,62 @@ export default function Dashboard() {
                             <div className="text-sm text-muted-foreground mb-2">
                               <span className="font-medium">+{recharge.credits_added} créditos</span>
                             </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">Link cadastrado:</p>
-                              <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
-                                {recharge.recharge_link}
+                            
+                            {/* Show input if pending_link and no link */}
+                            {recharge.status === 'pending_link' && !recharge.recharge_link ? (
+                              <div className="space-y-2">
+                                <p className="text-xs text-muted-foreground font-medium">Informe o link da sua conta:</p>
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="url"
+                                    placeholder="https://..."
+                                    value={linkInputs[recharge.id] || ''}
+                                    onChange={(e) => setLinkInputs(prev => ({ ...prev, [recharge.id]: e.target.value }))}
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSubmitRechargeLink(recharge.id)}
+                                    disabled={submittingLink === recharge.id || !linkInputs[recharge.id]?.trim()}
+                                    className="gradient-primary"
+                                  >
+                                    {submittingLink === recharge.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Send className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
+                            ) : recharge.recharge_link ? (
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground font-medium">Link cadastrado:</p>
+                                <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
+                                  {recharge.recharge_link}
+                                </div>
+                              </div>
+                            ) : null}
+                            
                             {recharge.completed_at && (
                               <p className="text-xs text-muted-foreground mt-2">
                                 Recarregado em: {new Date(recharge.completed_at).toLocaleDateString('pt-BR')}
                               </p>
                             )}
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyToClipboard(recharge.recharge_link, recharge.id)}
-                            className="shrink-0"
-                          >
-                            {copiedId === recharge.id ? (
-                              <Check className="w-4 h-4 text-green-500" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                          </Button>
+                          {recharge.recharge_link && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => copyToClipboard(recharge.recharge_link, recharge.id)}
+                              className="shrink-0"
+                            >
+                              {copiedId === recharge.id ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
