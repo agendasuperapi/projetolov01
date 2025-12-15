@@ -500,41 +500,46 @@ export default function Index() {
       </header>
 
       {/* Hero Section - Two columns layout */}
-      <section className="relative py-16 lg:py-24 overflow-hidden group">
+      <section 
+        className="relative py-16 lg:py-24 overflow-hidden group"
+        style={{
+          background: 'linear-gradient(180deg, hsl(220, 60%, 15%) 0%, hsl(240, 50%, 30%) 25%, hsl(270, 60%, 45%) 50%, hsl(330, 70%, 55%) 75%, hsl(15, 85%, 55%) 100%)'
+        }}
+      >
         {/* Background decorations */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left column - Content */}
             <div className="text-left space-y-6 animate-fade-in">
-              <Badge variant="secondary" className="px-4 py-2 bg-primary/10 text-primary border-0">
+              <Badge variant="secondary" className="px-4 py-2 bg-white/20 text-white border-white/30 backdrop-blur-sm">
                 <Sparkles className="w-4 h-4 mr-2" />
                 {hero.badge}
               </Badge>
               
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow-lg">
                 {hero.title}
-                <span className="block text-gradient">{hero.titleHighlight}</span>
+                <span className="block text-white/90">{hero.titleHighlight}</span>
               </h1>
               
-              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+              <p className="text-lg text-white/80 max-w-lg leading-relaxed">
                 {hero.description}
               </p>
 
               <div className="flex flex-col sm:flex-row items-start gap-4 pt-2">
                 <a href="#plans">
-                  <Button size="lg" className="gradient-primary text-lg px-8 shadow-hero hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90 text-lg px-8 shadow-xl transition-all duration-300 hover:scale-105">
                     {hero.ctaButton}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </a>
                 {!user && (
                   <Link to="/auth">
-                    <Button size="lg" variant="outline" className="text-lg px-8 border-2 hover:bg-primary/5 transition-all duration-300">
+                    <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                       {hero.secondaryButton}
                     </Button>
                   </Link>
@@ -543,17 +548,17 @@ export default function Index() {
 
               {/* Trust badges */}
               <div className="flex flex-wrap items-center gap-4 pt-6">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                <div className="flex items-center gap-2 text-sm text-white/80">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   <span>Rápido</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                <div className="flex items-center gap-2 text-sm text-white/80">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   <span>Seguro</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  <span>100% Digital</span>
+                <div className="flex items-center gap-2 text-sm text-white/80">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <span className="text-white/80">100% Digital</span>
                 </div>
               </div>
             </div>
@@ -682,18 +687,21 @@ export default function Index() {
       {/* Plans Section */}
       <section 
         id="plans" 
-        className="py-20 lg:py-28 relative group overflow-hidden bg-gradient-to-b from-background via-primary/5 to-background"
+        className="py-20 lg:py-28 relative group overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
+        }}
       >
         <div className="container mx-auto px-4">
           {/* Section header */}
           <div className="text-center mb-14">
-            <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+            <span className="inline-block px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
               Planos
             </span>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Escolha seu <span className="text-gradient">plano ideal</span>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
+              Escolha seu <span className="text-white/90">plano ideal</span>
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-white/80 text-lg max-w-2xl mx-auto">
               Quanto mais créditos, maior o desconto. Escolha o melhor para você.
             </p>
           </div>
@@ -701,13 +709,13 @@ export default function Index() {
           {/* Plan type navigation */}
           <div className="flex justify-center gap-4 mb-12">
             <a href="#new-account-plans">
-              <Button size="lg" variant="outline" className="gap-2 border-2 hover:bg-primary/5 hover:border-primary/50 transition-all">
+              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
                 <UserPlus className="w-5 h-5" />
                 Conta Nova
               </Button>
             </a>
             <a href="#recharge-plans">
-              <Button size="lg" variant="outline" className="gap-2 border-2 hover:bg-primary/5 hover:border-primary/50 transition-all">
+              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
                 <RefreshCw className="w-5 h-5" />
                 Recarregar Conta
               </Button>
@@ -718,12 +726,12 @@ export default function Index() {
           <div id="new-account-plans" className="mb-20">
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-3 mb-3">
-                <div className="p-3 rounded-xl gradient-primary">
-                  <UserPlus className="w-6 h-6 text-primary-foreground" />
+                <div className="p-3 rounded-full bg-white/10">
+                  <UserPlus className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-display text-2xl md:text-3xl font-bold">Conta Nova</h3>
+                <h3 className="font-display text-2xl md:text-3xl font-bold text-white">Conta Nova</h3>
               </div>
-              <p className="text-muted-foreground">Receba os dados de uma nova conta com créditos</p>
+              <p className="text-white/80">Receba os dados de uma nova conta com créditos</p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
@@ -745,18 +753,18 @@ export default function Index() {
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-12" />
+          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-12" />
 
           {/* Recharge Plans */}
           <div id="recharge-plans">
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-3 mb-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500">
+                <div className="p-3 rounded-full bg-white/10">
                   <RefreshCw className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-display text-2xl md:text-3xl font-bold">Recarregar Conta</h3>
+                <h3 className="font-display text-2xl md:text-3xl font-bold text-white">Recarregar Conta</h3>
               </div>
-              <p className="text-muted-foreground">Adicione créditos a uma conta existente</p>
+              <p className="text-white/80">Adicione créditos a uma conta existente</p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
