@@ -26,16 +26,26 @@ interface AuthModalProps {
   onSuccess: () => void;
   planId?: string;
   priceId?: string;
+  defaultTab?: 'login' | 'signup';
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId }: AuthModalProps) {
-  const [isLogin, setIsLogin] = useState(true);
+export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId, defaultTab = 'login' }: AuthModalProps) {
+  const [isLogin, setIsLogin] = useState(defaultTab === 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Reset to default tab when modal opens
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      resetForm();
+      setIsLogin(defaultTab === 'login');
+      onClose();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,13 +141,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId 
     setPhone('');
   };
 
+  const isPurchaseFlow = planId || priceId;
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        resetForm();
-        onClose();
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-display">
@@ -145,8 +152,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId 
           </DialogTitle>
           <DialogDescription>
             {isLogin 
-              ? 'Faça login para continuar com sua compra' 
-              : 'Crie sua conta para continuar com sua compra'}
+              ? (isPurchaseFlow ? 'Faça login para continuar com sua compra' : 'Faça login para acessar sua conta')
+              : (isPurchaseFlow ? 'Crie sua conta para continuar com sua compra' : 'Crie sua conta para começar')}
           </DialogDescription>
         </DialogHeader>
 
