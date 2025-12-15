@@ -4,7 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { RefreshCw, CheckCircle, Clock, ExternalLink, Bell } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { RefreshCw, CheckCircle, Clock, ExternalLink, Bell, Search, Filter, MoreHorizontal, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface RechargeRequest {
@@ -16,9 +19,11 @@ interface RechargeRequest {
   credits_added: number;
   created_at: string;
   completed_at: string | null;
-  user?: { name: string; email: string } | null;
+  user?: { name: string; email: string; phone: string | null } | null;
   plan?: { name: string } | null;
 }
+
+type StatusFilter = 'all' | 'pending_link' | 'pending' | 'completed' | 'canceled';
 
 // Função para tocar som de notificação
 const playNotificationSound = () => {
@@ -30,9 +35,9 @@ const playNotificationSound = () => {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5
-    oscillator.frequency.setValueAtTime(1174.66, audioContext.currentTime + 0.1); // D6
-    oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.2); // E6
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(1174.66, audioContext.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(1318.51, audioContext.currentTime + 0.2);
     
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
@@ -74,13 +79,44 @@ const sendBrowserNotification = (title: string, body: string) => {
   }
 };
 
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'pending_link':
+      return <Badge variant="outline" className="text-orange-500 border-orange-500/50">Aguardando Link</Badge>;
+    case 'pending':
+      return <Badge variant="outline" className="text-yellow-500 border-yellow-500/50">Pendente</Badge>;
+    case 'completed':
+      return <Badge variant="outline" className="text-green-500 border-green-500/50">Concluído</Badge>;
+    case 'canceled':
+      return <Badge variant="outline" className="text-red-500 border-red-500/50">Cancelado</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+};
+
+const getStatusIcon = (status: StatusFilter) => {
+  switch (status) {
+    case 'pending_link':
+      return <RefreshCw className="w-4 h-4 text-orange-500" />;
+    case 'pending':
+      return <Clock className="w-4 h-4 text-yellow-500" />;
+    case 'completed':
+      return <CheckCircle className="w-4 h-4 text-green-500" />;
+    case 'canceled':
+      return <XCircle className="w-4 h-4 text-red-500" />;
+    default:
+      return <Filter className="w-4 h-4" />;
+  }
+};
+
 export default function RechargeManager() {
   const [recharges, setRecharges] = useState<RechargeRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const previousPendingCount = useRef<number>(0);
   const isInitialLoad = useRef(true);
 
-  // Solicitar permissão de notificação ao montar o componente
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -90,7 +126,6 @@ export default function RechargeManager() {
   useEffect(() => {
     fetchRecharges();
 
-    // Real-time subscription para novas recargas
     const channel = supabase
       .channel('recharge-notifications')
       .on(
@@ -102,9 +137,7 @@ export default function RechargeManager() {
         },
         (payload) => {
           console.log('Nova recarga recebida:', payload);
-          // Tocar som de notificação
           playNotificationSound();
-          // Enviar notificação push do navegador
           sendBrowserNotification(
             '🔔 Nova Recarga!',
             'Uma nova solicitação de recarga foi adicionada.'
@@ -145,7 +178,7 @@ export default function RechargeManager() {
       const planIds = [...new Set(data.map(r => r.plan_id))];
 
       const [profilesRes, plansRes] = await Promise.all([
-        supabase.from('profiles').select('id, name, email').in('id', userIds),
+        supabase.from('profiles').select('id, name, email, phone').in('id', userIds),
         supabase.from('credit_plans').select('id, name').in('id', planIds)
       ]);
 
@@ -158,10 +191,8 @@ export default function RechargeManager() {
         plan: planMap.get(r.plan_id) || null
       })));
 
-      // Contar recargas pendentes
       const pendingCount = data.filter(r => r.status === 'pending').length;
       
-      // Notificar sobre recargas pendentes
       if (isInitialLoad.current && pendingCount > 0) {
         playNotificationSound();
         sendBrowserNotification(
@@ -192,208 +223,224 @@ export default function RechargeManager() {
     }
   };
 
-  const handleMarkAsCompleted = async (rechargeId: string) => {
+  const handleChangeStatus = async (rechargeId: string, newStatus: string) => {
     setLoading(true);
     try {
+      const updateData: { status: string; completed_at?: string | null } = { status: newStatus };
+      
+      if (newStatus === 'completed') {
+        updateData.completed_at = new Date().toISOString();
+      } else {
+        updateData.completed_at = null;
+      }
+
       const { error } = await supabase
         .from('recharge_requests')
-        .update({ 
-          status: 'completed', 
-          completed_at: new Date().toISOString() 
-        })
+        .update(updateData)
         .eq('id', rechargeId);
 
       if (error) throw error;
 
-      toast.success('Recarga marcada como concluída!');
+      const statusLabels: Record<string, string> = {
+        pending: 'pendente',
+        completed: 'concluído',
+        canceled: 'cancelado'
+      };
+
+      toast.success(`Status alterado para ${statusLabels[newStatus] || newStatus}!`);
       await fetchRecharges();
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao atualizar recarga');
+      toast.error(error.message || 'Erro ao atualizar status');
     } finally {
       setLoading(false);
     }
   };
 
-  const pendingLinkRecharges = recharges.filter(r => r.status === 'pending_link');
-  const pendingRecharges = recharges.filter(r => r.status === 'pending');
-  const completedRecharges = recharges.filter(r => r.status === 'completed');
+  // Filter recharges based on search and status
+  const filteredRecharges = recharges.filter(r => {
+    const matchesSearch = searchTerm === '' || 
+      r.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.user?.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Count by status
+  const counts = {
+    all: recharges.length,
+    pending_link: recharges.filter(r => r.status === 'pending_link').length,
+    pending: recharges.filter(r => r.status === 'pending').length,
+    completed: recharges.filter(r => r.status === 'completed').length,
+    canceled: recharges.filter(r => r.status === 'canceled').length,
+  };
 
   return (
     <div className="space-y-6">
-      {/* Pending Link Recharges */}
-      <Card className="shadow-card border-orange-500/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-orange-500" />
-            Aguardando Link ({pendingLinkRecharges.length})
-          </CardTitle>
-          <CardDescription>Recargas pagas aguardando o link do usuário</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {pendingLinkRecharges.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma recarga aguardando link.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Créditos</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingLinkRecharges.map((recharge) => (
-                  <TableRow key={recharge.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{recharge.user?.name || 'Usuário'}</p>
-                        <p className="text-sm text-muted-foreground">{recharge.user?.email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">+{recharge.credits_added}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-orange-500 border-orange-500/50">
-                        Aguardando Link
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pending Recharges */}
-      <Card className="shadow-card border-yellow-500/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-yellow-500" />
-            Recargas Pendentes ({pendingRecharges.length})
-          </CardTitle>
-          <CardDescription>Recargas com link recebido aguardando processamento</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {pendingRecharges.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma recarga pendente.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Créditos</TableHead>
-                  <TableHead>Link de Recarga</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingRecharges.map((recharge) => (
-                  <TableRow key={recharge.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{recharge.user?.name || 'Usuário'}</p>
-                        <p className="text-sm text-muted-foreground">{recharge.user?.email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">+{recharge.credits_added}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <a 
-                        href={recharge.recharge_link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-primary hover:underline text-sm"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Abrir Link
-                      </a>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        onClick={() => handleMarkAsCompleted(recharge.id)}
-                        disabled={loading}
-                        className="gap-1"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        Marcar Recarregado
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Completed Recharges */}
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            Recargas Concluídas ({completedRecharges.length})
+            <RefreshCw className="w-5 h-5 text-primary" />
+            Gerenciador de Recargas
           </CardTitle>
-          <CardDescription>Histórico de recargas processadas</CardDescription>
+          <CardDescription>Gerencie todas as solicitações de recarga</CardDescription>
         </CardHeader>
-        <CardContent>
-          {completedRecharges.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma recarga concluída.</p>
+        <CardContent className="space-y-4">
+          {/* Search and Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar por nome, email ou telefone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+              <SelectTrigger className="w-full sm:w-[220px]">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(statusFilter)}
+                  <SelectValue placeholder="Filtrar por status" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    Todos ({counts.all})
+                  </div>
+                </SelectItem>
+                <SelectItem value="pending_link">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-orange-500" />
+                    Aguardando Link ({counts.pending_link})
+                  </div>
+                </SelectItem>
+                <SelectItem value="pending">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-yellow-500" />
+                    Pendentes ({counts.pending})
+                  </div>
+                </SelectItem>
+                <SelectItem value="completed">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    Concluídos ({counts.completed})
+                  </div>
+                </SelectItem>
+                <SelectItem value="canceled">
+                  <div className="flex items-center gap-2">
+                    <XCircle className="w-4 h-4 text-red-500" />
+                    Cancelados ({counts.canceled})
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Results count */}
+          <div className="text-sm text-muted-foreground">
+            Mostrando {filteredRecharges.length} de {recharges.length} recargas
+          </div>
+
+          {/* Table */}
+          {filteredRecharges.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhuma recarga encontrada.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Créditos</TableHead>
-                  <TableHead>Data Solicitação</TableHead>
-                  <TableHead>Data Recarga</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {completedRecharges.map((recharge) => (
-                  <TableRow key={recharge.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{recharge.user?.name || 'Usuário'}</p>
-                        <p className="text-sm text-muted-foreground">{recharge.user?.email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">+{recharge.credits_added}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {recharge.completed_at && new Date(recharge.completed_at).toLocaleDateString('pt-BR')}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>Plano</TableHead>
+                    <TableHead>Créditos</TableHead>
+                    <TableHead>Link</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredRecharges.map((recharge) => (
+                    <TableRow key={recharge.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{recharge.user?.name || 'Usuário'}</p>
+                          <p className="text-sm text-muted-foreground">{recharge.user?.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{recharge.user?.phone || '-'}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">+{recharge.credits_added}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {recharge.recharge_link ? (
+                          <a 
+                            href={recharge.recharge_link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:underline text-sm"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Abrir
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(recharge.status)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell>
+                        {recharge.status !== 'pending_link' ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" disabled={loading}>
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {recharge.status !== 'pending' && (
+                                <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'pending')}>
+                                  <Clock className="w-4 h-4 mr-2 text-yellow-500" />
+                                  Marcar como Pendente
+                                </DropdownMenuItem>
+                              )}
+                              {recharge.status !== 'completed' && (
+                                <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'completed')}>
+                                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                  Marcar como Concluído
+                                </DropdownMenuItem>
+                              )}
+                              {recharge.status !== 'canceled' && (
+                                <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'canceled')}>
+                                  <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                                  Marcar como Cancelado
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
