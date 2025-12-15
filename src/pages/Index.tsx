@@ -5,11 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Sparkles, Zap, Shield, Download, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw, Check, Tag, X, Loader2 } from 'lucide-react';
+import { Sparkles, Zap, Shield, Download, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw, Check, Tag, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
 import PlanCard from '@/components/PlanCard';
-import WaveDivider from '@/components/WaveDivider';
+import HeroMockup from '@/components/HeroMockup';
+import FeatureCard from '@/components/FeatureCard';
+import HowItWorksSection from '@/components/HowItWorksSection';
 import confetti from 'canvas-confetti';
 
 const AdminEditButton = ({ section }: { section: string }) => (
@@ -124,7 +126,6 @@ export default function Index() {
 
   // Save coupon to localStorage only - profile is updated only after purchase via webhook
   const saveCouponToStorage = (couponData: CouponData) => {
-    // Only save if we have valid coupon data
     const hasValidData = couponData.custom_code || couponData.affiliate_id || couponData.coupon_id;
     
     if (!hasValidData) {
@@ -138,7 +139,6 @@ export default function Index() {
       coupon_id: couponData.coupon_id
     });
 
-    // Save to localStorage only - profile will be updated after purchase via webhook
     localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify({
       custom_code: couponData.custom_code,
       affiliate_id: couponData.affiliate_id,
@@ -149,7 +149,6 @@ export default function Index() {
 
   // Load saved coupon from localStorage or profile
   const loadSavedCoupon = async () => {
-    // First check localStorage
     const storedCoupon = localStorage.getItem(COUPON_STORAGE_KEY);
     if (storedCoupon) {
       try {
@@ -157,7 +156,6 @@ export default function Index() {
         if (parsed.full_data) {
           return parsed.full_data as CouponData;
         }
-        // If we only have the code, validate it
         if (parsed.custom_code) {
           const validated = await validateCouponCode(parsed.custom_code);
           if (validated) return validated;
@@ -167,7 +165,6 @@ export default function Index() {
       }
     }
 
-    // If user is logged in, check profile
     if (user) {
       const { data: profileData } = await supabase
         .from('profiles')
@@ -225,13 +222,11 @@ export default function Index() {
       
       const state = location.state as { couponData?: CouponData } | null;
       
-      // URL coupon has priority
       if (state?.couponData) {
         setAppliedCoupon(state.couponData);
         saveCouponToStorage(state.couponData);
         setCouponInitialized(true);
         
-        // Trigger confetti animation
         confetti({
           particleCount: 100,
           spread: 70,
@@ -244,12 +239,10 @@ export default function Index() {
           description: `${state.couponData.name} - ${state.couponData.type === 'percentage' ? `${state.couponData.value}% OFF` : `R$ ${state.couponData.value.toFixed(2)} OFF`}` 
         });
         
-        // Clear the state to prevent re-applying on refresh
         navigate('/', { replace: true, state: {} });
         return;
       }
 
-      // No URL coupon, try to load saved coupon
       const savedCoupon = await loadSavedCoupon();
       if (savedCoupon) {
         setAppliedCoupon(savedCoupon);
@@ -264,9 +257,6 @@ export default function Index() {
     initializeCoupon();
   }, [location.state, couponInitialized]);
 
-  // NOTE: Coupon is NO LONGER synced to profile on login
-  // Profile coupon fields are only updated after a successful purchase via webhook
-
   const fetchPlans = async () => {
     const { data: plansData } = await supabase
       .from('credit_plans')
@@ -275,7 +265,6 @@ export default function Index() {
       .order('credits', { ascending: true });
     
     if (plansData) {
-      // Fetch available accounts count for each plan using the SECURITY DEFINER function
       const plansWithAvailability = await Promise.all(
         (plansData as CreditPlan[]).map(async (plan) => {
           const { data: countData } = await supabase
@@ -351,7 +340,6 @@ export default function Index() {
     setIsAuthModalOpen(false);
   };
 
-  // Verificar se há compra pendente após login
   useEffect(() => {
     if (user && (newAccountPlans.length > 0 || rechargePlans.length > 0) && pendingPurchase) {
       const { plan, type } = pendingPurchase;
@@ -375,7 +363,6 @@ export default function Index() {
         saveCouponToStorage(data);
         setCouponInput('');
         
-        // Trigger confetti animation
         confetti({
           particleCount: 100,
           spread: 70,
@@ -399,8 +386,6 @@ export default function Index() {
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
-    // Clear from localStorage only - profile is NOT updated here
-    // Profile coupon fields are only managed after purchases via webhook
     localStorage.removeItem(COUPON_STORAGE_KEY);
     console.log('[COUPON] removeCoupon: Cleared from localStorage only, profile untouched');
     toast({ title: 'Cupom removido' });
@@ -447,16 +432,11 @@ export default function Index() {
   };
 
   const featuresData = featuresContent?.items || [
-    { icon: 'Zap', title: 'Acesso Instantâneo', description: 'Download imediato após a compra' },
-    { icon: 'Shield', title: 'Pagamento Seguro', description: 'Transações protegidas por Stripe' },
-    { icon: 'Download', title: 'Downloads Ilimitados', description: 'Baixe quantas vezes precisar' },
+    { icon: 'Zap', title: 'Acesso Instantâneo', description: 'Download imediato após a compra. Sem espera.' },
+    { icon: 'Shield', title: 'Pagamento Seguro', description: 'Transações protegidas por Stripe e criptografia.' },
+    { icon: 'Download', title: 'Downloads Ilimitados', description: 'Baixe quantas vezes precisar, sem limites.' },
+    { icon: 'Star', title: 'Suporte Dedicado', description: 'Atendimento rápido para tirar todas as suas dúvidas.' },
   ];
-
-  const plansData = plansContent || {
-    title: 'Escolha seu plano',
-    subtitle: 'Quanto mais créditos, mais economia',
-    features: ['Acesso à biblioteca completa', 'Download instantâneo', 'Suporte prioritário', 'Atualizações incluídas'],
-  };
 
   const footer = footerContent || {
     copyright: `© ${new Date().getFullYear()} CreditsHub. Todos os direitos reservados.`,
@@ -472,34 +452,34 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+      {/* Header - Sticky with glassmorphism */}
+      <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-xl">CreditsHub</span>
           </Link>
 
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-3">
             {user ? (
               <>
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full">
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
                   <Zap className="w-4 h-4 text-primary" />
-                  <span className="font-medium">{profile?.credits || 0} créditos</span>
+                  <span className="font-semibold text-primary">{profile?.credits || 0} créditos</span>
                 </div>
                 <Link to="/dashboard">
-                  <Button variant="ghost" size="sm">
-                    <User className="w-4 h-4 mr-2" />
-                    Minha Conta
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">Minha Conta</span>
                   </Button>
                 </Link>
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Admin
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Settings className="w-4 h-4" />
+                      <span className="hidden sm:inline">Admin</span>
                     </Button>
                   </Link>
                 )}
@@ -509,7 +489,7 @@ export default function Index() {
               </>
             ) : (
               <Link to="/auth">
-                <Button className="gradient-primary">
+                <Button className="gradient-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                   Entrar
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -519,70 +499,101 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section 
-        className="py-20 lg:py-32 relative group"
-        style={{
-          background: 'linear-gradient(180deg, hsl(220, 60%, 15%) 0%, hsl(240, 50%, 30%) 25%, hsl(270, 60%, 45%) 50%, hsl(330, 70%, 55%) 75%, hsl(15, 85%, 55%) 100%)'
-        }}
-      >
-        <div className="container mx-auto px-4 text-center">
-          <Badge variant="secondary" className="mb-6 px-4 py-2 bg-white/20 text-white border-white/30 backdrop-blur-sm animate-fade-in">
-            <Sparkles className="w-4 h-4 mr-2" />
-            {hero.badge}
-          </Badge>
-          
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in text-white drop-shadow-lg">
-            {hero.title}
-            <span className="block text-white/90 drop-shadow-md">{hero.titleHighlight}</span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto mb-10 animate-fade-in drop-shadow-sm" style={{ animationDelay: '0.2s' }}>
-            {hero.description}
-          </p>
+      {/* Hero Section - Two columns layout */}
+      <section className="relative py-16 lg:py-24 overflow-hidden group">
+        {/* Background decorations */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left column - Content */}
+            <div className="text-left space-y-6 animate-fade-in">
+              <Badge variant="secondary" className="px-4 py-2 bg-primary/10 text-primary border-0">
+                <Sparkles className="w-4 h-4 mr-2" />
+                {hero.badge}
+              </Badge>
+              
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                {hero.title}
+                <span className="block text-gradient">{hero.titleHighlight}</span>
+              </h1>
+              
+              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+                {hero.description}
+              </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <a href="#plans">
-              <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90 text-lg px-8 shadow-xl transition-all duration-300 hover:scale-105">
-                {hero.ctaButton}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </a>
-            {!user && (
-              <Link to="/auth">
-                <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  {hero.secondaryButton}
-                </Button>
-              </Link>
-            )}
+              <div className="flex flex-col sm:flex-row items-start gap-4 pt-2">
+                <a href="#plans">
+                  <Button size="lg" className="gradient-primary text-lg px-8 shadow-hero hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    {hero.ctaButton}
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </a>
+                {!user && (
+                  <Link to="/auth">
+                    <Button size="lg" variant="outline" className="text-lg px-8 border-2 hover:bg-primary/5 transition-all duration-300">
+                      {hero.secondaryButton}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+
+              {/* Trust badges */}
+              <div className="flex flex-wrap items-center gap-4 pt-6">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <span>Rápido</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <span>Seguro</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <span>100% Digital</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right column - Mockup */}
+            <div className="hidden lg:block animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <HeroMockup />
+            </div>
           </div>
         </div>
         {isAdmin && <AdminEditButton section="hero" />}
-        <WaveDivider 
-          topColor="transparent" 
-          bottomColor="hsl(var(--card))" 
-          intensity="high"
-        />
       </section>
 
-      {/* Features */}
-      <section className="py-20 bg-card relative group transition-all duration-500" style={{ marginTop: '-1px' }}>
+      {/* Features Section */}
+      <section className="py-20 lg:py-28 bg-card relative group">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+          {/* Section header */}
+          <div className="text-center mb-14">
+            <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+              Vantagens
+            </span>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              Por que escolher o <span className="text-gradient">CreditsHub</span>?
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Oferecemos a melhor experiência para você acessar produtos digitais
+            </p>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {featuresData.map((feature, index) => {
               const IconComponent = iconMap[feature.icon] || Zap;
               return (
-                <div 
-                  key={index} 
-                  className="text-center p-8 rounded-2xl bg-background shadow-card animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-6">
-                    <IconComponent className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <h3 className="font-display text-xl font-bold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </div>
+                <FeatureCard
+                  key={index}
+                  icon={IconComponent}
+                  title={feature.title}
+                  description={feature.description}
+                  index={index}
+                />
               );
             })}
           </div>
@@ -590,44 +601,41 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="features" />}
       </section>
 
-      {/* Seção Cupom */}
-      <section className="py-12 pt-16 pb-20 bg-gradient-to-br from-primary/15 via-primary/10 to-accent/20 relative overflow-hidden">
-        {/* Onda rasa no topo */}
-        <div className="absolute top-0 left-0 right-0">
-          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-8 fill-background">
-            <path d="M0,0 L0,30 Q300,60 600,30 T1200,30 L1200,0 Z" />
-          </svg>
-        </div>
-        {/* Onda rasa no fundo */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 60" preserveAspectRatio="none" className="w-full h-8 fill-background">
-            <path d="M0,60 L0,30 Q300,0 600,30 T1200,30 L1200,60 Z" />
-          </svg>
-        </div>
+      {/* How It Works Section */}
+      <HowItWorksSection />
+
+      {/* Coupon Section */}
+      <section className="py-16 bg-gradient-to-br from-primary/5 via-background to-accent/5 relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 mb-2">
-              <Tag className="w-6 h-6 text-primary" />
-              <h2 className="font-display text-2xl font-bold">Tem cupom de desconto?</h2>
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Tag className="w-5 h-5 text-primary" />
+                </div>
+              </div>
+              <h2 className="font-display text-2xl md:text-3xl font-bold mb-2">
+                Tem cupom de desconto?
+              </h2>
+              <p className="text-muted-foreground">
+                Aplique seu código e economize ainda mais!
+              </p>
             </div>
-            <p className="text-muted-foreground">Aplique seu código e economize ainda mais!</p>
-          </div>
-          
-          <div className="max-w-lg mx-auto">
+            
             {appliedCoupon ? (
-              <div className="bg-primary/10 rounded-2xl p-6 border-2 border-primary/30 shadow-lg">
+              <div className="bg-card rounded-2xl p-6 border-2 border-emerald-500/30 shadow-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {appliedCoupon.affiliate_avatar_url && (
                       <img 
                         src={appliedCoupon.affiliate_avatar_url} 
                         alt={appliedCoupon.affiliate_name}
-                        className="w-16 h-16 rounded-full border-2 border-primary/50"
+                        className="w-14 h-14 rounded-full border-2 border-emerald-500/50"
                       />
                     )}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-green-500 text-white">
+                        <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white">
                           {appliedCoupon.type === 'percentage' ? `${appliedCoupon.value}% OFF` : `R$ ${appliedCoupon.value.toFixed(2)} OFF`}
                         </Badge>
                       </div>
@@ -637,7 +645,7 @@ export default function Index() {
                   </div>
                   <Button 
                     variant="ghost" 
-                    size="sm" 
+                    size="icon" 
                     onClick={removeCoupon}
                     className="text-muted-foreground hover:text-destructive"
                   >
@@ -654,14 +662,14 @@ export default function Index() {
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                     onKeyDown={(e) => e.key === 'Enter' && validateCoupon()}
-                    className="pl-12 h-14 text-lg bg-background border-2 border-border focus:border-primary"
+                    className="pl-12 h-14 text-lg bg-card border-2 border-border focus:border-primary rounded-xl"
                   />
                 </div>
                 <Button 
                   onClick={validateCoupon}
                   disabled={couponLoading}
                   size="lg"
-                  className="h-14 px-8"
+                  className="h-14 px-8 gradient-primary shadow-lg"
                 >
                   {couponLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Aplicar'}
                 </Button>
@@ -671,55 +679,51 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Seção Planos */}
+      {/* Plans Section */}
       <section 
         id="plans" 
-        className="py-20 relative group overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
-        }}
+        className="py-20 lg:py-28 relative group overflow-hidden bg-gradient-to-b from-background via-primary/5 to-background"
       >
-        {/* Wave effect no topo */}
-        <div className="absolute top-0 left-0 right-0 w-full overflow-hidden leading-none">
-          <svg 
-            className="relative block w-full h-16 md:h-24" 
-            viewBox="0 0 1200 120" 
-            preserveAspectRatio="none"
-          >
-            <path 
-              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" 
-              fill="hsl(var(--background))"
-            />
-          </svg>
-        </div>
-        
-        <div className="container mx-auto px-4 pt-8">
-          {/* Botões de navegação */}
+        <div className="container mx-auto px-4">
+          {/* Section header */}
+          <div className="text-center mb-14">
+            <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+              Planos
+            </span>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              Escolha seu <span className="text-gradient">plano ideal</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Quanto mais créditos, maior o desconto. Escolha o melhor para você.
+            </p>
+          </div>
+
+          {/* Plan type navigation */}
           <div className="flex justify-center gap-4 mb-12">
             <a href="#new-account-plans">
-              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
+              <Button size="lg" variant="outline" className="gap-2 border-2 hover:bg-primary/5 hover:border-primary/50 transition-all">
                 <UserPlus className="w-5 h-5" />
                 Conta Nova
               </Button>
             </a>
             <a href="#recharge-plans">
-              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
+              <Button size="lg" variant="outline" className="gap-2 border-2 hover:bg-primary/5 hover:border-primary/50 transition-all">
                 <RefreshCw className="w-5 h-5" />
                 Recarregar Conta
               </Button>
             </a>
           </div>
 
-          {/* Conta Nova */}
-          <div id="new-account-plans" className="mb-16">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-full bg-white/10">
-                  <UserPlus className="w-8 h-8 text-white" />
+          {/* New Account Plans */}
+          <div id="new-account-plans" className="mb-20">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-3 mb-3">
+                <div className="p-3 rounded-xl gradient-primary">
+                  <UserPlus className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Conta Nova</h2>
+                <h3 className="font-display text-2xl md:text-3xl font-bold">Conta Nova</h3>
               </div>
-              <p className="text-white/80 text-lg">Receba os dados de uma nova conta</p>
+              <p className="text-muted-foreground">Receba os dados de uma nova conta com créditos</p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
@@ -740,19 +744,19 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Separador visual */}
-          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-8" />
+          {/* Divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-12" />
 
-          {/* Recarregar Conta */}
+          {/* Recharge Plans */}
           <div id="recharge-plans">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-full bg-white/10">
-                  <RefreshCw className="w-8 h-8 text-white" />
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-3 mb-3">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500">
+                  <RefreshCw className="w-6 h-6 text-white" />
                 </div>
-                <h2 className="font-display text-3xl md:text-4xl font-bold text-white">Recarregar Conta</h2>
+                <h3 className="font-display text-2xl md:text-3xl font-bold">Recarregar Conta</h3>
               </div>
-              <p className="text-white/80 text-lg">Adicione créditos a uma conta existente</p>
+              <p className="text-muted-foreground">Adicione créditos a uma conta existente</p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
@@ -773,13 +777,27 @@ export default function Index() {
           </div>
         </div>
         {isAdmin && <AdminEditButton section="plans" />}
-        <WaveDivider 
-          topColor="transparent" 
-          bottomColor="hsl(var(--card))" 
-          intensity="high"
-        />
       </section>
 
+      {/* Final CTA Section */}
+      <section className="py-20 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+              Pronto para começar?
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8">
+              Escolha seu plano e comece a usar seus créditos agora mesmo.
+            </p>
+            <a href="#plans">
+              <Button size="lg" className="gradient-primary text-lg px-10 shadow-hero hover:shadow-xl transition-all duration-300 hover:scale-105">
+                Ver Planos
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* Auth Modal */}
       <AuthModal
@@ -794,13 +812,13 @@ export default function Index() {
       />
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-12 relative group">
+      <footer className="bg-background border-t border-border py-12 relative group">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold">CreditsHub</span>
+            <span className="font-display font-bold text-lg">CreditsHub</span>
           </div>
           <p className="text-muted-foreground text-sm">
             {footer.copyright}

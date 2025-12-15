@@ -154,4 +154,48 @@
   .shadow-card {
     box-shadow: 0 4px 20px hsl(220 25% 10% / 0.08);
   }
+
+  .shadow-hero {
+    box-shadow: 0 25px 50px -12px hsl(250 84% 54% / 0.25);
+  }
+
+  .glass {
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .glass-dark {
+    background: hsl(220 25% 10% / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(220 25% 20% / 0.5);
+  }
+}
+
+/* Floating animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 4s ease-in-out infinite;
+  animation-delay: 1s;
 }
