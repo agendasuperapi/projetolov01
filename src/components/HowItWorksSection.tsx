@@ -4,7 +4,7 @@ const steps = [
   {
     number: '01',
     icon: UserPlus,
-    title: 'Crie sua conta',
+    title: 'Crie sua conta na Mais Créditos',
     description: 'Cadastre-se gratuitamente em poucos segundos. Basta informar seu e-mail e criar uma senha segura.',
     color: 'from-primary to-primary/80',
   },
