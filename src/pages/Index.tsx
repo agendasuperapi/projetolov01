@@ -606,39 +606,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 lg:py-28 bg-card relative group">
-        <div className="container mx-auto px-4">
-          {/* Section header */}
-          <div className="text-center mb-14">
-            <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
-              Vantagens
-            </span>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Por que escolher o <span className="text-gradient">CreditsHub</span>?
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Oferecemos a melhor experiência para você acessar produtos digitais
-            </p>
-          </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {featuresData.map((feature, index) => {
-              const IconComponent = iconMap[feature.icon] || Zap;
-              return (
-                <FeatureCard
-                  key={index}
-                  icon={IconComponent}
-                  title={feature.title}
-                  description={feature.description}
-                  index={index}
-                />
-              );
-            })}
-          </div>
-        </div>
-        {isAdmin && <AdminEditButton section="features" />}
-      </section>
 
       {/* How It Works Section */}
       <HowItWorksSection />
@@ -864,6 +831,40 @@ export default function Index() {
             </a>
           </div>
         </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 lg:py-28 bg-card relative group">
+        <div className="container mx-auto px-4">
+          {/* Section header */}
+          <div className="text-center mb-14">
+            <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+              Vantagens
+            </span>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              Por que escolher o <span className="text-gradient">CreditsHub</span>?
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Oferecemos a melhor experiência para você acessar produtos digitais
+            </p>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {featuresData.map((feature, index) => {
+              const IconComponent = iconMap[feature.icon] || Zap;
+              return (
+                <FeatureCard
+                  key={index}
+                  icon={IconComponent}
+                  title={feature.title}
+                  description={feature.description}
+                  index={index}
+                />
+              );
+            })}
+          </div>
+        </div>
+        {isAdmin && <AdminEditButton section="features" />}
       </section>
 
       {/* Auth Modal */}
