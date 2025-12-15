@@ -813,26 +813,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="py-20 bg-card">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              Pronto para começar?
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              Escolha seu plano e comece a usar seus créditos agora mesmo.
-            </p>
-            <a href="#plans">
-              <Button size="lg" className="gradient-primary text-lg px-10 shadow-hero hover:shadow-xl transition-all duration-300 hover:scale-105">
-                Ver Planos
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </a>
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section className="py-20 lg:py-28 bg-card relative group">
         <div className="container mx-auto px-4">
@@ -865,6 +845,26 @@ export default function Index() {
           </div>
         </div>
         {isAdmin && <AdminEditButton section="features" />}
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-20 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+              Pronto para começar?
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8">
+              Escolha seu plano e comece a usar seus créditos agora mesmo.
+            </p>
+            <a href="#plans">
+              <Button size="lg" className="gradient-primary text-lg px-10 shadow-hero hover:shadow-xl transition-all duration-300 hover:scale-105">
+                Ver Planos
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* Auth Modal */}
