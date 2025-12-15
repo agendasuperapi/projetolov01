@@ -19,7 +19,7 @@ const steps = [
     number: '03',
     icon: Download,
     title: 'Acesse seus créditos',
-    description: 'Após o pagamento, seus créditos são liberados instantaneamente. Use quando e como quiser.',
+    description: 'Após o pagamento, seus créditos são liberados. Use quando e como quiser.',
     color: 'from-amber-500 to-orange-500',
   },
 ];
