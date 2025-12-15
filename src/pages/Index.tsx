@@ -744,7 +744,7 @@ export default function Index() {
               Vantagens
             </span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Por que escolher o <span className="text-gradient">CreditsHub</span>?
+              Por que escolher a <span className="text-gradient">Mais Créditos</span>?
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Oferecemos a melhor experiência para você acessar produtos digitais
