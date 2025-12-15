@@ -13,18 +13,16 @@ import HeroMockup from '@/components/HeroMockup';
 import FeatureCard from '@/components/FeatureCard';
 import HowItWorksSection from '@/components/HowItWorksSection';
 import confetti from 'canvas-confetti';
-
-const AdminEditButton = ({ section }: { section: string }) => (
-  <Link 
-    to={`/admin?edit=${section}`}
-    className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-  >
+const AdminEditButton = ({
+  section
+}: {
+  section: string;
+}) => <Link to={`/admin?edit=${section}`} className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
     <Button variant="outline" size="sm" className="gap-2 bg-background/80 backdrop-blur-sm">
       <Pencil className="w-3 h-3" />
       Editar
     </Button>
-  </Link>
-);
+  </Link>;
 
 // Icon mapping for dynamic features
 const iconMap: Record<string, LucideIcon> = {
@@ -33,9 +31,8 @@ const iconMap: Record<string, LucideIcon> = {
   Download,
   Star,
   Sparkles,
-  Check,
+  Check
 };
-
 interface CreditPlan {
   id: string;
   name: string;
@@ -45,11 +42,9 @@ interface CreditPlan {
   competitor_price_cents: number | null;
   plan_type: 'new_account' | 'recharge';
 }
-
 interface PlanWithAvailability extends CreditPlan {
   availableAccounts: number;
 }
-
 interface CouponData {
   coupon_id: string;
   code: string;
@@ -65,7 +60,6 @@ interface CouponData {
   affiliate_avatar_url: string;
   custom_code: string;
 }
-
 interface HeroContent {
   badge: string;
   title: string;
@@ -78,30 +72,31 @@ interface HeroContent {
   gradientTo?: string;
   gradientDirection?: string;
 }
-
 interface FeatureItem {
   icon: string;
   title: string;
   description: string;
 }
-
 interface FeaturesContent {
   items: FeatureItem[];
 }
-
 interface PlansContent {
   title: string;
   subtitle: string;
   features: string[];
   competitorLabel?: string;
 }
-
 interface FooterContent {
   copyright: string;
 }
-
 export default function Index() {
-  const { user, profile, isAdmin, signOut, loading } = useAuth();
+  const {
+    user,
+    profile,
+    isAdmin,
+    signOut,
+    loading
+  } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [newAccountPlans, setNewAccountPlans] = useState<PlanWithAvailability[]>([]);
@@ -113,33 +108,33 @@ export default function Index() {
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalDefaultTab, setAuthModalDefaultTab] = useState<'login' | 'signup'>('login');
-  const [pendingPurchase, setPendingPurchase] = useState<{ plan: PlanWithAvailability; type: 'recharge' | 'new_account' } | null>(null);
-  
+  const [pendingPurchase, setPendingPurchase] = useState<{
+    plan: PlanWithAvailability;
+    type: 'recharge' | 'new_account';
+  } | null>(null);
+
   // Coupon states
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponInitialized, setCouponInitialized] = useState(false);
-  
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const COUPON_STORAGE_KEY = 'creditshub_last_coupon';
 
   // Save coupon to localStorage only - profile is updated only after purchase via webhook
   const saveCouponToStorage = (couponData: CouponData) => {
     const hasValidData = couponData.custom_code || couponData.affiliate_id || couponData.coupon_id;
-    
     if (!hasValidData) {
       console.log('[COUPON] saveCouponToStorage: No valid data to save, skipping');
       return;
     }
-
     console.log('[COUPON] saveCouponToStorage: Saving to localStorage only', {
       custom_code: couponData.custom_code,
       affiliate_id: couponData.affiliate_id,
       coupon_id: couponData.coupon_id
     });
-
     localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify({
       custom_code: couponData.custom_code,
       affiliate_id: couponData.affiliate_id,
@@ -165,43 +160,34 @@ export default function Index() {
         console.error('Error parsing stored coupon:', e);
       }
     }
-
     if (user) {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('last_coupon_code')
-        .eq('id', user.id)
-        .maybeSingle();
-
+      const {
+        data: profileData
+      } = await supabase.from('profiles').select('last_coupon_code').eq('id', user.id).maybeSingle();
       if (profileData?.last_coupon_code) {
         const validated = await validateCouponCode(profileData.last_coupon_code);
         if (validated) return validated;
       }
     }
-
     return null;
   };
 
   // Validate coupon code and return data
   const validateCouponCode = async (code: string): Promise<CouponData | null> => {
     try {
-      const response = await fetch(
-        'https://adpnzkvzvjbervzrqhhx.supabase.co/rest/v1/rpc/validate_coupon',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDAzODYsImV4cCI6MjA3OTA3NjM4Nn0.N7gETUDWj95yDCYdZTYWPoMJQcdx_Yjl51jxK-O1vrE',
-          },
-          body: JSON.stringify({ 
-            p_coupon_code: code,
-            p_product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1'
-          }),
-        }
-      );
+      const response = await fetch('https://adpnzkvzvjbervzrqhhx.supabase.co/rest/v1/rpc/validate_coupon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcG56a3Z6dmpiZXJ2enJxaGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDAzODYsImV4cCI6MjA3OTA3NjM4Nn0.N7gETUDWj95yDCYdZTYWPoMJQcdx_Yjl51jxK-O1vrE'
+        },
+        body: JSON.stringify({
+          p_coupon_code: code,
+          p_product_id: '9453f6dc-5257-43d9-9b04-3bdfd5188ed1'
+        })
+      });
       const responseData = await response.json();
       const data: CouponData | null = Array.isArray(responseData) ? responseData[0] : responseData;
-      
       if (data && data.coupon_id && data.is_active) {
         return data;
       }
@@ -210,7 +196,6 @@ export default function Index() {
     }
     return null;
   };
-
   useEffect(() => {
     fetchPlans();
     fetchContent();
@@ -220,73 +205,71 @@ export default function Index() {
   useEffect(() => {
     const initializeCoupon = async () => {
       if (couponInitialized) return;
-      
-      const state = location.state as { couponData?: CouponData } | null;
-      
+      const state = location.state as {
+        couponData?: CouponData;
+      } | null;
       if (state?.couponData) {
         setAppliedCoupon(state.couponData);
         saveCouponToStorage(state.couponData);
         setCouponInitialized(true);
-        
         confetti({
           particleCount: 100,
           spread: 70,
-          origin: { y: 0.6 },
+          origin: {
+            y: 0.6
+          },
           colors: ['#10b981', '#06b6d4', '#22c55e', '#14b8a6']
         });
-        
-        toast({ 
-          title: 'Cupom aplicado!', 
-          description: `${state.couponData.name} - ${state.couponData.type === 'percentage' ? `${state.couponData.value}% OFF` : `R$ ${state.couponData.value.toFixed(2)} OFF`}` 
+        toast({
+          title: 'Cupom aplicado!',
+          description: `${state.couponData.name} - ${state.couponData.type === 'percentage' ? `${state.couponData.value}% OFF` : `R$ ${state.couponData.value.toFixed(2)} OFF`}`
         });
-        
-        navigate('/', { replace: true, state: {} });
+        navigate('/', {
+          replace: true,
+          state: {}
+        });
         return;
       }
-
       const savedCoupon = await loadSavedCoupon();
       if (savedCoupon) {
         setAppliedCoupon(savedCoupon);
-        toast({ 
-          title: 'Cupom restaurado', 
-          description: `${savedCoupon.name} foi aplicado automaticamente` 
+        toast({
+          title: 'Cupom restaurado',
+          description: `${savedCoupon.name} foi aplicado automaticamente`
         });
       }
       setCouponInitialized(true);
     };
-
     initializeCoupon();
   }, [location.state, couponInitialized]);
-
   const fetchPlans = async () => {
-    const { data: plansData } = await supabase
-      .from('credit_plans')
-      .select('*')
-      .eq('active', true)
-      .order('credits', { ascending: true });
-    
+    const {
+      data: plansData
+    } = await supabase.from('credit_plans').select('*').eq('active', true).order('credits', {
+      ascending: true
+    });
     if (plansData) {
-      const plansWithAvailability = await Promise.all(
-        (plansData as CreditPlan[]).map(async (plan) => {
-          const { data: countData } = await supabase
-            .rpc('get_available_accounts_count', { p_plan_id: plan.id });
-          
-          return {
-            ...plan,
-            availableAccounts: countData || 0,
-          };
-        })
-      );
-      
+      const plansWithAvailability = await Promise.all((plansData as CreditPlan[]).map(async plan => {
+        const {
+          data: countData
+        } = await supabase.rpc('get_available_accounts_count', {
+          p_plan_id: plan.id
+        });
+        return {
+          ...plan,
+          availableAccounts: countData || 0
+        };
+      }));
       setNewAccountPlans(plansWithAvailability.filter(p => p.plan_type === 'new_account'));
       setRechargePlans(plansWithAvailability.filter(p => p.plan_type === 'recharge'));
     }
   };
-
   const fetchContent = async () => {
-    const { data } = await supabase.from('site_content').select('*');
+    const {
+      data
+    } = await supabase.from('site_content').select('*');
     if (data) {
-      data.forEach((item) => {
+      data.forEach(item => {
         const content = item.content as Record<string, unknown>;
         switch (item.section_key) {
           case 'hero':
@@ -305,106 +288,121 @@ export default function Index() {
       });
     }
   };
-
   const handleBuyNewAccount = (plan: PlanWithAvailability) => {
     if (!plan.stripe_price_id || plan.price_cents === 0) {
-      toast({ title: 'Indisponível', description: 'Este plano ainda não está configurado para venda.', variant: 'destructive' });
+      toast({
+        title: 'Indisponível',
+        description: 'Este plano ainda não está configurado para venda.',
+        variant: 'destructive'
+      });
       return;
     }
-
     if (!user) {
-      setPendingPurchase({ plan, type: 'new_account' });
+      setPendingPurchase({
+        plan,
+        type: 'new_account'
+      });
       setIsAuthModalOpen(true);
       return;
     }
-
     processPurchase(plan, 'new_account');
   };
-
   const handleBuyRecharge = (plan: PlanWithAvailability) => {
     if (!plan.stripe_price_id || plan.price_cents === 0) {
-      toast({ title: 'Indisponível', description: 'Este plano ainda não está configurado para venda.', variant: 'destructive' });
+      toast({
+        title: 'Indisponível',
+        description: 'Este plano ainda não está configurado para venda.',
+        variant: 'destructive'
+      });
       return;
     }
-
     if (!user) {
-      setPendingPurchase({ plan, type: 'recharge' });
+      setPendingPurchase({
+        plan,
+        type: 'recharge'
+      });
       setIsAuthModalOpen(true);
       return;
     }
-
     processPurchase(plan, 'recharge');
   };
-
-
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
   };
-
   useEffect(() => {
     if (user && (newAccountPlans.length > 0 || rechargePlans.length > 0) && pendingPurchase) {
-      const { plan, type } = pendingPurchase;
+      const {
+        plan,
+        type
+      } = pendingPurchase;
       setPendingPurchase(null);
       processPurchase(plan, type);
     }
   }, [user, newAccountPlans, rechargePlans, pendingPurchase]);
-
   const validateCoupon = async () => {
     if (!couponInput.trim()) {
-      toast({ title: 'Digite um código de cupom', variant: 'destructive' });
+      toast({
+        title: 'Digite um código de cupom',
+        variant: 'destructive'
+      });
       return;
     }
-
     setCouponLoading(true);
     try {
       const data = await validateCouponCode(couponInput.trim());
-
       if (data) {
         setAppliedCoupon(data);
         saveCouponToStorage(data);
         setCouponInput('');
-        
         confetti({
           particleCount: 100,
           spread: 70,
-          origin: { y: 0.6 },
+          origin: {
+            y: 0.6
+          },
           colors: ['#10b981', '#06b6d4', '#22c55e', '#14b8a6']
         });
-        
-        toast({ 
-          title: 'Cupom aplicado!', 
-          description: `${data.name} - ${data.type === 'percentage' ? `${data.value}% OFF` : `R$ ${(data.value).toFixed(2)} OFF`}` 
+        toast({
+          title: 'Cupom aplicado!',
+          description: `${data.name} - ${data.type === 'percentage' ? `${data.value}% OFF` : `R$ ${data.value.toFixed(2)} OFF`}`
         });
       } else {
-        toast({ title: 'Cupom inválido ou expirado', variant: 'destructive' });
+        toast({
+          title: 'Cupom inválido ou expirado',
+          variant: 'destructive'
+        });
       }
     } catch {
-      toast({ title: 'Erro ao validar cupom', variant: 'destructive' });
+      toast({
+        title: 'Erro ao validar cupom',
+        variant: 'destructive'
+      });
     } finally {
       setCouponLoading(false);
     }
   };
-
   const removeCoupon = () => {
     setAppliedCoupon(null);
     localStorage.removeItem(COUPON_STORAGE_KEY);
     console.log('[COUPON] removeCoupon: Cleared from localStorage only, profile untouched');
-    toast({ title: 'Cupom removido' });
+    toast({
+      title: 'Cupom removido'
+    });
   };
-
   const processPurchase = async (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
     setPurchaseLoading(plan.id);
-
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
-          priceId: plan.stripe_price_id, 
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          priceId: plan.stripe_price_id,
           planId: plan.id,
           purchaseType: type,
-          couponCode: appliedCoupon?.custom_code || appliedCoupon?.code || null,
-        },
+          couponCode: appliedCoupon?.custom_code || appliedCoupon?.code || null
+        }
       });
-
       if (error) throw error;
       if (data?.url) {
         const isDevelopment = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('lovable.dev') || window.location.hostname === 'localhost';
@@ -416,7 +414,11 @@ export default function Index() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento.';
-      toast({ title: 'Erro', description: errorMessage, variant: 'destructive' });
+      toast({
+        title: 'Erro',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setPurchaseLoading(null);
     }
@@ -429,30 +431,34 @@ export default function Index() {
     titleHighlight: 'com créditos',
     description: 'Compre créditos e tenha acesso à nossa biblioteca completa de produtos digitais exclusivos. Simples, rápido e seguro.',
     ctaButton: 'Ver Planos',
-    secondaryButton: 'Criar Conta Grátis',
+    secondaryButton: 'Criar Conta Grátis'
   };
-
-  const featuresData = featuresContent?.items || [
-    { icon: 'Zap', title: 'Acesso Instantâneo', description: 'Download imediato após a compra. Sem espera.' },
-    { icon: 'Shield', title: 'Pagamento Seguro', description: 'Transações protegidas por Stripe e criptografia.' },
-    { icon: 'Download', title: 'Downloads Ilimitados', description: 'Baixe quantas vezes precisar, sem limites.' },
-    { icon: 'Star', title: 'Suporte Dedicado', description: 'Atendimento rápido para tirar todas as suas dúvidas.' },
-  ];
-
+  const featuresData = featuresContent?.items || [{
+    icon: 'Zap',
+    title: 'Acesso Instantâneo',
+    description: 'Download imediato após a compra. Sem espera.'
+  }, {
+    icon: 'Shield',
+    title: 'Pagamento Seguro',
+    description: 'Transações protegidas por Stripe e criptografia.'
+  }, {
+    icon: 'Download',
+    title: 'Downloads Ilimitados',
+    description: 'Baixe quantas vezes precisar, sem limites.'
+  }, {
+    icon: 'Star',
+    title: 'Suporte Dedicado',
+    description: 'Atendimento rápido para tirar todas as suas dúvidas.'
+  }];
   const footer = footerContent || {
-    copyright: `© ${new Date().getFullYear()} CreditsHub. Todos os direitos reservados.`,
+    copyright: `© ${new Date().getFullYear()} CreditsHub. Todos os direitos reservados.`
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header - Sticky with glassmorphism */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -460,12 +466,11 @@ export default function Index() {
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-xl">CreditsHub</span>
+            <span className="font-display font-bold text-xl">Mais Créditos </span>
           </Link>
 
           <nav className="flex items-center gap-3">
-            {user ? (
-              <>
+            {user ? <>
                 <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
                   <Zap className="w-4 h-4 text-primary" />
                   <span className="font-semibold text-primary">{profile?.credits || 0} créditos</span>
@@ -476,41 +481,30 @@ export default function Index() {
                     <span className="hidden sm:inline">Minha Conta</span>
                   </Button>
                 </Link>
-                {isAdmin && (
-                  <Link to="/admin">
+                {isAdmin && <Link to="/admin">
                     <Button variant="outline" size="sm" className="gap-2">
                       <Settings className="w-4 h-4" />
                       <span className="hidden sm:inline">Admin</span>
                     </Button>
-                  </Link>
-                )}
+                  </Link>}
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   Sair
                 </Button>
-              </>
-            ) : (
-              <Button 
-                className="gradient-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                onClick={() => {
-                  setAuthModalDefaultTab('login');
-                  setIsAuthModalOpen(true);
-                }}
-              >
+              </> : <Button className="gradient-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" onClick={() => {
+            setAuthModalDefaultTab('login');
+            setIsAuthModalOpen(true);
+          }}>
                 Entrar
                 <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            )}
+              </Button>}
           </nav>
         </div>
       </header>
 
       {/* Hero Section - Two columns layout */}
-      <section 
-        className="relative py-16 lg:py-24 pb-28 lg:pb-36 overflow-hidden group"
-        style={{
-          background: 'linear-gradient(180deg, hsl(220, 60%, 15%) 0%, hsl(240, 50%, 30%) 25%, hsl(270, 60%, 45%) 50%, hsl(330, 70%, 55%) 75%, hsl(15, 85%, 55%) 100%)'
-        }}
-      >
+      <section className="relative py-16 lg:py-24 pb-28 lg:pb-36 overflow-hidden group" style={{
+      background: 'linear-gradient(180deg, hsl(220, 60%, 15%) 0%, hsl(240, 50%, 30%) 25%, hsl(270, 60%, 45%) 50%, hsl(330, 70%, 55%) 75%, hsl(15, 85%, 55%) 100%)'
+    }}>
         {/* Background decorations */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
@@ -562,7 +556,9 @@ export default function Index() {
             </div>
 
             {/* Right column - Mockup */}
-            <div className="hidden lg:block animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="hidden lg:block animate-fade-in" style={{
+            animationDelay: '0.2s'
+          }}>
               <HeroMockup />
             </div>
           </div>
@@ -574,21 +570,14 @@ export default function Index() {
         
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
-          <svg 
-            viewBox="0 0 1200 120" 
-            preserveAspectRatio="none" 
-            className="w-full h-12 md:h-20"
-          >
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 md:h-20">
             <defs>
               <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="0.5"/>
-                <stop offset="100%" stopColor="hsl(var(--card))" stopOpacity="1"/>
+                <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="hsl(var(--card))" stopOpacity="1" />
               </linearGradient>
             </defs>
-            <path 
-              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" 
-              fill="hsl(var(--card))"
-            />
+            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" fill="hsl(var(--card))" />
           </svg>
         </div>
       </section>
@@ -615,19 +604,12 @@ export default function Index() {
               </p>
             </div>
             
-            {appliedCoupon ? (
-              <div className="glass-card shadow-glow rounded-2xl p-6 border-2 border-emerald-500/30">
+            {appliedCoupon ? <div className="glass-card shadow-glow rounded-2xl p-6 border-2 border-emerald-500/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    {appliedCoupon.affiliate_avatar_url && (
-                      <div className="avatar-gradient">
-                        <img 
-                          src={appliedCoupon.affiliate_avatar_url} 
-                          alt={appliedCoupon.affiliate_name}
-                          className="w-14 h-14 object-cover"
-                        />
-                      </div>
-                    )}
+                    {appliedCoupon.affiliate_avatar_url && <div className="avatar-gradient">
+                        <img src={appliedCoupon.affiliate_avatar_url} alt={appliedCoupon.affiliate_name} className="w-14 h-14 object-cover" />
+                      </div>}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white">
@@ -638,50 +620,27 @@ export default function Index() {
                       <p className="text-sm text-muted-foreground">por @{appliedCoupon.affiliate_username}</p>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={removeCoupon}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
+                  <Button variant="ghost" size="icon" onClick={removeCoupon} className="text-muted-foreground hover:text-destructive">
                     <X className="w-5 h-5" />
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="flex gap-3">
+              </div> : <div className="flex gap-3">
                 <div className="relative flex-1">
                   <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    placeholder="Digite o código do cupom"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => e.key === 'Enter' && validateCoupon()}
-                    className="pl-12 h-14 text-lg bg-card border-2 border-border focus:border-primary rounded-xl"
-                  />
+                  <Input placeholder="Digite o código do cupom" value={couponInput} onChange={e => setCouponInput(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && validateCoupon()} className="pl-12 h-14 text-lg bg-card border-2 border-border focus:border-primary rounded-xl" />
                 </div>
-                <Button 
-                  onClick={validateCoupon}
-                  disabled={couponLoading}
-                  size="lg"
-                  className="h-14 px-8 gradient-primary shadow-lg"
-                >
+                <Button onClick={validateCoupon} disabled={couponLoading} size="lg" className="h-14 px-8 gradient-primary shadow-lg">
                   {couponLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Aplicar'}
                 </Button>
-              </div>
-            )}
+              </div>}
           </div>
         </div>
       </section>
 
       {/* Plans Section */}
-      <section 
-        id="plans" 
-        className="py-20 lg:py-28 pb-28 lg:pb-36 relative group overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
-        }}
-      >
+      <section id="plans" className="py-20 lg:py-28 pb-28 lg:pb-36 relative group overflow-hidden" style={{
+      background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
+    }}>
         <div className="container mx-auto px-4">
           {/* Section header */}
           <div className="text-center mb-14">
@@ -725,20 +684,11 @@ export default function Index() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
-              {newAccountPlans.filter(plan => plan.availableAccounts > 0).map((plan) => (
-                <PlanCard
-                  key={plan.id}
-                  planType="new_account"
-                  planName={plan.name}
-                  credits={plan.credits}
-                  priceCents={plan.price_cents}
-                  competitorPriceCents={plan.competitor_price_cents}
-                  availableAccounts={plan.availableAccounts}
-                  isLoading={purchaseLoading === plan.id}
-                  onBuy={() => handleBuyNewAccount(plan)}
-                  couponDiscount={appliedCoupon ? { type: appliedCoupon.type, value: appliedCoupon.value, name: appliedCoupon.name } : null}
-                />
-              ))}
+              {newAccountPlans.filter(plan => plan.availableAccounts > 0).map(plan => <PlanCard key={plan.id} planType="new_account" planName={plan.name} credits={plan.credits} priceCents={plan.price_cents} competitorPriceCents={plan.competitor_price_cents} availableAccounts={plan.availableAccounts} isLoading={purchaseLoading === plan.id} onBuy={() => handleBuyNewAccount(plan)} couponDiscount={appliedCoupon ? {
+              type: appliedCoupon.type,
+              value: appliedCoupon.value,
+              name: appliedCoupon.name
+            } : null} />)}
             </div>
           </div>
 
@@ -758,19 +708,11 @@ export default function Index() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
-              {rechargePlans.map((plan) => (
-                <PlanCard
-                  key={plan.id}
-                  planType="recharge"
-                  planName={plan.name}
-                  credits={plan.credits}
-                  priceCents={plan.price_cents}
-                  competitorPriceCents={plan.competitor_price_cents}
-                  isLoading={purchaseLoading === plan.id}
-                  onBuy={() => handleBuyRecharge(plan)}
-                  couponDiscount={appliedCoupon ? { type: appliedCoupon.type, value: appliedCoupon.value, name: appliedCoupon.name } : null}
-                />
-              ))}
+              {rechargePlans.map(plan => <PlanCard key={plan.id} planType="recharge" planName={plan.name} credits={plan.credits} priceCents={plan.price_cents} competitorPriceCents={plan.competitor_price_cents} isLoading={purchaseLoading === plan.id} onBuy={() => handleBuyRecharge(plan)} couponDiscount={appliedCoupon ? {
+              type: appliedCoupon.type,
+              value: appliedCoupon.value,
+              name: appliedCoupon.name
+            } : null} />)}
             </div>
           </div>
         </div>
@@ -781,21 +723,14 @@ export default function Index() {
         
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
-          <svg 
-            viewBox="0 0 1200 120" 
-            preserveAspectRatio="none" 
-            className="w-full h-12 md:h-20"
-          >
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-12 md:h-20">
             <defs>
               <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="0.5"/>
-                <stop offset="100%" stopColor="hsl(var(--card))" stopOpacity="1"/>
+                <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="hsl(var(--card))" stopOpacity="1" />
               </linearGradient>
             </defs>
-            <path 
-              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" 
-              fill="hsl(var(--card))"
-            />
+            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" fill="hsl(var(--card))" />
           </svg>
         </div>
       </section>
@@ -818,17 +753,9 @@ export default function Index() {
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {featuresData.map((feature, index) => {
-              const IconComponent = iconMap[feature.icon] || Zap;
-              return (
-                <FeatureCard
-                  key={index}
-                  icon={IconComponent}
-                  title={feature.title}
-                  description={feature.description}
-                  index={index}
-                />
-              );
-            })}
+            const IconComponent = iconMap[feature.icon] || Zap;
+            return <FeatureCard key={index} icon={IconComponent} title={feature.title} description={feature.description} index={index} />;
+          })}
           </div>
         </div>
         {isAdmin && <AdminEditButton section="features" />}
@@ -855,18 +782,11 @@ export default function Index() {
       </section>
 
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => {
-          setIsAuthModalOpen(false);
-          setPendingPurchase(null);
-          setAuthModalDefaultTab('login');
-        }}
-        onSuccess={handleAuthSuccess}
-        planId={pendingPurchase?.plan?.id}
-        priceId={pendingPurchase?.plan?.stripe_price_id || undefined}
-        defaultTab={authModalDefaultTab}
-      />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => {
+      setIsAuthModalOpen(false);
+      setPendingPurchase(null);
+      setAuthModalDefaultTab('login');
+    }} onSuccess={handleAuthSuccess} planId={pendingPurchase?.plan?.id} priceId={pendingPurchase?.plan?.stripe_price_id || undefined} defaultTab={authModalDefaultTab} />
 
       {/* Footer */}
       <footer className="bg-background border-t border-border py-12 relative group">
@@ -883,6 +803,5 @@ export default function Index() {
         </div>
         {isAdmin && <AdminEditButton section="footer" />}
       </footer>
-    </div>
-  );
+    </div>;
 }
