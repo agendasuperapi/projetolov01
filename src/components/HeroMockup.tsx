@@ -1,8 +1,6 @@
 import { Zap, CreditCard, Shield, Star } from 'lucide-react';
-
 export default function HeroMockup() {
-  return (
-    <div className="relative w-full max-w-xs mx-auto scale-90">
+  return <div className="relative w-full max-w-xs mx-auto scale-90">
       {/* Phone mockup */}
       <div className="relative z-10">
         <div className="bg-gradient-to-br from-card to-background rounded-[2.5rem] p-3 shadow-2xl border border-border/50">
@@ -24,7 +22,7 @@ export default function HeroMockup() {
                   <div className="w-12 h-12 mx-auto rounded-xl gradient-primary flex items-center justify-center mb-2">
                     <Zap className="w-6 h-6 text-primary-foreground" />
                   </div>
-                  <h3 className="font-display font-bold text-lg">CreditsHub</h3>
+                  <h3 className="font-display font-bold text-lg">Mais Créditos </h3>
                 </div>
                 
                 {/* Credit cards mockup */}
@@ -84,7 +82,9 @@ export default function HeroMockup() {
         </div>
       </div>
       
-      <div className="absolute -left-4 bottom-32 glass-card shadow-glow-sm rounded-xl p-3 border border-border animate-float z-20 hover:scale-105 transition-transform duration-300" style={{ animationDelay: '0.5s' }}>
+      <div className="absolute -left-4 bottom-32 glass-card shadow-glow-sm rounded-xl p-3 border border-border animate-float z-20 hover:scale-105 transition-transform duration-300" style={{
+      animationDelay: '0.5s'
+    }}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
             <Star className="w-4 h-4 text-amber-500" />
@@ -99,6 +99,5 @@ export default function HeroMockup() {
       {/* Glow effects */}
       <div className="absolute top-1/4 -left-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl"></div>
       <div className="absolute bottom-1/4 -right-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl"></div>
-    </div>
-  );
+    </div>;
 }
