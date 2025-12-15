@@ -598,7 +598,7 @@ export default function Index() {
       <HowItWorksSection />
 
       {/* Coupon Section */}
-      <section className="py-16 bg-gradient-to-br from-primary/5 via-background to-accent/5 relative overflow-hidden">
+      <section className="py-16 bg-muted relative overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
@@ -777,7 +777,7 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="plans" />}
         
         {/* Fade gradient overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-72 bg-gradient-to-b from-transparent via-muted/30 to-muted pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-72 bg-gradient-to-b from-transparent via-card/30 to-card pointer-events-none"></div>
         
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
@@ -788,20 +788,20 @@ export default function Index() {
           >
             <defs>
               <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--muted))" stopOpacity="0.5"/>
-                <stop offset="100%" stopColor="hsl(var(--muted))" stopOpacity="1"/>
+                <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="0.5"/>
+                <stop offset="100%" stopColor="hsl(var(--card))" stopOpacity="1"/>
               </linearGradient>
             </defs>
             <path 
               d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" 
-              fill="hsl(var(--muted))"
+              fill="hsl(var(--card))"
             />
           </svg>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 lg:py-28 bg-muted relative group">
+      <section className="py-20 lg:py-28 bg-card relative group">
         <div className="container mx-auto px-4">
           {/* Section header */}
           <div className="text-center mb-14">
