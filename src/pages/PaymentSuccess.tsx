@@ -38,11 +38,14 @@ export default function PaymentSuccess() {
     checkPendingRecharge();
   }, [user]);
 
-  const checkPendingRecharge = async () => {
+  const checkPendingRecharge = async (retryCount = 0): Promise<void> => {
     if (!user || !sessionId) {
       setLoading(false);
       return;
     }
+
+    const MAX_RETRIES = 10;
+    const RETRY_DELAY = 1500; // 1.5 seconds
 
     try {
       // Find the recharge request linked to this specific Stripe session
@@ -58,10 +61,19 @@ export default function PaymentSuccess() {
       
       if (data) {
         setPendingRecharge(data);
+        setLoading(false);
+      } else if (retryCount < MAX_RETRIES) {
+        // Webhook may not have processed yet, retry after delay
+        console.log(`Recharge request not found, retrying (${retryCount + 1}/${MAX_RETRIES})...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return checkPendingRecharge(retryCount + 1);
+      } else {
+        // Max retries reached, stop loading
+        console.log('Max retries reached, no pending recharge found');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error checking pending recharge:', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -98,7 +110,15 @@ export default function PaymentSuccess() {
   if (loading) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Card className="max-w-md w-full shadow-card border-0 text-center">
+          <CardContent className="pt-8 pb-8">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Processando pagamento...</h3>
+            <p className="text-sm text-muted-foreground">
+              Aguarde enquanto confirmamos seu pagamento
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
