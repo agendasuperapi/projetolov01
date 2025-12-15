@@ -9,7 +9,7 @@ const steps = [{
   number: '02',
   icon: CreditCard,
   title: 'Escolha seu plano',
-  description: 'Selecione a quantidade de créditos ideal para você. Quanto mais créditos, maior o desconto.',
+  description: 'Garanta créditos para seus projetos com descontos progressivos: quanto mais créditos você comprar, menos você paga.',
   color: 'from-emerald-500 to-cyan-500'
 }, {
   number: '03',
