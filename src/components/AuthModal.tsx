@@ -13,11 +13,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// Função para aplicar máscara de telefone brasileiro
+const formatPhone = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 2) return numbers;
+  if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+  if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+};
+
+// Função para formatar email (lowercase e trim)
+const formatEmail = (value: string): string => {
+  return value.toLowerCase().trim();
+};
+
 const authSchema = z.object({
   email: z.string().trim().email('Email inválido').max(255, 'Email muito longo'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').max(72, 'Senha muito longa'),
   name: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome muito longo').optional(),
-  phone: z.string().trim().min(10, 'Telefone deve ter pelo menos 10 dígitos').max(20, 'Telefone muito longo').optional(),
+  phone: z.string().trim().min(14, 'Telefone deve ter pelo menos 10 dígitos').max(20, 'Telefone muito longo').optional(),
 });
 
 interface AuthModalProps {
@@ -196,7 +210,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
                   type="tel"
                   placeholder="(00) 00000-0000"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(formatPhone(e.target.value))}
+                  maxLength={15}
                   required={!isLogin}
                   disabled={loading}
                 />
@@ -211,7 +226,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
               type="email"
               placeholder="seu@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.toLowerCase())}
+              onBlur={(e) => setEmail(formatEmail(e.target.value))}
               required
               disabled={loading}
             />
