@@ -730,7 +730,7 @@ export default function Index() {
           </div>
 
           {/* Plan type navigation */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <a href="#new-account-plans">
               <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
                 <UserPlus className="w-5 h-5" />
