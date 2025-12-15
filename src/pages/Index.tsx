@@ -502,7 +502,7 @@ export default function Index() {
       </header>
 
       {/* Hero Section - Two columns layout */}
-      <section className="relative py-16 lg:py-24 pb-28 lg:pb-36 overflow-hidden group" style={{
+      <section className="relative py-12 lg:py-20 pb-24 lg:pb-28 overflow-hidden group" style={{
       background: 'linear-gradient(180deg, hsl(220, 60%, 15%) 0%, hsl(240, 50%, 30%) 25%, hsl(270, 60%, 45%) 50%, hsl(330, 70%, 55%) 75%, hsl(15, 85%, 55%) 100%)'
     }}>
         {/* Background decorations */}
@@ -587,7 +587,7 @@ export default function Index() {
       <HowItWorksSection />
 
       {/* Coupon Section */}
-      <section className="py-16 bg-muted relative overflow-hidden">
+      <section className="py-12 bg-muted relative overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
@@ -638,7 +638,7 @@ export default function Index() {
       </section>
 
       {/* Plans Section */}
-      <section id="plans" className="py-20 lg:py-28 pb-28 lg:pb-36 relative group overflow-hidden" style={{
+      <section id="plans" className="py-14 lg:py-20 pb-24 lg:pb-28 relative group overflow-hidden" style={{
       background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
     }}>
         <div className="container mx-auto px-4">
@@ -671,7 +671,7 @@ Escolha seu plano ideal.</h2>
           </div>
 
           {/* New Account Plans */}
-          <div id="new-account-plans" className="mb-20">
+          <div id="new-account-plans" className="mb-8">
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-3 mb-3">
                 <div className="p-3 rounded-full bg-white/10">
@@ -735,7 +735,7 @@ Escolha seu plano ideal.</h2>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 lg:py-28 bg-card relative group">
+      <section className="py-14 lg:py-20 bg-card relative group">
         <div className="container mx-auto px-4">
           {/* Section header */}
           <div className="text-center mb-14">
@@ -761,7 +761,7 @@ Escolha seu plano ideal.</h2>
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 bg-muted">
+      <section className="py-14 bg-muted">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
