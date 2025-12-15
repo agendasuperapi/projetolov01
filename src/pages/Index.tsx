@@ -692,7 +692,7 @@ Escolha seu plano ideal.</h2>
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-12" />
+          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" />
 
           {/* Recharge Plans */}
           <div id="recharge-plans">
