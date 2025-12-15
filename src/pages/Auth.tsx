@@ -95,8 +95,23 @@ export default function Auth() {
       });
 
       if (error) {
-        if (error.message.includes('Invalid login')) {
-          toast({ title: 'Erro', description: 'Email ou senha incorretos.', variant: 'destructive' });
+        if (error.message.includes('Invalid login credentials')) {
+          // Verificar se o email existe na base de dados
+          const { data: existingUsers } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', validated.email.toLowerCase().trim())
+            .limit(1);
+          
+          if (!existingUsers || existingUsers.length === 0) {
+            // Email não cadastrado - redirecionar para cadastro
+            toast({ title: 'Email não cadastrado', description: 'Por favor, crie uma conta.', variant: 'default' });
+            setSignUpData({ ...signUpData, email: validated.email });
+            // Switch to signup tab programmatically - user needs to click the tab
+          } else {
+            // Email existe, senha incorreta
+            toast({ title: 'Senha incorreta', description: 'A senha digitada está incorreta.', variant: 'destructive' });
+          }
         } else {
           toast({ title: 'Erro', description: error.message, variant: 'destructive' });
         }
