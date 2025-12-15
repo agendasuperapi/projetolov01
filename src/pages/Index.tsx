@@ -647,7 +647,8 @@ export default function Index() {
             <span className="inline-block px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
               Planos
             </span>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">Pronto para finalizar seus projetos? Escolha seu plano ideal.</h2>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">Pronto para finalizar seus projetos?
+Escolha seu plano ideal.</h2>
             <p className="text-white/80 text-lg max-w-2xl mx-auto">
               Quanto mais créditos, maior o desconto. Escolha o melhor para você.
             </p>
