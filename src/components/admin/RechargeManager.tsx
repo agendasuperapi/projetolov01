@@ -301,10 +301,7 @@ export default function RechargeManager() {
             </div>
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
               <SelectTrigger className="w-full sm:w-[220px]">
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(statusFilter)}
-                  <SelectValue placeholder="Filtrar por status" />
-                </div>
+                <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
