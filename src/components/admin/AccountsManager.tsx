@@ -82,8 +82,6 @@ export default function AccountsManager() {
 
       toast({ title: 'Sucesso!', description: 'Conta cadastrada com sucesso.' });
       setAccountData('');
-      setSelectedPlanId('');
-      setIsDialogOpen(false);
       await fetchAccounts();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Erro ao cadastrar conta.', variant: 'destructive' });
