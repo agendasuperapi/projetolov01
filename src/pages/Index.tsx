@@ -112,6 +112,7 @@ export default function Index() {
   const [plansContent, setPlansContent] = useState<PlansContent | null>(null);
   const [footerContent, setFooterContent] = useState<FooterContent | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalDefaultTab, setAuthModalDefaultTab] = useState<'login' | 'signup'>('login');
   const [pendingPurchase, setPendingPurchase] = useState<{ plan: PlanWithAvailability; type: 'recharge' | 'new_account' } | null>(null);
   
   // Coupon states
@@ -488,12 +489,16 @@ export default function Index() {
                 </Button>
               </>
             ) : (
-              <Link to="/auth">
-                <Button className="gradient-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  Entrar
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+              <Button 
+                className="gradient-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                onClick={() => {
+                  setAuthModalDefaultTab('login');
+                  setIsAuthModalOpen(true);
+                }}
+              >
+                Entrar
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             )}
           </nav>
         </div>
@@ -538,11 +543,17 @@ export default function Index() {
                   </Button>
                 </a>
                 {!user && (
-                  <Link to="/auth">
-                    <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                      {hero.secondaryButton}
-                    </Button>
-                  </Link>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="text-lg px-8 bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                    onClick={() => {
+                      setAuthModalDefaultTab('signup');
+                      setIsAuthModalOpen(true);
+                    }}
+                  >
+                    {hero.secondaryButton}
+                  </Button>
                 )}
               </div>
 
@@ -859,10 +870,12 @@ export default function Index() {
         onClose={() => {
           setIsAuthModalOpen(false);
           setPendingPurchase(null);
+          setAuthModalDefaultTab('login');
         }}
         onSuccess={handleAuthSuccess}
         planId={pendingPurchase?.plan?.id}
         priceId={pendingPurchase?.plan?.stripe_price_id || undefined}
+        defaultTab={authModalDefaultTab}
       />
 
       {/* Footer */}
