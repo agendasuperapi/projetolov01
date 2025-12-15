@@ -26,7 +26,7 @@ const steps = [
 
 export default function HowItWorksSection() {
   return (
-    <section className="py-14 lg:py-20 bg-card relative overflow-hidden">
+    <section className="py-10 lg:py-14 bg-card relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
@@ -35,14 +35,14 @@ export default function HowItWorksSection() {
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Section header */}
-        <div className="text-center mb-16">
-          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+        <div className="text-center mb-10">
+          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-3">
             Simples e rápido
           </span>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+          <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
             Como <span className="text-gradient">funciona</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
             Em apenas 3 passos você já está pronto para usar seus créditos
           </p>
         </div>
