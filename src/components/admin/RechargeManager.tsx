@@ -156,7 +156,24 @@ export default function RechargeManager() {
           schema: 'public',
           table: 'recharge_requests'
         },
-        () => {
+        (payload) => {
+          console.log('Recarga atualizada:', payload);
+          const newData = payload.new as RechargeRequest;
+          const oldData = payload.old as Partial<RechargeRequest>;
+          
+          // Notifica quando link é cadastrado (status muda de pending_link para pending)
+          if (oldData.status === 'pending_link' && newData.status === 'pending') {
+            playNotificationSound();
+            sendBrowserNotification(
+              '🔗 Link Cadastrado!',
+              'Um usuário cadastrou o link de recarga. Recarga pronta para processamento.'
+            );
+            toast.warning('Link de recarga cadastrado!', {
+              description: 'Uma recarga está pronta para processamento.',
+              icon: <Bell className="w-4 h-4" />,
+            });
+          }
+          
           fetchRecharges();
         }
       )
