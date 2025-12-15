@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -118,6 +118,10 @@ export default function Index() {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponInitialized, setCouponInitialized] = useState(false);
+  
+  // Flash animation state for plan sections
+  const [flashingSection, setFlashingSection] = useState<'new_account' | 'recharge' | null>(null);
+  
   const {
     toast
   } = useToast();
@@ -656,13 +660,19 @@ Escolha seu plano ideal.</h2>
 
           {/* Plan type navigation */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <a href="#new-account-plans">
+            <a href="#new-account-plans" onClick={() => {
+              setFlashingSection('new_account');
+              setTimeout(() => setFlashingSection(null), 1500);
+            }}>
               <Button size="lg" className="gap-2 bg-white text-purple-600 font-bold hover:bg-white/90 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 px-8">
                 <UserPlus className="w-5 h-5" />
                 Conta Nova
               </Button>
             </a>
-            <a href="#recharge-plans">
+            <a href="#recharge-plans" onClick={() => {
+              setFlashingSection('recharge');
+              setTimeout(() => setFlashingSection(null), 1500);
+            }}>
               <Button size="lg" className="gap-2 bg-emerald-500 text-white font-bold hover:bg-emerald-400 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 px-8">
                 <RefreshCw className="w-5 h-5" />
                 Recarregar Conta
@@ -671,7 +681,7 @@ Escolha seu plano ideal.</h2>
           </div>
 
           {/* New Account Plans */}
-          <div id="new-account-plans" className="mb-8">
+          <div id="new-account-plans" className={`mb-8 rounded-2xl p-4 transition-all duration-300 ${flashingSection === 'new_account' ? 'animate-flash-border' : ''}`}>
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-3 mb-3">
                 <div className="p-3 rounded-full bg-white/10">
@@ -695,7 +705,7 @@ Escolha seu plano ideal.</h2>
           <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" />
 
           {/* Recharge Plans */}
-          <div id="recharge-plans">
+          <div id="recharge-plans" className={`rounded-2xl p-4 transition-all duration-300 ${flashingSection === 'recharge' ? 'animate-flash-border' : ''}`}>
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-3 mb-3">
                 <div className="p-3 rounded-full bg-white/10">
