@@ -572,7 +572,7 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="hero" />}
         
         {/* Fade gradient overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 md:h-48 bg-gradient-to-b from-transparent via-transparent to-card pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-72 bg-gradient-to-b from-transparent via-card/30 to-card pointer-events-none"></div>
         
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
@@ -810,7 +810,7 @@ export default function Index() {
         {isAdmin && <AdminEditButton section="plans" />}
         
         {/* Fade gradient overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 md:h-48 bg-gradient-to-b from-transparent via-transparent to-card pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-72 bg-gradient-to-b from-transparent via-card/30 to-card pointer-events-none"></div>
         
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
