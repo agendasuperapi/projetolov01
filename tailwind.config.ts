@@ -107,7 +107,7 @@ export default {
         "fade-in": "fade-in 0.6s ease-out forwards",
         "scale-in": "scale-in 0.4s ease-out forwards",
         "float": "float 3s ease-in-out infinite",
-        "flash-border": "flash-border 4s ease-in-out",
+        "flash-border": "flash-border 6s ease-in-out",
       },
     },
   },

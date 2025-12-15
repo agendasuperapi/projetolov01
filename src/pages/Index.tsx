@@ -662,7 +662,7 @@ Escolha seu plano ideal.</h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <a href="#new-account-plans" onClick={() => {
               setFlashingSection('new_account');
-              setTimeout(() => setFlashingSection(null), 4500);
+              setTimeout(() => setFlashingSection(null), 6500);
             }}>
               <Button size="lg" className="gap-2 bg-white text-purple-600 font-bold hover:bg-white/90 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 px-8">
                 <UserPlus className="w-5 h-5" />
@@ -671,7 +671,7 @@ Escolha seu plano ideal.</h2>
             </a>
             <a href="#recharge-plans" onClick={() => {
               setFlashingSection('recharge');
-              setTimeout(() => setFlashingSection(null), 4500);
+              setTimeout(() => setFlashingSection(null), 6500);
             }}>
               <Button size="lg" className="gap-2 bg-emerald-500 text-white font-bold hover:bg-emerald-400 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 px-8">
                 <RefreshCw className="w-5 h-5" />
