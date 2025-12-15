@@ -26,7 +26,7 @@ const steps = [
 
 export default function HowItWorksSection() {
   return (
-    <section className="py-20 lg:py-28 bg-background relative overflow-hidden">
+    <section className="py-20 lg:py-28 bg-background relative overflow-hidden -mt-24 pt-32 lg:pt-40">
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
