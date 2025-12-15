@@ -51,6 +51,7 @@ export default function AccountsManager() {
       .from('credit_plans')
       .select('id, name, credits')
       .eq('active', true)
+      .neq('plan_type', 'recharge')
       .order('credits', { ascending: true });
     if (data) setPlans(data);
   };
