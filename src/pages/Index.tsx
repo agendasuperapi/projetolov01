@@ -515,7 +515,7 @@ export default function Index() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left column - Content */}
-            <div className="text-left space-y-6 animate-fade-in">
+            <div className="text-center lg:text-left space-y-6 animate-fade-in">
               <Badge variant="secondary" className="px-4 py-2 bg-white/20 text-white border-white/30 backdrop-blur-sm">
                 <Sparkles className="w-4 h-4 mr-2" />
                 {hero.badge}
@@ -530,7 +530,7 @@ export default function Index() {
                 {hero.description}
               </p>
 
-              <div className="flex flex-col sm:flex-row items-start gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 pt-2">
                 <a href="#plans">
                   <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90 text-lg px-8 shadow-xl transition-all duration-300 hover:scale-105">
                     {hero.ctaButton}
@@ -547,7 +547,7 @@ export default function Index() {
               </div>
 
               {/* Trust badges */}
-              <div className="flex flex-wrap items-center gap-4 pt-6">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-6">
                 <div className="flex items-center gap-2 text-sm text-white/80">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   <span>Rápido</span>
