@@ -10,11 +10,11 @@ interface FeatureCardProps {
 export default function FeatureCard({ icon: Icon, title, description, index = 0 }: FeatureCardProps) {
   return (
     <div 
-      className="group relative p-6 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-lg hover:border-primary/20 transition-all duration-300 animate-fade-in"
+      className="group relative p-6 rounded-2xl glass-card hover:shadow-glow hover:border-primary/30 transition-all duration-500 animate-slide-up"
       style={{ animationDelay: `${index * 0.1}s` }}
     >
       {/* Icon container */}
-      <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+      <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center mb-5 group-hover:scale-110 group-hover:shadow-glow-sm transition-all duration-300">
         <Icon className="w-7 h-7 text-primary-foreground" />
       </div>
       

@@ -199,3 +199,82 @@
   animation: float-delayed 4s ease-in-out infinite;
   animation-delay: 1s;
 }
+
+/* Glass Card - Card com efeito de vidro */
+.glass-card {
+  background: hsl(var(--card) / 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.3);
+  box-shadow: 0 8px 32px hsl(220 25% 10% / 0.1);
+}
+
+.dark .glass-card {
+  background: hsl(var(--card) / 0.6);
+  box-shadow: 0 8px 32px hsl(220 25% 5% / 0.3);
+}
+
+/* Shadow Glow Menor */
+.shadow-glow-sm {
+  box-shadow: 0 0 20px hsl(250 84% 54% / 0.2);
+}
+
+/* Avatar com borda gradiente */
+.avatar-gradient {
+  position: relative;
+  padding: 3px;
+  background: var(--gradient-primary);
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.avatar-gradient img {
+  border-radius: 9999px;
+  display: block;
+}
+
+/* Novas Animações Motion */
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(250 84% 54% / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(250 84% 54% / 0.4);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-scale-fade-in {
+  animation: scale-fade-in 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}

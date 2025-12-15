@@ -649,7 +649,7 @@ export default function Index() {
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shadow-glow-sm">
                   <Tag className="w-5 h-5 text-primary" />
                 </div>
               </div>
@@ -662,15 +662,17 @@ export default function Index() {
             </div>
             
             {appliedCoupon ? (
-              <div className="bg-card rounded-2xl p-6 border-2 border-emerald-500/30 shadow-lg">
+              <div className="glass-card shadow-glow rounded-2xl p-6 border-2 border-emerald-500/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {appliedCoupon.affiliate_avatar_url && (
-                      <img 
-                        src={appliedCoupon.affiliate_avatar_url} 
-                        alt={appliedCoupon.affiliate_name}
-                        className="w-14 h-14 rounded-full border-2 border-emerald-500/50"
-                      />
+                      <div className="avatar-gradient">
+                        <img 
+                          src={appliedCoupon.affiliate_avatar_url} 
+                          alt={appliedCoupon.affiliate_name}
+                          className="w-14 h-14 object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -743,13 +745,13 @@ export default function Index() {
           {/* Plan type navigation */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <a href="#new-account-plans">
-              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
+              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm hover:shadow-glow-sm transition-all duration-300">
                 <UserPlus className="w-5 h-5" />
                 Conta Nova
               </Button>
             </a>
             <a href="#recharge-plans">
-              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20">
+              <Button size="lg" className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm hover:shadow-glow-sm transition-all duration-300">
                 <RefreshCw className="w-5 h-5" />
                 Recarregar Conta
               </Button>

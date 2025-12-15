@@ -60,7 +60,7 @@ export default function HeroMockup() {
       </div>
       
       {/* Floating cards */}
-      <div className="absolute -left-8 top-20 bg-card rounded-xl p-3 shadow-xl border border-border animate-float z-20">
+      <div className="absolute -left-8 top-20 glass-card shadow-glow-sm rounded-xl p-3 border border-border animate-float z-20 hover:scale-105 transition-transform duration-300">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
             <Zap className="w-4 h-4 text-emerald-500" />
@@ -72,7 +72,7 @@ export default function HeroMockup() {
         </div>
       </div>
       
-      <div className="absolute -right-8 top-40 bg-card rounded-xl p-3 shadow-xl border border-border animate-float-delayed z-20">
+      <div className="absolute -right-8 top-40 glass-card shadow-glow-sm rounded-xl p-3 border border-border animate-float-delayed z-20 hover:scale-105 transition-transform duration-300">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Shield className="w-4 h-4 text-primary" />
@@ -84,7 +84,7 @@ export default function HeroMockup() {
         </div>
       </div>
       
-      <div className="absolute -left-4 bottom-32 bg-card rounded-xl p-3 shadow-xl border border-border animate-float z-20" style={{ animationDelay: '0.5s' }}>
+      <div className="absolute -left-4 bottom-32 glass-card shadow-glow-sm rounded-xl p-3 border border-border animate-float z-20 hover:scale-105 transition-transform duration-300" style={{ animationDelay: '0.5s' }}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
             <Star className="w-4 h-4 text-amber-500" />
