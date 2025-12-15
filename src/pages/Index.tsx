@@ -502,7 +502,7 @@ export default function Index() {
       </header>
 
       {/* Hero Section - Two columns layout */}
-      <section className="relative py-12 lg:py-20 pb-24 lg:pb-28 overflow-hidden group" style={{
+      <section className="relative py-8 lg:py-12 pb-20 lg:pb-24 overflow-hidden group" style={{
       background: 'linear-gradient(180deg, hsl(220, 60%, 15%) 0%, hsl(240, 50%, 30%) 25%, hsl(270, 60%, 45%) 50%, hsl(330, 70%, 55%) 75%, hsl(15, 85%, 55%) 100%)'
     }}>
         {/* Background decorations */}
