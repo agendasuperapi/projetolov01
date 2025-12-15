@@ -383,16 +383,8 @@ export default function Admin() {
           </div>
         </div>
 
-        <Tabs defaultValue={editSection ? 'content' : 'plans'} className="space-y-8">
-          <TabsList className="grid w-full max-w-6xl grid-cols-8">
-            <TabsTrigger value="plans" className="gap-2">
-              <DollarSign className="w-4 h-4" />
-              Conta Nova
-            </TabsTrigger>
-            <TabsTrigger value="recharge-plans" className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              Recarga
-            </TabsTrigger>
+        <Tabs defaultValue={editSection ? 'content' : 'accounts'} className="space-y-8">
+          <TabsList className="grid w-full max-w-5xl grid-cols-7">
             <TabsTrigger value="accounts" className="gap-2">
               <Package className="w-4 h-4" />
               Contas
@@ -421,6 +413,10 @@ export default function Admin() {
               <Activity className="w-4 h-4" />
               Stripe
             </TabsTrigger>
+            <TabsTrigger value="plans" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              Planos
+            </TabsTrigger>
             <TabsTrigger value="content" className="gap-2">
               <FileText className="w-4 h-4" />
               Conteúdo
@@ -428,7 +424,80 @@ export default function Admin() {
           </TabsList>
 
 
-          {/* Plans Tab - New Account */}
+          {/* Accounts Tab */}
+          <TabsContent value="accounts" className="space-y-6">
+            <AccountsManager />
+          </TabsContent>
+
+          {/* Recharges Tab */}
+          <TabsContent value="recharges" className="space-y-6">
+            <RechargeManager />
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <UsersManager />
+          </TabsContent>
+
+          {/* Transactions Tab */}
+          <TabsContent value="transactions" className="space-y-6">
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle>Transações Recentes</CardTitle>
+                <CardDescription>Histórico de pagamentos e créditos adicionados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {transactions.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nenhuma transação registrada.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Usuário</TableHead>
+                        <TableHead>Créditos</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Data</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map((tx) => (
+                        <TableRow key={tx.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{tx.profiles?.name || 'Usuário'}</p>
+                              <p className="text-sm text-muted-foreground">{tx.profiles?.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{tx.credits_added}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
+                              {tx.status === 'completed' ? 'Concluído' : tx.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(tx.created_at).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Stripe Events Tab */}
+          <TabsContent value="stripe-events" className="space-y-6">
+            <StripeEventsManager />
+          </TabsContent>
+
+          {/* Plans Tab - Combined New Account and Recharge */}
           <TabsContent value="plans" className="space-y-6">
             <div className="flex justify-end gap-2">
               <Button 
@@ -444,7 +513,7 @@ export default function Admin() {
                 <DialogTrigger asChild>
                   <Button className="gradient-primary" onClick={() => setNewPlan({ ...newPlan, plan_type: 'new_account' })}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Novo Plano Conta Nova
+                    Novo Plano
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -455,6 +524,18 @@ export default function Admin() {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreatePlan} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="plan_type">Tipo de Plano</Label>
+                      <select
+                        id="plan_type"
+                        value={newPlan.plan_type}
+                        onChange={(e) => setNewPlan({ ...newPlan, plan_type: e.target.value as 'new_account' | 'recharge' })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      >
+                        <option value="new_account">Conta Nova</option>
+                        <option value="recharge">Recarga</option>
+                      </select>
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="name">Nome do Plano</Label>
                       <Input
@@ -506,9 +587,13 @@ export default function Admin() {
               </Dialog>
             </div>
 
+            {/* New Account Plans */}
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle>Planos de Conta Nova</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  Planos de Conta Nova
+                </CardTitle>
                 <CardDescription>Configure os preços e IDs do Stripe para planos de conta nova</CardDescription>
               </CardHeader>
               <CardContent>
@@ -587,36 +672,14 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
 
-          {/* Recharge Plans Tab */}
-          <TabsContent value="recharge-plans" className="space-y-6">
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={handleSyncStripe} 
-                disabled={syncing}
-                className="gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Sincronizando...' : 'Sincronizar Stripe'}
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="gradient-primary" onClick={() => {
-                    setNewPlan({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'recharge' });
-                    setIsDialogOpen(true);
-                  }}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Novo Plano Recarga
-                  </Button>
-                </DialogTrigger>
-              </Dialog>
-            </div>
-
+            {/* Recharge Plans */}
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle>Planos de Recarga</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 text-primary" />
+                  Planos de Recarga
+                </CardTitle>
                 <CardDescription>Configure os preços e IDs do Stripe para planos de recarga</CardDescription>
               </CardHeader>
               <CardContent>
@@ -695,79 +758,6 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Accounts Tab */}
-          <TabsContent value="accounts" className="space-y-6">
-            <AccountsManager />
-          </TabsContent>
-
-          {/* Recharges Tab */}
-          <TabsContent value="recharges" className="space-y-6">
-            <RechargeManager />
-          </TabsContent>
-
-          {/* Transactions Tab */}
-          <TabsContent value="transactions" className="space-y-6">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Transações Recentes</CardTitle>
-                <CardDescription>Histórico de pagamentos e créditos adicionados</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {transactions.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Nenhuma transação registrada.</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Usuário</TableHead>
-                        <TableHead>Créditos</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {transactions.map((tx) => (
-                        <TableRow key={tx.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{tx.profiles?.name || 'Usuário'}</p>
-                              <p className="text-sm text-muted-foreground">{tx.profiles?.email}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{tx.credits_added}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
-                              {tx.status === 'completed' ? 'Concluído' : tx.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {new Date(tx.created_at).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Stripe Events Tab */}
-          <TabsContent value="stripe-events" className="space-y-6">
-            <StripeEventsManager />
-          </TabsContent>
-
-          {/* Users Tab */}
-          <TabsContent value="users" className="space-y-6">
-            <UsersManager />
           </TabsContent>
 
           {/* Content Editor Tab */}
