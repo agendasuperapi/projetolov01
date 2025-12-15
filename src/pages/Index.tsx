@@ -795,7 +795,7 @@ export default function Index() {
             <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-lg">CreditsHub</span>
+            <span className="font-display font-bold text-lg">Mais Créditos</span>
           </div>
           <p className="text-muted-foreground text-sm">
             {footer.copyright}
