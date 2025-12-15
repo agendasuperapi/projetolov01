@@ -2,7 +2,7 @@ import { Zap, CreditCard, Shield, Star } from 'lucide-react';
 
 export default function HeroMockup() {
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className="relative w-full max-w-xs mx-auto scale-90">
       {/* Phone mockup */}
       <div className="relative z-10">
         <div className="bg-gradient-to-br from-card to-background rounded-[2.5rem] p-3 shadow-2xl border border-border/50">
