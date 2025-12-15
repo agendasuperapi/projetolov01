@@ -98,9 +98,10 @@ export default {
         },
         "flash-border": {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary))" },
-          "25%": { boxShadow: "0 0 0 4px hsl(var(--primary))" },
-          "50%": { boxShadow: "0 0 0 0 hsl(var(--primary))" },
-          "75%": { boxShadow: "0 0 0 4px hsl(var(--primary))" },
+          "20%": { boxShadow: "0 0 0 4px hsl(var(--primary))" },
+          "40%": { boxShadow: "0 0 0 0 hsl(var(--primary))" },
+          "60%": { boxShadow: "0 0 0 4px hsl(var(--primary))" },
+          "80%": { boxShadow: "0 0 0 0 hsl(var(--primary))" },
         },
       },
       animation: {
@@ -109,7 +110,7 @@ export default {
         "fade-in": "fade-in 0.6s ease-out forwards",
         "scale-in": "scale-in 0.4s ease-out forwards",
         "float": "float 3s ease-in-out infinite",
-        "flash-border": "flash-border 0.8s ease-in-out",
+        "flash-border": "flash-border 2s ease-in-out",
       },
     },
   },
