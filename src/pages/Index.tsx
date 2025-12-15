@@ -501,7 +501,7 @@ export default function Index() {
 
       {/* Hero Section - Two columns layout */}
       <section 
-        className="relative py-16 lg:py-24 overflow-hidden group"
+        className="relative py-16 lg:py-24 pb-28 lg:pb-36 overflow-hidden group"
         style={{
           background: 'linear-gradient(180deg, hsl(220, 60%, 15%) 0%, hsl(240, 50%, 30%) 25%, hsl(270, 60%, 45%) 50%, hsl(330, 70%, 55%) 75%, hsl(15, 85%, 55%) 100%)'
         }}
@@ -570,6 +570,20 @@ export default function Index() {
           </div>
         </div>
         {isAdmin && <AdminEditButton section="hero" />}
+        
+        {/* Wave divider */}
+        <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
+          <svg 
+            viewBox="0 0 1200 120" 
+            preserveAspectRatio="none" 
+            className="w-full h-16 md:h-24"
+          >
+            <path 
+              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" 
+              fill="hsl(var(--card))"
+            />
+          </svg>
+        </div>
       </section>
 
       {/* Features Section */}
@@ -687,7 +701,7 @@ export default function Index() {
       {/* Plans Section */}
       <section 
         id="plans" 
-        className="py-20 lg:py-28 relative group overflow-hidden"
+        className="py-20 lg:py-28 pb-28 lg:pb-36 relative group overflow-hidden"
         style={{
           background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
         }}
@@ -785,6 +799,20 @@ export default function Index() {
           </div>
         </div>
         {isAdmin && <AdminEditButton section="plans" />}
+        
+        {/* Wave divider */}
+        <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
+          <svg 
+            viewBox="0 0 1200 120" 
+            preserveAspectRatio="none" 
+            className="w-full h-16 md:h-24"
+          >
+            <path 
+              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" 
+              fill="hsl(var(--card))"
+            />
+          </svg>
+        </div>
       </section>
 
       {/* Final CTA Section */}
