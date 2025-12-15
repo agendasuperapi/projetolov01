@@ -69,8 +69,8 @@ export default function Admin() {
       fetchTransactions();
       fetchPendingRechargesCount();
 
-      // Real-time subscription para atualizar badge
-      const channel = supabase
+      // Real-time subscription para atualizar badge de recargas
+      const rechargeChannel = supabase
         .channel('admin-recharge-badge')
         .on(
           'postgres_changes',
@@ -85,8 +85,25 @@ export default function Admin() {
         )
         .subscribe();
 
+      // Real-time subscription para atualizar transações
+      const transactionsChannel = supabase
+        .channel('admin-transactions')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'payment_transactions'
+          },
+          () => {
+            fetchTransactions();
+          }
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(rechargeChannel);
+        supabase.removeChannel(transactionsChannel);
       };
     }
   }, [isAdmin]);
