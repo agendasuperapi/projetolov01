@@ -35,9 +35,8 @@ export default function HowItWorksSection() {
           <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
             Como <span className="text-gradient">funciona</span>
           </h2>
-          <p className="text-muted-foreground text-base max-w-2xl mx-auto">Em apenas 3 passos você já está pronto para usar seus créditos
-
-Créditos em Reais pelo menor preço. Ative seus projetos agora de forma rápida e segura.</p>
+          <p className="text-muted-foreground text-base max-w-2xl mx-auto">Em apenas 3 passos você já está pronto para usar seus créditos .
+Ative seus projetos agora de forma rápida e segura.</p>
         </div>
         
         {/* Steps */}
