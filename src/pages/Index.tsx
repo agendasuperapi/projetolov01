@@ -543,17 +543,17 @@ export default function Index() {
 
               {/* Trust badges */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-6">
-                <div className="flex items-center gap-2 text-sm text-white/80">
+                <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  <span>Rápido</span>
+                  <span className="text-white font-medium">Rápido</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-white/80">
+                <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  <span>Seguro</span>
+                  <span className="text-white font-medium">Seguro</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-white/80">
+                <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  <span className="text-white/80">100% Digital</span>
+                  <span className="text-white font-medium">100% Digital</span>
                 </div>
               </div>
             </div>
