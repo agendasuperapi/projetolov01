@@ -46,22 +46,29 @@ Ative seus projetos agora de forma rápida e segura.</p>
             animationDelay: `${index * 0.15}s`
           }}>
                 {/* Step card */}
-                <div className="bg-card rounded-2xl p-6 lg:p-8 border border-border/50 shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                <div className="relative bg-card rounded-2xl p-6 lg:p-8 border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 h-full overflow-hidden">
+                  {/* Modern corner decorations */}
+                  <div className={`absolute top-0 left-0 w-16 h-16 bg-gradient-to-br ${step.color} opacity-20 group-hover:opacity-40 transition-opacity duration-300`} style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+                  <div className={`absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl ${step.color} opacity-20 group-hover:opacity-40 transition-opacity duration-300`} style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }} />
+                  
+                  {/* Glowing border accent on hover */}
+                  <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} style={{ boxShadow: `inset 0 0 0 2px hsl(var(--primary) / 0.2)` }} />
+                  
                   {/* Step number */}
-                  <span className="inline-block text-5xl lg:text-6xl font-display font-bold text-muted-foreground/20 mb-4 group-hover:text-primary/30 transition-colors duration-300">
+                  <span className="relative inline-block text-5xl lg:text-6xl font-display font-bold text-muted-foreground/20 mb-4 group-hover:text-primary/30 transition-colors duration-300">
                     {step.number}
                   </span>
                   
                   {/* Icon */}
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                  <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                     <step.icon className="w-7 h-7 text-white" />
                   </div>
                   
                   {/* Content */}
-                  <h3 className="font-display font-bold text-xl mb-3">
+                  <h3 className="relative font-display font-bold text-xl mb-3">
                     {step.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="relative text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
                 </div>
