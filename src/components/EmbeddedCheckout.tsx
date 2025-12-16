@@ -1,5 +1,5 @@
 import { useCallback, useState, useMemo } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, Appearance } from '@stripe/stripe-js';
 import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout,
@@ -7,11 +7,50 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 const stripePromise = loadStripe('pk_test_51ScUIsB5jlU6MVipyrn6VrLyC0DVv5sQCGRAkSFOK2Ndlovwl0a12l8GsguXvPkAA3AhlTKrQBAKPh5SusTxQM9t00qT2IDmkD');
+
+// Customização visual do checkout para combinar com o site
+const checkoutAppearance: Appearance = {
+  theme: 'flat',
+  variables: {
+    colorPrimary: '#7c3aed',
+    colorBackground: '#ffffff',
+    colorText: '#1f2937',
+    colorDanger: '#ef4444',
+    colorSuccess: '#22c55e',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSizeBase: '16px',
+    spacingUnit: '4px',
+    borderRadius: '12px',
+  },
+  rules: {
+    '.Input': {
+      border: '1px solid #e5e7eb',
+      boxShadow: 'none',
+    },
+    '.Input:focus': {
+      border: '2px solid #7c3aed',
+      boxShadow: '0 0 0 3px rgba(124, 58, 237, 0.1)',
+    },
+    '.Label': {
+      fontWeight: '500',
+    },
+    '.Tab': {
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+    },
+    '.Tab--selected': {
+      backgroundColor: '#7c3aed',
+      borderColor: '#7c3aed',
+    },
+  },
+};
 
 interface EmbeddedCheckoutModalProps {
   open: boolean;
@@ -79,7 +118,10 @@ export default function EmbeddedCheckoutModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0" aria-describedby={undefined}>
+        <VisuallyHidden>
+          <DialogTitle>Checkout</DialogTitle>
+        </VisuallyHidden>
         <div className="p-4 min-h-[400px]">
           {error && (
             <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
@@ -96,7 +138,10 @@ export default function EmbeddedCheckoutModal({
             <EmbeddedCheckoutProvider 
               key={checkoutKey}
               stripe={stripePromise} 
-              options={{ fetchClientSecret }}
+              options={{ 
+                fetchClientSecret,
+                onComplete: () => console.log('[EmbeddedCheckout] Checkout completed'),
+              }}
             >
               <EmbeddedCheckout />
             </EmbeddedCheckoutProvider>
