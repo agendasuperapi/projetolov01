@@ -204,6 +204,42 @@ serve(async (req) => {
         affiliate_id: couponMetadata.affiliate_id,
         affiliate_product_id: couponMetadata.affiliate_product_id,
       },
+      // Customização visual do checkout
+      appearance: {
+        theme: 'flat',
+        variables: {
+          colorPrimary: '#7c3aed', // Primary purple (HSL 250 84% 54%)
+          colorBackground: '#ffffff',
+          colorText: '#1f2937',
+          colorDanger: '#ef4444',
+          colorSuccess: '#22c55e',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          fontSizeBase: '16px',
+          spacingUnit: '4px',
+          borderRadius: '12px',
+        },
+        rules: {
+          '.Input': {
+            border: '1px solid #e5e7eb',
+            boxShadow: 'none',
+          },
+          '.Input:focus': {
+            border: '2px solid #7c3aed',
+            boxShadow: '0 0 0 3px rgba(124, 58, 237, 0.1)',
+          },
+          '.Label': {
+            fontWeight: '500',
+          },
+          '.Tab': {
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+          },
+          '.Tab--selected': {
+            backgroundColor: '#7c3aed',
+            borderColor: '#7c3aed',
+          },
+        },
+      },
     };
 
     // Add discount if coupon is valid
