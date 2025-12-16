@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2, HeadphonesIcon, MessageSquare, AlertCircle, Plus, Star, Search } from 'lucide-react';
+import { Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2, HeadphonesIcon, MessageSquare, AlertCircle, Plus, Star, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import NewTicketModal from '@/components/support/NewTicketModal';
 import TicketDetailModal from '@/components/support/TicketDetailModal';
+import logoImage from '@/assets/logo-new.png';
 interface Transaction {
   id: string;
   credits_added: number;
@@ -268,10 +269,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-xl">Mais Créditos </span>
+            <img src={logoImage} alt="Mais Créditos" className="h-10 w-auto" />
           </Link>
 
           <div className="flex items-center gap-4">
