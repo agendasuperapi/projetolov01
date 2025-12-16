@@ -468,7 +468,7 @@ export default function Index() {
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={logoImage} alt="Mais Créditos" className="w-10 h-10 object-contain" />
+            <img src={logoImage} alt="Mais Créditos" className="w-10 h-10 object-contain" loading="eager" decoding="async" />
             <span className="font-display font-bold text-xl">Mais Créditos</span>
           </Link>
 
@@ -800,7 +800,7 @@ Escolha seu plano ideal.</h2>
       <footer className="bg-background border-t border-border py-12 relative group">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2.5 mb-4">
-            <img src={logoImage} alt="Mais Créditos" className="w-9 h-9 object-contain" />
+            <img src={logoImage} alt="Mais Créditos" className="w-9 h-9 object-contain" loading="lazy" decoding="async" />
             <span className="font-display font-bold text-lg">Mais Créditos</span>
           </div>
           <p className="text-muted-foreground text-sm">
