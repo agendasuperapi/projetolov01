@@ -131,7 +131,7 @@ export default function EmbeddedCheckoutModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0" aria-describedby={undefined}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-white" aria-describedby={undefined}>
         <VisuallyHidden>
           <DialogTitle>Checkout</DialogTitle>
         </VisuallyHidden>
