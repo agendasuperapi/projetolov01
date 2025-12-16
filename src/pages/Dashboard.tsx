@@ -110,6 +110,72 @@ export default function Dashboard() {
     }
   }, [user]);
 
+  // Realtime subscription for support tickets and messages
+  useEffect(() => {
+    if (!user) return;
+
+    const ticketsChannel = supabase
+      .channel('user-tickets-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_tickets',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            const newStatus = (payload.new as any).status;
+            if (newStatus === 'resolved') {
+              toast.success('Seu chamado foi resolvido!', {
+                description: 'Avalie o atendimento no painel de suporte.',
+              });
+            } else if (newStatus === 'in_progress') {
+              toast.info('Seu chamado está sendo atendido');
+            }
+          }
+          fetchTickets();
+        }
+      )
+      .subscribe();
+
+    const messagesChannel = supabase
+      .channel('user-messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+        },
+        async (payload) => {
+          const newMessage = payload.new as any;
+          // Check if this message is for a ticket owned by the user and is from admin
+          if (newMessage.is_admin && newMessage.user_id !== user.id) {
+            const { data: ticket } = await supabase
+              .from('support_tickets')
+              .select('ticket_number, user_id')
+              .eq('id', newMessage.ticket_id)
+              .single();
+            
+            if (ticket && ticket.user_id === user.id) {
+              toast.info(`Nova resposta no chamado #${String(ticket.ticket_number).padStart(3, '0')}`, {
+                description: 'Clique em Suporte para ver.',
+              });
+              fetchTickets();
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ticketsChannel);
+      supabase.removeChannel(messagesChannel);
+    };
+  }, [user]);
+
   const fetchTransactions = async () => {
     const { data } = await supabase
       .from('payment_transactions')

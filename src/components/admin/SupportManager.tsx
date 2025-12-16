@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -86,6 +87,70 @@ export default function SupportManager() {
 
   useEffect(() => {
     loadTickets();
+
+    // Realtime subscription for new tickets and updates
+    const ticketsChannel = supabase
+      .channel('admin-tickets-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_tickets',
+        },
+        (payload) => {
+          const newTicket = payload.new as any;
+          toast.info(`Novo chamado #${String(newTicket.ticket_number).padStart(3, '0')}`, {
+            description: newTicket.subject,
+          });
+          loadTickets();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'support_tickets',
+        },
+        () => {
+          loadTickets();
+        }
+      )
+      .subscribe();
+
+    const messagesChannel = supabase
+      .channel('admin-messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+        },
+        async (payload) => {
+          const newMessage = payload.new as any;
+          // Notify only for user messages (not admin)
+          if (!newMessage.is_admin) {
+            const { data: ticket } = await supabase
+              .from('support_tickets')
+              .select('ticket_number')
+              .eq('id', newMessage.ticket_id)
+              .single();
+            
+            if (ticket) {
+              toast.info(`Nova mensagem no chamado #${String(ticket.ticket_number).padStart(3, '0')}`);
+            }
+          }
+          loadTickets();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ticketsChannel);
+      supabase.removeChannel(messagesChannel);
+    };
   }, []);
 
   const loadTickets = async () => {
