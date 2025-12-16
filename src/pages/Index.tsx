@@ -457,7 +457,7 @@ export default function Index() {
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
       </div>;
   }
-  return <div className="min-h-screen bg-background lg:max-w-[80vw] lg:mx-auto">
+  return <div className="min-h-screen bg-background">
       {/* Header - Sticky with glassmorphism */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
