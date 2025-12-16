@@ -1,4 +1,5 @@
 import { Zap, CreditCard, Shield, Star } from 'lucide-react';
+import logoImage from '@/assets/logo.png';
 export default function HeroMockup() {
   return <div className="relative w-full max-w-xs mx-auto scale-90">
       {/* Phone mockup */}
@@ -19,8 +20,8 @@ export default function HeroMockup() {
               {/* App content */}
               <div className="flex-1 flex flex-col gap-4">
                 <div className="text-center mb-4">
-                  <div className="w-12 h-12 mx-auto rounded-xl gradient-primary flex items-center justify-center mb-2">
-                    <Zap className="w-6 h-6 text-primary-foreground" />
+                  <div className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-2">
+                    <img src={logoImage} alt="Mais Créditos" className="w-12 h-12 object-contain" />
                   </div>
                   <h3 className="font-display font-bold text-lg">Mais Créditos </h3>
                 </div>
