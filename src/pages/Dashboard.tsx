@@ -8,36 +8,31 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2, HeadphonesIcon, MessageSquare, AlertCircle, Plus, Star, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import NewTicketModal from '@/components/support/NewTicketModal';
 import TicketDetailModal from '@/components/support/TicketDetailModal';
-
 interface Transaction {
   id: string;
   credits_added: number;
   amount_cents: number;
   status: string;
   created_at: string;
-  plan: { name: string } | null;
+  plan: {
+    name: string;
+  } | null;
 }
-
 interface PurchasedAccount {
   id: string;
   account_data: string;
   used_at: string;
-  plan: { name: string } | null;
+  plan: {
+    name: string;
+  } | null;
 }
-
 interface RechargeRequest {
   id: string;
   recharge_link: string;
@@ -45,12 +40,12 @@ interface RechargeRequest {
   credits_added: number;
   created_at: string;
   completed_at: string | null;
-  plan: { name: string } | null;
+  plan: {
+    name: string;
+  } | null;
 }
-
 type TicketStatus = 'open' | 'in_progress' | 'waiting_user' | 'resolved' | 'closed';
 type TicketType = 'problem' | 'suggestion' | 'complaint' | 'question' | 'financial' | 'technical' | 'other';
-
 interface Ticket {
   id: string;
   ticket_number: number;
@@ -62,23 +57,20 @@ interface Ticket {
   updated_at: string;
   rating: number | null;
 }
-
 const statusLabels: Record<TicketStatus, string> = {
   open: 'Aberto',
   in_progress: 'Em Andamento',
   waiting_user: 'Aguardando Você',
   resolved: 'Resolvido',
-  closed: 'Encerrado',
+  closed: 'Encerrado'
 };
-
 const statusColors: Record<TicketStatus, string> = {
   open: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   in_progress: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   waiting_user: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   resolved: 'bg-green-500/20 text-green-400 border-green-500/30',
-  closed: 'bg-muted text-muted-foreground border-border',
+  closed: 'bg-muted text-muted-foreground border-border'
 };
-
 const typeLabels: Record<TicketType, string> = {
   problem: 'Problema',
   suggestion: 'Sugestão',
@@ -86,11 +78,14 @@ const typeLabels: Record<TicketType, string> = {
   question: 'Dúvida',
   financial: 'Financeiro',
   technical: 'Técnico',
-  other: 'Outro',
+  other: 'Outro'
 };
-
 export default function Dashboard() {
-  const { user, profile, loading } = useAuth();
+  const {
+    user,
+    profile,
+    loading
+  } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [purchasedAccounts, setPurchasedAccounts] = useState<PurchasedAccount[]>([]);
   const [rechargeRequests, setRechargeRequests] = useState<RechargeRequest[]>([]);
@@ -103,13 +98,11 @@ export default function Dashboard() {
   const [ticketSearch, setTicketSearch] = useState('');
   const [ticketStatusFilter, setTicketStatusFilter] = useState<string>('all');
   const navigate = useNavigate();
-
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
-
   useEffect(() => {
     if (user) {
       fetchTransactions();
@@ -122,109 +115,90 @@ export default function Dashboard() {
   // Realtime subscription for support tickets and messages
   useEffect(() => {
     if (!user) return;
-
-    const ticketsChannel = supabase
-      .channel('user-tickets-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'support_tickets',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            const newStatus = (payload.new as any).status;
-            if (newStatus === 'resolved') {
-              toast.success('Seu chamado foi resolvido!', {
-                description: 'Avalie o atendimento no painel de suporte.',
-              });
-            } else if (newStatus === 'in_progress') {
-              toast.info('Seu chamado está sendo atendido');
-            }
-          }
+    const ticketsChannel = supabase.channel('user-tickets-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'support_tickets',
+      filter: `user_id=eq.${user.id}`
+    }, payload => {
+      if (payload.eventType === 'UPDATE') {
+        const newStatus = (payload.new as any).status;
+        if (newStatus === 'resolved') {
+          toast.success('Seu chamado foi resolvido!', {
+            description: 'Avalie o atendimento no painel de suporte.'
+          });
+        } else if (newStatus === 'in_progress') {
+          toast.info('Seu chamado está sendo atendido');
+        }
+      }
+      fetchTickets();
+    }).subscribe();
+    const messagesChannel = supabase.channel('user-messages-changes').on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'support_messages'
+    }, async payload => {
+      const newMessage = payload.new as any;
+      // Check if this message is for a ticket owned by the user and is from admin
+      if (newMessage.is_admin && newMessage.user_id !== user.id) {
+        const {
+          data: ticket
+        } = await supabase.from('support_tickets').select('ticket_number, user_id').eq('id', newMessage.ticket_id).single();
+        if (ticket && ticket.user_id === user.id) {
+          toast.info(`Nova resposta no chamado #${String(ticket.ticket_number).padStart(3, '0')}`, {
+            description: 'Clique em Suporte para ver.'
+          });
           fetchTickets();
         }
-      )
-      .subscribe();
-
-    const messagesChannel = supabase
-      .channel('user-messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'support_messages',
-        },
-        async (payload) => {
-          const newMessage = payload.new as any;
-          // Check if this message is for a ticket owned by the user and is from admin
-          if (newMessage.is_admin && newMessage.user_id !== user.id) {
-            const { data: ticket } = await supabase
-              .from('support_tickets')
-              .select('ticket_number, user_id')
-              .eq('id', newMessage.ticket_id)
-              .single();
-            
-            if (ticket && ticket.user_id === user.id) {
-              toast.info(`Nova resposta no chamado #${String(ticket.ticket_number).padStart(3, '0')}`, {
-                description: 'Clique em Suporte para ver.',
-              });
-              fetchTickets();
-            }
-          }
-        }
-      )
-      .subscribe();
-
+      }
+    }).subscribe();
     return () => {
       supabase.removeChannel(ticketsChannel);
       supabase.removeChannel(messagesChannel);
     };
   }, [user]);
-
   const fetchTransactions = async () => {
-    const { data } = await supabase
-      .from('payment_transactions')
-      .select('*, plan:credit_plans(name)')
-      .eq('user_id', user!.id)
-      .order('created_at', { ascending: false });
-    
+    const {
+      data
+    } = await supabase.from('payment_transactions').select('*, plan:credit_plans(name)').eq('user_id', user!.id).order('created_at', {
+      ascending: false
+    });
     if (data) {
-      setTransactions(data.map(t => ({ ...t, plan: t.plan as { name: string } | null })));
+      setTransactions(data.map(t => ({
+        ...t,
+        plan: t.plan as {
+          name: string;
+        } | null
+      })));
     }
   };
-
   const fetchPurchasedAccounts = async () => {
-    const { data } = await supabase
-      .from('accounts')
-      .select('id, account_data, used_at, plan:credit_plans(name)')
-      .eq('used_by', user!.id)
-      .order('used_at', { ascending: false });
-    
+    const {
+      data
+    } = await supabase.from('accounts').select('id, account_data, used_at, plan:credit_plans(name)').eq('used_by', user!.id).order('used_at', {
+      ascending: false
+    });
     if (data) {
-      setPurchasedAccounts(data.map(a => ({ ...a, plan: a.plan as { name: string } | null })));
+      setPurchasedAccounts(data.map(a => ({
+        ...a,
+        plan: a.plan as {
+          name: string;
+        } | null
+      })));
     }
   };
-
   const fetchRechargeRequests = async () => {
-    const { data: recharges } = await supabase
-      .from('recharge_requests')
-      .select('*')
-      .eq('user_id', user!.id)
-      .order('created_at', { ascending: false });
-    
+    const {
+      data: recharges
+    } = await supabase.from('recharge_requests').select('*').eq('user_id', user!.id).order('created_at', {
+      ascending: false
+    });
     if (recharges && recharges.length > 0) {
       const planIds = [...new Set(recharges.map(r => r.plan_id))];
-      const { data: plans } = await supabase
-        .from('credit_plans')
-        .select('id, name')
-        .in('id', planIds);
-      
+      const {
+        data: plans
+      } = await supabase.from('credit_plans').select('id, name').in('id', planIds);
       const planMap = new Map(plans?.map(p => [p.id, p.name]) || []);
-      
       setRechargeRequests(recharges.map(r => ({
         id: r.id,
         recharge_link: r.recharge_link,
@@ -232,49 +206,48 @@ export default function Dashboard() {
         credits_added: r.credits_added,
         created_at: r.created_at,
         completed_at: r.completed_at,
-        plan: planMap.has(r.plan_id) ? { name: planMap.get(r.plan_id)! } : null
+        plan: planMap.has(r.plan_id) ? {
+          name: planMap.get(r.plan_id)!
+        } : null
       })));
     } else {
       setRechargeRequests([]);
     }
   };
-
   const fetchTickets = async () => {
-    const { data, error } = await supabase
-      .from('support_tickets')
-      .select('*')
-      .order('updated_at', { ascending: false });
-
+    const {
+      data,
+      error
+    } = await supabase.from('support_tickets').select('*').order('updated_at', {
+      ascending: false
+    });
     if (!error && data) {
       setTickets(data);
     }
   };
-
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     toast.success('Dados copiados!');
     setTimeout(() => setCopiedId(null), 2000);
   };
-
   const handleSubmitRechargeLink = async (rechargeId: string) => {
     const link = linkInputs[rechargeId]?.trim();
     if (!link) return;
-
     setSubmittingLink(rechargeId);
     try {
-      const { error } = await supabase
-        .from('recharge_requests')
-        .update({ 
-          recharge_link: link,
-          status: 'pending'
-        })
-        .eq('id', rechargeId);
-
+      const {
+        error
+      } = await supabase.from('recharge_requests').update({
+        recharge_link: link,
+        status: 'pending'
+      }).eq('id', rechargeId);
       if (error) throw error;
-
       toast.success('Link enviado com sucesso!');
-      setLinkInputs(prev => ({ ...prev, [rechargeId]: '' }));
+      setLinkInputs(prev => ({
+        ...prev,
+        [rechargeId]: ''
+      }));
       fetchRechargeRequests();
     } catch (error) {
       toast.error('Erro ao enviar link');
@@ -282,21 +255,15 @@ export default function Dashboard() {
       setSubmittingLink(null);
     }
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
-      </div>
-    );
+      </div>;
   }
-
   const totalCreditsAdded = transactions.filter(t => t.status === 'completed').reduce((acc, t) => acc + t.credits_added, 0);
   const totalSpent = transactions.filter(t => t.status === 'completed').reduce((acc, t) => acc + t.amount_cents, 0);
   const openTicketsCount = tickets.filter(t => t.status === 'open' || t.status === 'waiting_user').length;
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -304,7 +271,7 @@ export default function Dashboard() {
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-xl">CreditsHub</span>
+            <span className="font-display font-bold text-xl">Mais Créditos </span>
           </Link>
 
           <div className="flex items-center gap-4">
@@ -384,14 +351,9 @@ export default function Dashboard() {
             <TabsTrigger value="support" className="gap-2 text-xs sm:text-sm py-2 relative">
               <HeadphonesIcon className="w-4 h-4 shrink-0" />
               Suporte
-              {openTicketsCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
-                >
+              {openTicketsCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
                   {openTicketsCount}
-                </Badge>
-              )}
+                </Badge>}
             </TabsTrigger>
           </TabsList>
 
@@ -406,18 +368,14 @@ export default function Dashboard() {
                 <CardDescription>Dados de acesso das suas contas compradas</CardDescription>
               </CardHeader>
               <CardContent>
-                {purchasedAccounts.length === 0 ? (
-                  <div className="text-center py-12">
+                {purchasedAccounts.length === 0 ? <div className="text-center py-12">
                     <KeyRound className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground mb-4">Nenhuma conta adquirida ainda.</p>
                     <Link to="/#plans">
                       <Button className="gradient-primary">Comprar Conta</Button>
                     </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {purchasedAccounts.map((account) => (
-                      <Card key={account.id} className="bg-secondary/50 border-border">
+                  </div> : <div className="space-y-4">
+                    {purchasedAccounts.map(account => <Card key={account.id} className="bg-secondary/50 border-border">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
@@ -431,24 +389,13 @@ export default function Dashboard() {
                                 {account.account_data}
                               </div>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => copyToClipboard(account.account_data, account.id)}
-                              className="shrink-0"
-                            >
-                              {copiedId === account.id ? (
-                                <Check className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
+                            <Button variant="outline" size="sm" onClick={() => copyToClipboard(account.account_data, account.id)} className="shrink-0">
+                              {copiedId === account.id ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                             </Button>
                           </div>
                         </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                      </Card>)}
+                  </div>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -464,34 +411,21 @@ export default function Dashboard() {
                 <CardDescription>Acompanhe o status das suas recargas</CardDescription>
               </CardHeader>
               <CardContent>
-                {rechargeRequests.length === 0 ? (
-                  <div className="text-center py-12">
+                {rechargeRequests.length === 0 ? <div className="text-center py-12">
                     <RefreshCw className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground mb-4">Nenhuma recarga solicitada ainda.</p>
                     <Link to="/#plans">
                       <Button className="gradient-primary">Solicitar Recarga</Button>
                     </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {rechargeRequests.map((recharge) => (
-                      <Card key={recharge.id} className="bg-secondary/50 border-border">
+                  </div> : <div className="space-y-4">
+                    {rechargeRequests.map(recharge => <Card key={recharge.id} className="bg-secondary/50 border-border">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
-                                <Badge 
-                                  variant={recharge.status === 'completed' ? 'default' : recharge.status === 'pending_link' ? 'destructive' : 'secondary'}
-                                  className={recharge.status === 'completed' ? 'bg-green-500' : ''}
-                                >
-                                  {recharge.status === 'completed' ? (
-                                    <><CheckCircle className="w-3 h-3 mr-1" /> Recarregado</>
-                                  ) : recharge.status === 'pending_link' ? (
-                                    <><Clock className="w-3 h-3 mr-1" /> Aguardando Link</>
-                                  ) : (
-                                    <><Clock className="w-3 h-3 mr-1" /> Pendente</>
-                                  )}
+                                <Badge variant={recharge.status === 'completed' ? 'default' : recharge.status === 'pending_link' ? 'destructive' : 'secondary'} className={recharge.status === 'completed' ? 'bg-green-500' : ''}>
+                                  {recharge.status === 'completed' ? <><CheckCircle className="w-3 h-3 mr-1" /> Recarregado</> : recharge.status === 'pending_link' ? <><Clock className="w-3 h-3 mr-1" /> Aguardando Link</> : <><Clock className="w-3 h-3 mr-1" /> Pendente</>}
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
                                   {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
@@ -501,66 +435,35 @@ export default function Dashboard() {
                                 <span className="font-medium">+{recharge.credits_added} créditos</span>
                               </div>
                               
-                              {recharge.status === 'pending_link' && !recharge.recharge_link ? (
-                                <div className="space-y-2">
+                              {recharge.status === 'pending_link' && !recharge.recharge_link ? <div className="space-y-2">
                                   <p className="text-xs text-muted-foreground font-medium">Informe o link da sua conta:</p>
                                   <div className="flex gap-2">
-                                    <Input
-                                      type="url"
-                                      placeholder="https://..."
-                                      value={linkInputs[recharge.id] || ''}
-                                      onChange={(e) => setLinkInputs(prev => ({ ...prev, [recharge.id]: e.target.value }))}
-                                      className="flex-1"
-                                    />
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleSubmitRechargeLink(recharge.id)}
-                                      disabled={submittingLink === recharge.id || !linkInputs[recharge.id]?.trim()}
-                                      className="gradient-primary"
-                                    >
-                                      {submittingLink === recharge.id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <Send className="w-4 h-4" />
-                                      )}
+                                    <Input type="url" placeholder="https://..." value={linkInputs[recharge.id] || ''} onChange={e => setLinkInputs(prev => ({
+                              ...prev,
+                              [recharge.id]: e.target.value
+                            }))} className="flex-1" />
+                                    <Button size="sm" onClick={() => handleSubmitRechargeLink(recharge.id)} disabled={submittingLink === recharge.id || !linkInputs[recharge.id]?.trim()} className="gradient-primary">
+                                      {submittingLink === recharge.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     </Button>
                                   </div>
-                                </div>
-                              ) : recharge.recharge_link ? (
-                                <div className="space-y-1">
+                                </div> : recharge.recharge_link ? <div className="space-y-1">
                                   <p className="text-xs text-muted-foreground font-medium">Link cadastrado:</p>
                                   <div className="bg-background p-3 rounded-lg font-mono text-sm break-all">
                                     {recharge.recharge_link}
                                   </div>
-                                </div>
-                              ) : null}
+                                </div> : null}
                               
-                              {recharge.completed_at && (
-                                <p className="text-xs text-muted-foreground mt-2">
+                              {recharge.completed_at && <p className="text-xs text-muted-foreground mt-2">
                                   Recarregado em: {new Date(recharge.completed_at).toLocaleDateString('pt-BR')}
-                                </p>
-                              )}
+                                </p>}
                             </div>
-                            {recharge.recharge_link && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => copyToClipboard(recharge.recharge_link, recharge.id)}
-                                className="shrink-0"
-                              >
-                                {copiedId === recharge.id ? (
-                                  <Check className="w-4 h-4 text-green-500" />
-                                ) : (
-                                  <Copy className="w-4 h-4" />
-                                )}
-                              </Button>
-                            )}
+                            {recharge.recharge_link && <Button variant="outline" size="sm" onClick={() => copyToClipboard(recharge.recharge_link, recharge.id)} className="shrink-0">
+                                {copiedId === recharge.id ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                              </Button>}
                           </div>
                         </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                      </Card>)}
+                  </div>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -573,16 +476,13 @@ export default function Dashboard() {
                 <CardDescription>Histórico de créditos comprados</CardDescription>
               </CardHeader>
               <CardContent>
-                {transactions.length === 0 ? (
-                  <div className="text-center py-12">
+                {transactions.length === 0 ? <div className="text-center py-12">
                     <History className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground mb-4">Nenhuma compra realizada ainda.</p>
                     <Link to="/#plans">
                       <Button className="gradient-primary">Comprar Créditos</Button>
                     </Link>
-                  </div>
-                ) : (
-                  <Table>
+                  </div> : <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Plano</TableHead>
@@ -593,8 +493,7 @@ export default function Dashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactions.map((tx) => (
-                        <TableRow key={tx.id}>
+                      {transactions.map(tx => <TableRow key={tx.id}>
                           <TableCell className="font-medium">{tx.plan?.name || 'Plano'}</TableCell>
                           <TableCell>
                             <Badge variant="secondary">{tx.credits_added}</Badge>
@@ -610,11 +509,9 @@ export default function Dashboard() {
                           <TableCell className="text-muted-foreground">
                             {new Date(tx.created_at).toLocaleDateString('pt-BR')}
                           </TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow>)}
                     </TableBody>
-                  </Table>
-                )}
+                  </Table>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -686,12 +583,7 @@ export default function Dashboard() {
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por assunto ou número..."
-                    value={ticketSearch}
-                    onChange={(e) => setTicketSearch(e.target.value)}
-                    className="pl-10"
-                  />
+                  <Input placeholder="Buscar por assunto ou número..." value={ticketSearch} onChange={e => setTicketSearch(e.target.value)} className="pl-10" />
                 </div>
                 <Select value={ticketStatusFilter} onValueChange={setTicketStatusFilter}>
                   <SelectTrigger className="w-full md:w-[180px]">
@@ -711,42 +603,27 @@ export default function Dashboard() {
               {/* Tickets List */}
               <div className="space-y-4">
                 {(() => {
-                  const filteredTickets = tickets.filter(ticket => {
-                    const matchesSearch = 
-                      ticketSearch === '' ||
-                      ticket.subject.toLowerCase().includes(ticketSearch.toLowerCase()) ||
-                      String(ticket.ticket_number).includes(ticketSearch);
-                    const matchesStatus = ticketStatusFilter === 'all' || ticket.status === ticketStatusFilter;
-                    return matchesSearch && matchesStatus;
-                  });
-
-                  if (tickets.length === 0) {
-                    return (
-                      <Card className="p-8 text-center border-border/50 bg-card/50">
+                const filteredTickets = tickets.filter(ticket => {
+                  const matchesSearch = ticketSearch === '' || ticket.subject.toLowerCase().includes(ticketSearch.toLowerCase()) || String(ticket.ticket_number).includes(ticketSearch);
+                  const matchesStatus = ticketStatusFilter === 'all' || ticket.status === ticketStatusFilter;
+                  return matchesSearch && matchesStatus;
+                });
+                if (tickets.length === 0) {
+                  return <Card className="p-8 text-center border-border/50 bg-card/50">
                         <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                         <p className="text-muted-foreground">Nenhum chamado encontrado</p>
                         <Button onClick={() => setIsNewTicketOpen(true)} className="mt-4">
                           Criar primeiro chamado
                         </Button>
-                      </Card>
-                    );
-                  }
-
-                  if (filteredTickets.length === 0) {
-                    return (
-                      <Card className="p-8 text-center border-border/50 bg-card/50">
+                      </Card>;
+                }
+                if (filteredTickets.length === 0) {
+                  return <Card className="p-8 text-center border-border/50 bg-card/50">
                         <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                         <p className="text-muted-foreground">Nenhum chamado corresponde aos filtros</p>
-                      </Card>
-                    );
-                  }
-
-                  return filteredTickets.map((ticket) => (
-                    <Card
-                      key={ticket.id}
-                      className="p-4 border-border/50 bg-card/50 hover:bg-card/80 cursor-pointer transition-colors"
-                      onClick={() => setSelectedTicket(ticket.id)}
-                    >
+                      </Card>;
+                }
+                return filteredTickets.map(ticket => <Card key={ticket.id} className="p-4 border-border/50 bg-card/50 hover:bg-card/80 cursor-pointer transition-colors" onClick={() => setSelectedTicket(ticket.id)}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
@@ -761,43 +638,28 @@ export default function Dashboard() {
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span>{typeLabels[ticket.ticket_type]}</span>
                             <span>•</span>
-                            <span>{format(new Date(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                            <span>{format(new Date(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                            locale: ptBR
+                          })}</span>
                           </div>
                         </div>
-                        {ticket.rating && (
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${i < ticket.rating! ? 'fill-amber-400 text-amber-400' : 'text-muted'}`}
-                              />
-                            ))}
-                          </div>
-                        )}
+                        {ticket.rating && <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < ticket.rating! ? 'fill-amber-400 text-amber-400' : 'text-muted'}`} />)}
+                          </div>}
                       </div>
-                    </Card>
-                  ));
-                })()}
+                    </Card>);
+              })()}
               </div>
             </div>
 
-            <NewTicketModal
-              open={isNewTicketOpen}
-              onOpenChange={setIsNewTicketOpen}
-              onSuccess={() => {
-                fetchTickets();
-                setIsNewTicketOpen(false);
-              }}
-            />
+            <NewTicketModal open={isNewTicketOpen} onOpenChange={setIsNewTicketOpen} onSuccess={() => {
+            fetchTickets();
+            setIsNewTicketOpen(false);
+          }} />
 
-            <TicketDetailModal
-              ticketId={selectedTicket}
-              onClose={() => setSelectedTicket(null)}
-              onUpdate={fetchTickets}
-            />
+            <TicketDetailModal ticketId={selectedTicket} onClose={() => setSelectedTicket(null)} onUpdate={fetchTickets} />
           </TabsContent>
         </Tabs>
       </main>
-    </div>
-  );
+    </div>;
 }
