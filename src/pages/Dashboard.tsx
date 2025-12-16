@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import NewTicketModal from '@/components/support/NewTicketModal';
 import TicketDetailModal from '@/components/support/TicketDetailModal';
-import logoImage from '@/assets/logo-new.png';
+import logoImage from '@/assets/logo.png';
 interface Transaction {
   id: string;
   credits_added: number;
