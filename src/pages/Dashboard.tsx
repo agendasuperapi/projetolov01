@@ -366,21 +366,23 @@ export default function Dashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="accounts" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
-            <TabsTrigger value="accounts" className="gap-2">
-              <KeyRound className="w-4 h-4" />
-              Minhas Contas
+          <TabsList className="grid w-full max-w-2xl grid-cols-2 md:grid-cols-4 h-auto gap-1">
+            <TabsTrigger value="accounts" className="gap-2 text-xs sm:text-sm py-2">
+              <KeyRound className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Minhas Contas</span>
+              <span className="sm:hidden">Contas</span>
             </TabsTrigger>
-            <TabsTrigger value="recharges" className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              Minhas Recargas
+            <TabsTrigger value="recharges" className="gap-2 text-xs sm:text-sm py-2">
+              <RefreshCw className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Minhas Recargas</span>
+              <span className="sm:hidden">Recargas</span>
             </TabsTrigger>
-            <TabsTrigger value="transactions" className="gap-2">
-              <History className="w-4 h-4" />
+            <TabsTrigger value="transactions" className="gap-2 text-xs sm:text-sm py-2">
+              <History className="w-4 h-4 shrink-0" />
               Transações
             </TabsTrigger>
-            <TabsTrigger value="support" className="gap-2 relative">
-              <HeadphonesIcon className="w-4 h-4" />
+            <TabsTrigger value="support" className="gap-2 text-xs sm:text-sm py-2 relative">
+              <HeadphonesIcon className="w-4 h-4 shrink-0" />
               Suporte
               {openTicketsCount > 0 && (
                 <Badge 
