@@ -37,9 +37,9 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed z-50 grid w-full max-w-lg gap-4 border bg-background/95 backdrop-blur-md p-6 shadow-2xl shadow-black/20 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        // Mobile: positioned to work with keyboard - uses safe area insets
-        "inset-x-0 bottom-0 rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-        "max-h-[85dvh] pb-[env(safe-area-inset-bottom)]",
+        // Mobile: positioned at TOP to stay above keyboard
+        "inset-x-0 top-0 rounded-b-2xl data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        "max-h-[85dvh] pt-[env(safe-area-inset-top)]",
         // Desktop: centered modal
         "sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:max-h-[90vh] sm:pb-6 sm:data-[state=closed]:zoom-out-90 sm:data-[state=open]:zoom-in-90 sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
         className,
