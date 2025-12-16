@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock, HeadphonesIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
@@ -18,6 +18,7 @@ import AccountsManager from '@/components/admin/AccountsManager';
 import RechargeManager from '@/components/admin/RechargeManager';
 import StripeEventsManager from '@/components/admin/StripeEventsManager';
 import UsersManager from '@/components/admin/UsersManager';
+import SupportManager from '@/components/admin/SupportManager';
 interface CreditPlan {
   id: string;
   name: string;
@@ -401,7 +402,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue={editSection ? 'content' : 'accounts'} className="space-y-8">
-          <TabsList className="grid w-full max-w-5xl grid-cols-7">
+          <TabsList className="grid w-full max-w-6xl grid-cols-8">
             <TabsTrigger value="accounts" className="gap-2">
               <Package className="w-4 h-4" />
               Contas
@@ -421,6 +422,10 @@ export default function Admin() {
             <TabsTrigger value="users" className="gap-2">
               <UserCheck className="w-4 h-4" />
               Usuários
+            </TabsTrigger>
+            <TabsTrigger value="support" className="gap-2">
+              <HeadphonesIcon className="w-4 h-4" />
+              Suporte
             </TabsTrigger>
             <TabsTrigger value="transactions" className="gap-2">
               <Users className="w-4 h-4" />
@@ -454,6 +459,11 @@ export default function Admin() {
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-6">
             <UsersManager />
+          </TabsContent>
+
+          {/* Support Tab */}
+          <TabsContent value="support" className="space-y-6">
+            <SupportManager />
           </TabsContent>
 
           {/* Transactions Tab */}
