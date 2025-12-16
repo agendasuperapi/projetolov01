@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2, HeadphonesIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Transaction {
@@ -175,6 +175,12 @@ export default function Dashboard() {
               <Zap className="w-4 h-4 text-primary" />
               <span className="font-bold">{profile?.credits || 0} créditos</span>
             </div>
+            <Link to="/support">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <HeadphonesIcon className="w-4 h-4" />
+                Suporte
+              </Button>
+            </Link>
             <Link to="/#plans">
               <Button variant="outline" size="sm">Comprar Créditos</Button>
             </Link>

@@ -390,6 +390,89 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_admin: boolean
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          message?: string
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          closed_at: string | null
+          created_at: string
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          rating: number | null
+          rating_comment: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          ticket_number: number
+          ticket_type: Database["public"]["Enums"]["ticket_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          rating?: number | null
+          rating_comment?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          ticket_number?: number
+          ticket_type?: Database["public"]["Enums"]["ticket_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          rating?: number | null
+          rating_comment?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject?: string
+          ticket_number?: number
+          ticket_type?: Database["public"]["Enums"]["ticket_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -454,6 +537,21 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      ticket_priority: "low" | "normal" | "high" | "urgent"
+      ticket_status:
+        | "open"
+        | "in_progress"
+        | "waiting_user"
+        | "resolved"
+        | "closed"
+      ticket_type:
+        | "problem"
+        | "suggestion"
+        | "complaint"
+        | "question"
+        | "financial"
+        | "technical"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -582,6 +680,23 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      ticket_priority: ["low", "normal", "high", "urgent"],
+      ticket_status: [
+        "open",
+        "in_progress",
+        "waiting_user",
+        "resolved",
+        "closed",
+      ],
+      ticket_type: [
+        "problem",
+        "suggestion",
+        "complaint",
+        "question",
+        "financial",
+        "technical",
+        "other",
+      ],
     },
   },
 } as const
