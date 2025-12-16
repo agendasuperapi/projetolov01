@@ -47,9 +47,8 @@ Ative seus projetos agora de forma rápida e segura.</p>
           }}>
                 {/* Step card */}
                 <div className="relative bg-card rounded-2xl p-6 lg:p-8 border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 h-full overflow-hidden">
-                  {/* Modern corner decorations */}
+                  {/* Modern corner decoration - top only */}
                   <div className={`absolute top-0 left-0 w-16 h-16 bg-gradient-to-br ${step.color} opacity-20 group-hover:opacity-40 transition-opacity duration-300`} style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
-                  <div className={`absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl ${step.color} opacity-20 group-hover:opacity-40 transition-opacity duration-300`} style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }} />
                   
                   {/* Glowing border accent on hover */}
                   <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} style={{ boxShadow: `inset 0 0 0 2px hsl(var(--primary) / 0.2)` }} />
