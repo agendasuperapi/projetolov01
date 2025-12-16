@@ -58,7 +58,7 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "").trim();
     if (!token) throw new Error("No auth token provided");
 
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
 
     const user = userData.user;
