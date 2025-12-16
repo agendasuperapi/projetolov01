@@ -12,6 +12,7 @@ import PlanCard from '@/components/PlanCard';
 import HeroMockup from '@/components/HeroMockup';
 import FeatureCard from '@/components/FeatureCard';
 import HowItWorksSection from '@/components/HowItWorksSection';
+import EmbeddedCheckoutModal from '@/components/EmbeddedCheckout';
 import confetti from 'canvas-confetti';
 import logoImage from '@/assets/logo.png';
 const AdminEditButton = ({
@@ -119,6 +120,14 @@ export default function Index() {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponInitialized, setCouponInitialized] = useState(false);
+
+  // Checkout modal state
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutData, setCheckoutData] = useState<{
+    priceId: string;
+    planId: string;
+    purchaseType: 'new_account' | 'recharge';
+  } | null>(null);
 
   // Flash animation state for plan sections
   const [flashingSection, setFlashingSection] = useState<'new_account' | 'recharge' | null>(null);
@@ -393,39 +402,27 @@ export default function Index() {
       title: 'Cupom removido'
     });
   };
-  const processPurchase = async (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
+  const processPurchase = (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
     setPurchaseLoading(plan.id);
-    try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          priceId: plan.stripe_price_id,
-          planId: plan.id,
-          purchaseType: type,
-          couponCode: appliedCoupon?.custom_code || appliedCoupon?.code || null
-        }
-      });
-      if (error) throw error;
-      if (data?.url) {
-        const isDevelopment = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('lovable.dev') || window.location.hostname === 'localhost';
-        if (isDevelopment) {
-          window.open(data.url, '_blank');
-        } else {
-          window.location.href = data.url;
-        }
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento.';
+    
+    if (!plan.stripe_price_id) {
       toast({
         title: 'Erro',
-        description: errorMessage,
+        description: 'Plano não configurado.',
         variant: 'destructive'
       });
-    } finally {
       setPurchaseLoading(null);
+      return;
     }
+    
+    // Open embedded checkout modal
+    setCheckoutData({
+      priceId: plan.stripe_price_id,
+      planId: plan.id,
+      purchaseType: type,
+    });
+    setCheckoutOpen(true);
+    setPurchaseLoading(null);
   };
 
   // Default content fallbacks
@@ -818,6 +815,18 @@ Escolha seu plano ideal.</h2>
       setPendingPurchase(null);
       setAuthModalDefaultTab('login');
     }} onSuccess={handleAuthSuccess} planId={pendingPurchase?.plan?.id} priceId={pendingPurchase?.plan?.stripe_price_id || undefined} defaultTab={authModalDefaultTab} />
+
+      {/* Embedded Checkout Modal */}
+      {checkoutData && (
+        <EmbeddedCheckoutModal
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          priceId={checkoutData.priceId}
+          planId={checkoutData.planId}
+          purchaseType={checkoutData.purchaseType}
+          couponCode={appliedCoupon?.custom_code || appliedCoupon?.code}
+        />
+      )}
 
       {/* Footer */}
       <footer className="bg-background border-t border-border py-12 relative group">
