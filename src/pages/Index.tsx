@@ -643,7 +643,7 @@ export default function Index() {
       <section id="plans" className="py-14 lg:py-20 pb-24 lg:pb-28 relative group overflow-hidden" style={{
       background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
     }}>
-        <div className="container mx-auto px-4">
+        <div className="px-2 md:px-4">
           {/* Section header */}
           <div className="text-center mb-14">
             <span className="inline-block px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
@@ -690,7 +690,7 @@ Escolha seu plano ideal.</h2>
               <p className="text-white/80">Receba os dados de uma nova conta com créditos</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 max-w-5xl mx-auto px-2">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
               {newAccountPlans.filter(plan => plan.availableAccounts > 0).map(plan => <PlanCard key={plan.id} planType="new_account" planName={plan.name} credits={plan.credits} priceCents={plan.price_cents} competitorPriceCents={plan.competitor_price_cents} availableAccounts={plan.availableAccounts} isLoading={purchaseLoading === plan.id} onBuy={() => handleBuyNewAccount(plan)} couponDiscount={appliedCoupon ? {
               type: appliedCoupon.type,
               value: appliedCoupon.value,
@@ -714,7 +714,7 @@ Escolha seu plano ideal.</h2>
               <p className="text-white/80">Adicione créditos a uma conta existente</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 max-w-5xl mx-auto px-2">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
               {rechargePlans.map(plan => <PlanCard key={plan.id} planType="recharge" planName={plan.name} credits={plan.credits} priceCents={plan.price_cents} competitorPriceCents={plan.competitor_price_cents} isLoading={purchaseLoading === plan.id} onBuy={() => handleBuyRecharge(plan)} couponDiscount={appliedCoupon ? {
               type: appliedCoupon.type,
               value: appliedCoupon.value,
