@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,7 +50,54 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Detectar teclado virtual via VisualViewport API
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const handleResize = () => {
+      // Se a viewport visual for significativamente menor que a janela, o teclado está aberto
+      const isKeyboardOpen = viewport.height < window.innerHeight * 0.75;
+      setKeyboardVisible(isKeyboardOpen);
+    };
+
+    viewport.addEventListener('resize', handleResize);
+    viewport.addEventListener('scroll', handleResize);
+
+    return () => {
+      viewport.removeEventListener('resize', handleResize);
+      viewport.removeEventListener('scroll', handleResize);
+    };
+  }, [isOpen]);
+
+  // Scroll para o botão quando o teclado aparecer
+  useEffect(() => {
+    if (keyboardVisible && submitButtonRef.current) {
+      setTimeout(() => {
+        submitButtonRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest' 
+        });
+      }, 100);
+    }
+  }, [keyboardVisible]);
+
+  // Handler para scroll ao focar em inputs
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      submitButtonRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest' 
+      });
+    }, 300);
+  };
   
   // Reset to default tab when modal opens
   const handleOpenChange = (open: boolean) => {
@@ -176,7 +223,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-display">
             {isLogin ? 'Entrar' : 'Criar Conta'}
@@ -188,7 +235,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mt-4">
           {!isLogin && (
             <>
               <div className="space-y-2">
@@ -199,6 +246,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
                   placeholder="Seu nome"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  onFocus={handleInputFocus}
                   required={!isLogin}
                   disabled={loading}
                 />
@@ -211,6 +259,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
                   placeholder="(00) 00000-0000"
                   value={phone}
                   onChange={(e) => setPhone(formatPhone(e.target.value))}
+                  onFocus={handleInputFocus}
                   maxLength={15}
                   required={!isLogin}
                   disabled={loading}
@@ -228,6 +277,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
               value={email}
               onChange={(e) => setEmail(e.target.value.toLowerCase())}
               onBlur={(e) => setEmail(formatEmail(e.target.value))}
+              onFocus={handleInputFocus}
               required
               disabled={loading}
             />
@@ -241,16 +291,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onFocus={handleInputFocus}
               required
               disabled={loading}
             />
           </div>
 
-          <Button type="submit" className="w-full gradient-primary" disabled={loading}>
+          <Button 
+            ref={submitButtonRef}
+            type="submit" 
+            className="w-full gradient-primary" 
+            disabled={loading}
+          >
             {loading ? 'Processando...' : isLogin ? 'Entrar' : 'Criar Conta'}
           </Button>
 
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-muted-foreground pb-2">
             {isLogin ? (
               <>
                 Não tem conta?{' '}
