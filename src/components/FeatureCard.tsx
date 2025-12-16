@@ -10,9 +10,12 @@ interface FeatureCardProps {
 export default function FeatureCard({ icon: Icon, title, description, index = 0 }: FeatureCardProps) {
   return (
     <div 
-      className="group relative p-6 rounded-2xl glass-card hover:shadow-glow hover:border-primary/30 transition-all duration-500 animate-slide-up h-full flex flex-col"
+      className="group relative p-6 rounded-2xl glass-card hover:shadow-glow hover:border-primary/30 transition-all duration-500 animate-slide-up h-full flex flex-col overflow-hidden"
       style={{ animationDelay: `${index * 0.1}s` }}
     >
+      {/* Modern corner decoration - top */}
+      <div className="absolute top-0 left-0 w-14 h-14 bg-gradient-to-br from-primary to-primary/60 opacity-20 group-hover:opacity-40 transition-opacity duration-300" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+      
       {/* Icon container */}
       <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-glow-sm transition-all duration-300">
         <Icon className="w-6 h-6 text-primary-foreground" />
