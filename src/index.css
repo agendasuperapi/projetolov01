@@ -292,3 +292,19 @@
 .animate-shimmer {
   animation: shimmer 4s ease-in-out infinite;
 }
+
+/* Shimmer com delays para efeito cascata */
+.animate-shimmer-delay-1 {
+  animation: shimmer 4s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-shimmer-delay-2 {
+  animation: shimmer 4s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-shimmer-delay-3 {
+  animation: shimmer 4s ease-in-out infinite;
+  animation-delay: 3s;
+}

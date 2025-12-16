@@ -28,7 +28,7 @@ export default function HowItWorksSection() {
       
       {/* Shimmer light effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer" />
+        <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer-delay-1" />
       </div>
       
       <div className="container mx-auto px-4 relative z-10">
