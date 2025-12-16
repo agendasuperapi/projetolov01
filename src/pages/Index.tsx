@@ -523,7 +523,7 @@ export default function Index() {
                 {hero.badge}
               </Badge>
               
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow-lg">
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow-lg uppercase">
                 {hero.title}
                 <span className="block text-white/90">{hero.titleHighlight}</span>
               </h1>
