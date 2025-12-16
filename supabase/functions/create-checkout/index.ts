@@ -55,10 +55,12 @@ serve(async (req) => {
     if (!authHeader) throw new Error("No authorization header provided");
     logStep("Authorization header found");
 
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (!token) throw new Error("No auth token provided");
+
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
+
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
@@ -222,10 +224,18 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    const status =
+      errorMessage.includes("Authentication error") ||
+      errorMessage.includes("No authorization header") ||
+      errorMessage.includes("No auth token")
+        ? 401
+        : 500;
+
+    logStep("ERROR", { message: errorMessage, status });
+
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status,
     });
   }
 });
