@@ -439,6 +439,7 @@ export type Database = {
       }
     }
     Functions: {
+      check_email_exists: { Args: { p_email: string }; Returns: boolean }
       get_available_accounts_count: {
         Args: { p_plan_id: string }
         Returns: number
