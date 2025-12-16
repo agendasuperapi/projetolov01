@@ -650,6 +650,10 @@ export default function Index() {
     }}>
         {/* Shimmer light effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer-delay-2" />
+        </div>
+        {/* Shimmer light effect */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
         </div>
         
@@ -753,8 +757,13 @@ Escolha seu plano ideal.</h2>
       </section>
 
       {/* Features Section */}
-      <section className="py-14 lg:py-20 bg-card relative group">
-        <div className="container mx-auto px-4">
+      <section className="py-14 lg:py-20 bg-card relative group overflow-hidden">
+        {/* Shimmer light effect */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer-delay-3" />
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           {/* Section header */}
           <div className="text-center mb-14">
             <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
@@ -782,7 +791,7 @@ Escolha seu plano ideal.</h2>
       <section className="py-14 bg-muted relative overflow-hidden">
         {/* Shimmer light effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer" />
+          <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer-delay-3" />
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
