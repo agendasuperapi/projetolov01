@@ -81,21 +81,8 @@ export default function EmbeddedCheckoutModal({
     console.log('[EmbeddedCheckout] Fetching client secret...', { priceId, planId, purchaseType, couponCode });
     setError(null);
     setLoading(true);
-
+    
     try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        throw new Error(sessionError.message);
-      }
-
-      if (!session?.access_token) {
-        throw new Error('Você precisa estar logado para continuar com o pagamento.');
-      }
-
       const { data, error: invokeError } = await supabase.functions.invoke('create-checkout', {
         body: {
           priceId,
@@ -131,7 +118,7 @@ export default function EmbeddedCheckoutModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-white" aria-describedby={undefined}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0" aria-describedby={undefined}>
         <VisuallyHidden>
           <DialogTitle>Checkout</DialogTitle>
         </VisuallyHidden>
