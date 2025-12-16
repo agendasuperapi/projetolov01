@@ -13,6 +13,7 @@ import HeroMockup from '@/components/HeroMockup';
 import FeatureCard from '@/components/FeatureCard';
 import HowItWorksSection from '@/components/HowItWorksSection';
 import confetti from 'canvas-confetti';
+import logoImage from '@/assets/logo.png';
 const AdminEditButton = ({
   section
 }: {
@@ -467,10 +468,8 @@ export default function Index() {
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-xl">Mais Créditos </span>
+            <img src={logoImage} alt="Mais Créditos" className="w-10 h-10 object-contain" />
+            <span className="font-display font-bold text-xl">Mais Créditos</span>
           </Link>
 
           <nav className="flex items-center gap-3">
@@ -801,9 +800,7 @@ Escolha seu plano ideal.</h2>
       <footer className="bg-background border-t border-border py-12 relative group">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2.5 mb-4">
-            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <img src={logoImage} alt="Mais Créditos" className="w-9 h-9 object-contain" />
             <span className="font-display font-bold text-lg">Mais Créditos</span>
           </div>
           <p className="text-muted-foreground text-sm">
