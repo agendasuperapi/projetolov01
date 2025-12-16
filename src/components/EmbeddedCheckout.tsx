@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
   EmbeddedCheckoutProvider,
@@ -9,6 +9,7 @@ import {
   DialogContent,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 const stripePromise = loadStripe('pk_test_51ScUIsB5jlU6MVipyrn6VrLyC0DVv5sQCGRAkSFOK2Ndlovwl0a12l8GsguXvPkAA3AhlTKrQBAKPh5SusTxQM9t00qT2IDmkD');
 
@@ -29,32 +30,74 @@ export default function EmbeddedCheckoutModal({
   purchaseType,
   couponCode,
 }: EmbeddedCheckoutModalProps) {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Create a unique key for each checkout attempt to force re-mount
+  const checkoutKey = useMemo(() => {
+    return `${priceId}-${planId}-${Date.now()}`;
+  }, [priceId, planId, open]);
+
   const fetchClientSecret = useCallback(async () => {
-    const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: {
-        priceId,
-        planId,
-        purchaseType,
-        couponCode,
-      },
-    });
+    console.log('[EmbeddedCheckout] Fetching client secret...', { priceId, planId, purchaseType, couponCode });
+    setError(null);
+    setLoading(true);
+    
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          priceId,
+          planId,
+          purchaseType,
+          couponCode,
+        },
+      });
 
-    if (error) {
-      console.error('Error creating checkout session:', error);
-      throw error;
+      console.log('[EmbeddedCheckout] Response:', { data, invokeError });
+
+      if (invokeError) {
+        console.error('[EmbeddedCheckout] Invoke error:', invokeError);
+        setError(invokeError.message);
+        throw new Error(invokeError.message);
+      }
+
+      if (!data || !data.clientSecret) {
+        console.error('[EmbeddedCheckout] No clientSecret in response:', data);
+        setError('Não foi possível iniciar o checkout');
+        throw new Error('No clientSecret in response');
+      }
+
+      console.log('[EmbeddedCheckout] Got clientSecret:', data.clientSecret.substring(0, 50) + '...');
+      setLoading(false);
+      return data.clientSecret;
+    } catch (err) {
+      console.error('[EmbeddedCheckout] Error:', err);
+      setLoading(false);
+      throw err;
     }
-
-    return data.clientSecret;
   }, [priceId, planId, purchaseType, couponCode]);
-
-  const options = { fetchClientSecret };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <div className="p-4">
-          {open && (
-            <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
+        <div className="p-4 min-h-[400px]">
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              {error}
+            </div>
+          )}
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Carregando checkout...</span>
+            </div>
+          )}
+          {open && priceId && planId && (
+            <EmbeddedCheckoutProvider 
+              key={checkoutKey}
+              stripe={stripePromise} 
+              options={{ fetchClientSecret }}
+            >
               <EmbeddedCheckout />
             </EmbeddedCheckoutProvider>
           )}
