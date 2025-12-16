@@ -779,8 +779,13 @@ Escolha seu plano ideal.</h2>
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-14 bg-muted">
-        <div className="container mx-auto px-4">
+      <section className="py-14 bg-muted relative overflow-hidden">
+        {/* Shimmer light effect */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer" />
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
               Pronto para começar?
