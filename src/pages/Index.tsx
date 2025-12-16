@@ -690,7 +690,7 @@ Escolha seu plano ideal.</h2>
               <p className="text-white/80">Receba os dados de uma nova conta com créditos</p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 max-w-5xl mx-auto px-2">
               {newAccountPlans.filter(plan => plan.availableAccounts > 0).map(plan => <PlanCard key={plan.id} planType="new_account" planName={plan.name} credits={plan.credits} priceCents={plan.price_cents} competitorPriceCents={plan.competitor_price_cents} availableAccounts={plan.availableAccounts} isLoading={purchaseLoading === plan.id} onBuy={() => handleBuyNewAccount(plan)} couponDiscount={appliedCoupon ? {
               type: appliedCoupon.type,
               value: appliedCoupon.value,
@@ -714,7 +714,7 @@ Escolha seu plano ideal.</h2>
               <p className="text-white/80">Adicione créditos a uma conta existente</p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 max-w-5xl mx-auto px-2">
               {rechargePlans.map(plan => <PlanCard key={plan.id} planType="recharge" planName={plan.name} credits={plan.credits} priceCents={plan.price_cents} competitorPriceCents={plan.competitor_price_cents} isLoading={purchaseLoading === plan.id} onBuy={() => handleBuyRecharge(plan)} couponDiscount={appliedCoupon ? {
               type: appliedCoupon.type,
               value: appliedCoupon.value,
