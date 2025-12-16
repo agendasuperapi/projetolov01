@@ -26,6 +26,11 @@ export default function HowItWorksSection() {
         <div className="absolute bottom-20 right-10 w-72 h-72 bg-accent/5 rounded-full blur-3xl"></div>
       </div>
       
+      {/* Shimmer light effect */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer" />
+      </div>
+      
       <div className="container mx-auto px-4 relative z-10">
         {/* Section header */}
         <div className="text-center mb-10">
