@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { Eye, EyeOff } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -51,9 +52,37 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const hidePasswordTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-hide password after stop typing
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    setShowPassword(true);
+    
+    // Clear existing timeout
+    if (hidePasswordTimeoutRef.current) {
+      clearTimeout(hidePasswordTimeoutRef.current);
+    }
+    
+    // Set new timeout to hide password after 1.5 seconds
+    hidePasswordTimeoutRef.current = setTimeout(() => {
+      setShowPassword(false);
+    }, 1500);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hidePasswordTimeoutRef.current) {
+        clearTimeout(hidePasswordTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Detectar teclado virtual via VisualViewport API
   useEffect(() => {
@@ -285,16 +314,27 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
 
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onFocus={handleInputFocus}
-              required
-              disabled={loading}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={handlePasswordChange}
+                onFocus={handleInputFocus}
+                required
+                disabled={loading}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           <Button 
