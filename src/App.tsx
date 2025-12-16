@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
-import Support from "./pages/Support";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 import CouponHandler from "./components/CouponHandler";
@@ -27,7 +26,6 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/support" element={<Support />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/:code" element={<CouponHandler />} />
             <Route path="*" element={<NotFound />} />
