@@ -172,7 +172,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
             const { data: existingUsers } = await supabase
               .from('profiles')
               .select('id')
-              .eq('email', email.trim())
+              .eq('email', email.trim().toLowerCase())
               .limit(1);
             
             if (!existingUsers || existingUsers.length === 0) {
