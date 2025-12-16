@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import CouponHandler from "./components/CouponHandler";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/:code" element={<CouponHandler />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

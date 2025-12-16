@@ -12,7 +12,7 @@ import PlanCard from '@/components/PlanCard';
 import HeroMockup from '@/components/HeroMockup';
 import FeatureCard from '@/components/FeatureCard';
 import HowItWorksSection from '@/components/HowItWorksSection';
-import EmbeddedCheckoutModal from '@/components/EmbeddedCheckout';
+
 import confetti from 'canvas-confetti';
 import logoImage from '@/assets/logo.png';
 const AdminEditButton = ({
@@ -121,13 +121,6 @@ export default function Index() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponInitialized, setCouponInitialized] = useState(false);
 
-  // Checkout modal state
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [checkoutData, setCheckoutData] = useState<{
-    priceId: string;
-    planId: string;
-    purchaseType: 'new_account' | 'recharge';
-  } | null>(null);
 
   // Flash animation state for plan sections
   const [flashingSection, setFlashingSection] = useState<'new_account' | 'recharge' | null>(null);
@@ -415,13 +408,18 @@ export default function Index() {
       return;
     }
     
-    // Open embedded checkout modal
-    setCheckoutData({
+    // Navigate to checkout page
+    const params = new URLSearchParams({
       priceId: plan.stripe_price_id,
       planId: plan.id,
       purchaseType: type,
     });
-    setCheckoutOpen(true);
+    
+    if (appliedCoupon?.custom_code || appliedCoupon?.code) {
+      params.set('couponCode', appliedCoupon.custom_code || appliedCoupon.code);
+    }
+    
+    navigate(`/checkout?${params.toString()}`);
     setPurchaseLoading(null);
   };
 
@@ -816,17 +814,6 @@ Escolha seu plano ideal.</h2>
       setAuthModalDefaultTab('login');
     }} onSuccess={handleAuthSuccess} planId={pendingPurchase?.plan?.id} priceId={pendingPurchase?.plan?.stripe_price_id || undefined} defaultTab={authModalDefaultTab} />
 
-      {/* Embedded Checkout Modal */}
-      {checkoutData && (
-        <EmbeddedCheckoutModal
-          open={checkoutOpen}
-          onOpenChange={setCheckoutOpen}
-          priceId={checkoutData.priceId}
-          planId={checkoutData.planId}
-          purchaseType={checkoutData.purchaseType}
-          couponCode={appliedCoupon?.custom_code || appliedCoupon?.code}
-        />
-      )}
 
       {/* Footer */}
       <footer className="bg-background border-t border-border py-12 relative group">
