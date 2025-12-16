@@ -8,7 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2, HeadphonesIcon, MessageSquare, AlertCircle, Plus, Star } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Sparkles, Zap, ArrowLeft, History, CreditCard, KeyRound, Copy, Check, RefreshCw, Clock, CheckCircle, Send, Loader2, HeadphonesIcon, MessageSquare, AlertCircle, Plus, Star, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -93,6 +100,8 @@ export default function Dashboard() {
   const [submittingLink, setSubmittingLink] = useState<string | null>(null);
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
+  const [ticketSearch, setTicketSearch] = useState('');
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<string>('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -671,18 +680,66 @@ export default function Dashboard() {
                 </Card>
               </div>
 
+              {/* Filters */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por assunto ou número..."
+                    value={ticketSearch}
+                    onChange={(e) => setTicketSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={ticketStatusFilter} onValueChange={setTicketStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="open">Aberto</SelectItem>
+                    <SelectItem value="in_progress">Em Andamento</SelectItem>
+                    <SelectItem value="waiting_user">Aguardando Você</SelectItem>
+                    <SelectItem value="resolved">Resolvido</SelectItem>
+                    <SelectItem value="closed">Encerrado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Tickets List */}
               <div className="space-y-4">
-                {tickets.length === 0 ? (
-                  <Card className="p-8 text-center border-border/50 bg-card/50">
-                    <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Nenhum chamado encontrado</p>
-                    <Button onClick={() => setIsNewTicketOpen(true)} className="mt-4">
-                      Criar primeiro chamado
-                    </Button>
-                  </Card>
-                ) : (
-                  tickets.map((ticket) => (
+                {(() => {
+                  const filteredTickets = tickets.filter(ticket => {
+                    const matchesSearch = 
+                      ticketSearch === '' ||
+                      ticket.subject.toLowerCase().includes(ticketSearch.toLowerCase()) ||
+                      String(ticket.ticket_number).includes(ticketSearch);
+                    const matchesStatus = ticketStatusFilter === 'all' || ticket.status === ticketStatusFilter;
+                    return matchesSearch && matchesStatus;
+                  });
+
+                  if (tickets.length === 0) {
+                    return (
+                      <Card className="p-8 text-center border-border/50 bg-card/50">
+                        <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">Nenhum chamado encontrado</p>
+                        <Button onClick={() => setIsNewTicketOpen(true)} className="mt-4">
+                          Criar primeiro chamado
+                        </Button>
+                      </Card>
+                    );
+                  }
+
+                  if (filteredTickets.length === 0) {
+                    return (
+                      <Card className="p-8 text-center border-border/50 bg-card/50">
+                        <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">Nenhum chamado corresponde aos filtros</p>
+                      </Card>
+                    );
+                  }
+
+                  return filteredTickets.map((ticket) => (
                     <Card
                       key={ticket.id}
                       className="p-4 border-border/50 bg-card/50 hover:bg-card/80 cursor-pointer transition-colors"
@@ -717,8 +774,8 @@ export default function Dashboard() {
                         )}
                       </div>
                     </Card>
-                  ))
-                )}
+                  ));
+                })()}
               </div>
             </div>
 

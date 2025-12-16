@@ -253,6 +253,36 @@ export type Database = {
           },
         ]
       }
+      quick_reply_templates: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recharge_requests: {
         Row: {
           completed_at: string | null
@@ -392,6 +422,7 @@ export type Database = {
       }
       support_messages: {
         Row: {
+          attachment_url: string | null
           created_at: string
           id: string
           is_admin: boolean
@@ -400,6 +431,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachment_url?: string | null
           created_at?: string
           id?: string
           is_admin?: boolean
@@ -408,6 +440,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachment_url?: string | null
           created_at?: string
           id?: string
           is_admin?: boolean
