@@ -158,7 +158,7 @@ export default function Checkout() {
       </header>
 
       {/* Checkout Content */}
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="w-full px-4 py-8 lg:px-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">Finalizar Compra</h1>
           <p className="text-muted-foreground">
