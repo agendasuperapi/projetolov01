@@ -643,7 +643,7 @@ export default function Index() {
       <section id="plans" className="py-14 lg:py-20 pb-24 lg:pb-28 relative group overflow-hidden" style={{
       background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
     }}>
-        <div className="px-2 md:px-4">
+        <div className="px-0 md:px-4">
           {/* Section header */}
           <div className="text-center mb-14">
             <span className="inline-block px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
