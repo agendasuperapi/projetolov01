@@ -21,7 +21,7 @@ export default function HeroMockup() {
               <div className="flex-1 flex flex-col gap-4">
                 <div className="text-center mb-4">
                   <div className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-2">
-                    <img src={logoImage} alt="Mais Créditos" className="w-12 h-12 object-contain" />
+                    <img src={logoImage} alt="Mais Créditos" className="w-12 h-12 object-contain" decoding="async" />
                   </div>
                   <h3 className="font-display font-bold text-lg">Mais Créditos </h3>
                 </div>
