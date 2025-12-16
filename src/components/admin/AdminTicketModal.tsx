@@ -10,7 +10,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, CheckCircle, XCircle, Clock, Star } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Send, CheckCircle, XCircle, Clock, Star, Paperclip, Image as ImageIcon, X, Loader2, MessageSquareText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -35,12 +41,20 @@ interface Message {
   is_admin: boolean;
   created_at: string;
   user_id: string;
+  attachment_url: string | null;
 }
 
 interface Profile {
   id: string;
   name: string;
   email: string;
+}
+
+interface QuickReplyTemplate {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
 }
 
 interface AdminTicketModalProps {
@@ -73,13 +87,43 @@ export default function AdminTicketModal({ ticketId, onClose, onUpdate }: AdminT
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [templates, setTemplates] = useState<QuickReplyTemplate[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (ticketId) {
       loadTicket();
       loadMessages();
+      loadTemplates();
     }
+  }, [ticketId]);
+
+  // Realtime subscription for messages
+  useEffect(() => {
+    if (!ticketId) return;
+
+    const channel = supabase
+      .channel(`admin-ticket-messages-${ticketId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `ticket_id=eq.${ticketId}`
+        },
+        () => {
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [ticketId]);
 
   useEffect(() => {
@@ -143,16 +187,65 @@ export default function AdminTicketModal({ ticketId, onClose, onUpdate }: AdminT
     }
   };
 
+  const loadTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('quick_reply_templates')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    }
+  };
+
+  const uploadFile = async (): Promise<string | null> => {
+    if (!selectedFile || !user) return null;
+
+    setUploading(true);
+    try {
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}/${ticketId}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('support-attachments')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('support-attachments')
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Erro ao enviar arquivo');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const sendMessage = async () => {
-    if (!user || !ticketId || !newMessage.trim()) return;
+    if (!user || !ticketId || (!newMessage.trim() && !selectedFile)) return;
 
     setSending(true);
     try {
+      let attachmentUrl: string | null = null;
+
+      if (selectedFile) {
+        attachmentUrl = await uploadFile();
+      }
+
       const { error } = await supabase.from('support_messages').insert({
         ticket_id: ticketId,
         user_id: user.id,
-        message: newMessage.trim(),
+        message: newMessage.trim() || (attachmentUrl ? 'Arquivo anexado' : ''),
         is_admin: true,
+        attachment_url: attachmentUrl,
       });
 
       if (error) throw error;
@@ -166,6 +259,7 @@ export default function AdminTicketModal({ ticketId, onClose, onUpdate }: AdminT
       }
 
       setNewMessage('');
+      setSelectedFile(null);
       loadMessages();
       onUpdate();
     } catch (error: any) {
@@ -208,6 +302,25 @@ export default function AdminTicketModal({ ticketId, onClose, onUpdate }: AdminT
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Arquivo muito grande. Máximo 5MB.');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const useTemplate = (template: QuickReplyTemplate) => {
+    setNewMessage(template.content);
+  };
+
+  const isImage = (url: string) => {
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  };
+
   if (!ticketId) return null;
 
   const userProfile = ticket ? profiles.get(ticket.user_id) : null;
@@ -236,7 +349,7 @@ export default function AdminTicketModal({ ticketId, onClose, onUpdate }: AdminT
         </DialogHeader>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[350px] bg-muted/20">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[250px] max-h-[300px] bg-muted/20">
           {loading ? (
             <div className="text-center text-muted-foreground">Carregando...</div>
           ) : messages.length === 0 ? (
@@ -260,6 +373,28 @@ export default function AdminTicketModal({ ticketId, onClose, onUpdate }: AdminT
                   >
                     {!msg.is_admin && msgProfile && (
                       <p className="text-xs font-medium mb-1">{msgProfile.name}</p>
+                    )}
+                    {msg.attachment_url && (
+                      <div className="mb-2">
+                        {isImage(msg.attachment_url) ? (
+                          <img
+                            src={msg.attachment_url}
+                            alt="Anexo"
+                            className="max-w-full rounded-md cursor-pointer"
+                            onClick={() => window.open(msg.attachment_url!, '_blank')}
+                          />
+                        ) : (
+                          <a
+                            href={msg.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm underline"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                            Ver anexo
+                          </a>
+                        )}
+                      </div>
                     )}
                     <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                     <p
@@ -297,22 +432,88 @@ export default function AdminTicketModal({ ticketId, onClose, onUpdate }: AdminT
         {/* Input */}
         {!isClosed && (
           <div className="p-4 border-t border-border">
+            {/* Quick Reply Templates */}
+            {templates.length > 0 && (
+              <div className="mb-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <MessageSquareText className="h-4 w-4" />
+                      Respostas Rápidas
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-64">
+                    {templates.map((template) => (
+                      <DropdownMenuItem
+                        key={template.id}
+                        onClick={() => useTemplate(template)}
+                        className="flex flex-col items-start"
+                      >
+                        <span className="font-medium">{template.title}</span>
+                        <span className="text-xs text-muted-foreground truncate w-full">
+                          {template.content.substring(0, 50)}...
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+
+            {selectedFile && (
+              <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-md">
+                {selectedFile.type.startsWith('image/') ? (
+                  <ImageIcon className="h-4 w-4" />
+                ) : (
+                  <Paperclip className="h-4 w-4" />
+                )}
+                <span className="text-sm flex-1 truncate">{selectedFile.name}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setSelectedFile(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <div className="flex gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx"
+                onChange={handleFileSelect}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-[60px] w-[60px] shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending || uploading}
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
               <Textarea
                 placeholder="Digite sua mensagem..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyPress}
                 className="min-h-[60px] resize-none"
-                disabled={sending}
+                disabled={sending || uploading}
               />
               <Button
                 onClick={sendMessage}
-                disabled={sending || !newMessage.trim()}
+                disabled={sending || uploading || (!newMessage.trim() && !selectedFile)}
                 size="icon"
                 className="h-[60px] w-[60px]"
               >
-                <Send className="h-5 w-5" />
+                {sending || uploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
               </Button>
             </div>
             <div className="mt-3 flex gap-2 flex-wrap">

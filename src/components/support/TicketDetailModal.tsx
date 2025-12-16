@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, X, Star } from 'lucide-react';
+import { Send, Star, Paperclip, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -35,6 +35,7 @@ interface Message {
   is_admin: boolean;
   created_at: string;
   user_id: string;
+  attachment_url: string | null;
 }
 
 interface TicketDetailModalProps {
@@ -67,14 +68,41 @@ export default function TicketDetailModal({ ticketId, onClose, onUpdate }: Ticke
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [rating, setRating] = useState(0);
-  const [showRating, setShowRating] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (ticketId) {
       loadTicket();
       loadMessages();
     }
+  }, [ticketId]);
+
+  // Realtime subscription for messages
+  useEffect(() => {
+    if (!ticketId) return;
+
+    const channel = supabase
+      .channel(`ticket-messages-${ticketId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `ticket_id=eq.${ticketId}`
+        },
+        () => {
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [ticketId]);
 
   useEffect(() => {
@@ -116,21 +144,57 @@ export default function TicketDetailModal({ ticketId, onClose, onUpdate }: Ticke
     }
   };
 
+  const uploadFile = async (): Promise<string | null> => {
+    if (!selectedFile || !user) return null;
+
+    setUploading(true);
+    try {
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}/${ticketId}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('support-attachments')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('support-attachments')
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Erro ao enviar arquivo');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const sendMessage = async () => {
-    if (!user || !ticketId || !newMessage.trim()) return;
+    if (!user || !ticketId || (!newMessage.trim() && !selectedFile)) return;
 
     setSending(true);
     try {
+      let attachmentUrl: string | null = null;
+
+      if (selectedFile) {
+        attachmentUrl = await uploadFile();
+      }
+
       const { error } = await supabase.from('support_messages').insert({
         ticket_id: ticketId,
         user_id: user.id,
-        message: newMessage.trim(),
+        message: newMessage.trim() || (attachmentUrl ? 'Arquivo anexado' : ''),
         is_admin: false,
+        attachment_url: attachmentUrl,
       });
 
       if (error) throw error;
 
       setNewMessage('');
+      setSelectedFile(null);
       loadMessages();
     } catch (error: any) {
       console.error('Error sending message:', error);
@@ -187,6 +251,21 @@ export default function TicketDetailModal({ ticketId, onClose, onUpdate }: Ticke
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Arquivo muito grande. Máximo 5MB.');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const isImage = (url: string) => {
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  };
+
   if (!ticketId) return null;
 
   const isClosed = ticket?.status === 'closed' || ticket?.status === 'resolved';
@@ -231,6 +310,28 @@ export default function TicketDetailModal({ ticketId, onClose, onUpdate }: Ticke
                       : 'bg-card border border-border'
                   }`}
                 >
+                  {msg.attachment_url && (
+                    <div className="mb-2">
+                      {isImage(msg.attachment_url) ? (
+                        <img
+                          src={msg.attachment_url}
+                          alt="Anexo"
+                          className="max-w-full rounded-md cursor-pointer"
+                          onClick={() => window.open(msg.attachment_url!, '_blank')}
+                        />
+                      ) : (
+                        <a
+                          href={msg.attachment_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm underline"
+                        >
+                          <Paperclip className="h-4 w-4" />
+                          Ver anexo
+                        </a>
+                      )}
+                    </div>
+                  )}
                   <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                   <p
                     className={`text-xs mt-1 ${
@@ -276,22 +377,60 @@ export default function TicketDetailModal({ ticketId, onClose, onUpdate }: Ticke
         {/* Input */}
         {!isClosed && (
           <div className="p-4 border-t border-border">
+            {selectedFile && (
+              <div className="mb-2 flex items-center gap-2 p-2 bg-muted rounded-md">
+                {selectedFile.type.startsWith('image/') ? (
+                  <ImageIcon className="h-4 w-4" />
+                ) : (
+                  <Paperclip className="h-4 w-4" />
+                )}
+                <span className="text-sm flex-1 truncate">{selectedFile.name}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setSelectedFile(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <div className="flex gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx"
+                onChange={handleFileSelect}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-[60px] w-[60px] shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending || uploading}
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
               <Textarea
                 placeholder="Digite sua mensagem..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyPress}
                 className="min-h-[60px] resize-none"
-                disabled={sending}
+                disabled={sending || uploading}
               />
               <Button
                 onClick={sendMessage}
-                disabled={sending || !newMessage.trim()}
+                disabled={sending || uploading || (!newMessage.trim() && !selectedFile)}
                 size="icon"
                 className="h-[60px] w-[60px]"
               >
-                <Send className="h-5 w-5" />
+                {sending || uploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
               </Button>
             </div>
             <div className="mt-3">
