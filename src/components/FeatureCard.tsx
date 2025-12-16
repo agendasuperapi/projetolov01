@@ -22,7 +22,7 @@ export default function FeatureCard({ icon: Icon, title, description, index = 0 
       <h3 className="font-display font-bold text-base mb-2 text-foreground">
         {title}
       </h3>
-      <p className="text-muted-foreground text-sm leading-relaxed flex-grow">
+      <p className="text-muted-foreground text-sm leading-relaxed flex-grow line-clamp-2">
         {description}
       </p>
       
