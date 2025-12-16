@@ -648,7 +648,12 @@ export default function Index() {
       <section id="plans" className="py-14 lg:py-20 pb-24 lg:pb-28 relative group overflow-hidden" style={{
       background: 'linear-gradient(180deg, hsl(230, 70%, 25%) 0%, hsl(260, 60%, 50%) 40%, hsl(330, 80%, 55%) 70%, hsl(20, 90%, 55%) 100%)'
     }}>
-        <div className="px-0 md:px-4">
+        {/* Shimmer light effect */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
+        </div>
+        
+        <div className="px-0 md:px-4 relative z-10">
           {/* Section header */}
           <div className="text-center mb-14">
             <span className="inline-block px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
