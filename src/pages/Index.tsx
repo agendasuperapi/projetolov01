@@ -758,7 +758,7 @@ Escolha seu plano ideal.</h2>
             </p>
           </div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto justify-items-center">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto items-stretch">
             {featuresData.map((feature, index) => {
             const IconComponent = iconMap[feature.icon] || Zap;
             return <FeatureCard key={index} icon={IconComponent} title={feature.title} description={feature.description} index={index} />;
