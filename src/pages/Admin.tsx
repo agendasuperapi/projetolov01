@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock, HeadphonesIcon } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock, HeadphonesIcon, AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
@@ -55,6 +55,7 @@ export default function Admin() {
   const [syncing, setSyncing] = useState(false);
   const [syncingPlanId, setSyncingPlanId] = useState<string | null>(null);
   const [pendingRechargesCount, setPendingRechargesCount] = useState(0);
+  const [syncIssuesCount, setSyncIssuesCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -69,6 +70,7 @@ export default function Admin() {
       fetchPlans();
       fetchTransactions();
       fetchPendingRechargesCount();
+      fetchSyncIssuesCount();
 
       // Real-time subscription para atualizar badge de recargas
       const rechargeChannel = supabase
@@ -102,9 +104,26 @@ export default function Admin() {
         )
         .subscribe();
 
+      // Real-time subscription para sync issues
+      const syncChannel = supabase
+        .channel('admin-sync-issues')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'stripe_events'
+          },
+          () => {
+            fetchSyncIssuesCount();
+          }
+        )
+        .subscribe();
+
       return () => {
         supabase.removeChannel(rechargeChannel);
         supabase.removeChannel(transactionsChannel);
+        supabase.removeChannel(syncChannel);
       };
     }
   }, [isAdmin]);
@@ -116,6 +135,16 @@ export default function Admin() {
       .eq('status', 'pending');
     
     setPendingRechargesCount(count || 0);
+  };
+
+  const fetchSyncIssuesCount = async () => {
+    const { count } = await supabase
+      .from('stripe_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_type', 'checkout.session.completed')
+      .or('sync_status.eq.error,sync_status.eq.pending');
+    
+    setSyncIssuesCount(count || 0);
   };
 
   const fetchPlans = async () => {
@@ -399,6 +428,39 @@ export default function Admin() {
             <p className="text-muted-foreground">Gerencie planos e transações</p>
           </div>
         </div>
+
+        {/* Alert for Sync Issues */}
+        {syncIssuesCount > 0 && (
+          <Card className="mb-6 border-yellow-500/50 bg-yellow-500/10">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-2 rounded-full bg-yellow-500/20">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-yellow-600 dark:text-yellow-400">
+                  Sincronização com Servidor B pendente
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {syncIssuesCount} evento{syncIssuesCount > 1 ? 's' : ''} de checkout aguardando sincronização ou com erro.
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/20"
+                onClick={() => {
+                  const tabsElement = document.querySelector('[data-state="active"][value="stripe-events"]');
+                  if (!tabsElement) {
+                    const trigger = document.querySelector('[value="stripe-events"]') as HTMLElement;
+                    trigger?.click();
+                  }
+                }}
+              >
+                Ver eventos
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue={editSection ? 'content' : 'accounts'} className="space-y-8">
           <TabsList className="grid w-full max-w-6xl grid-cols-8">
