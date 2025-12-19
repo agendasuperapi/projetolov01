@@ -204,20 +204,19 @@ export default function Admin() {
     }
 
     if (status === 'synced') {
+      const syncDate = plan.synced_at ? new Date(plan.synced_at).toLocaleString('pt-BR') : null;
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="outline" className="gap-1 border-green-500 text-green-600 bg-green-50">
-                <CheckCircle className="w-3 h-3" />
-                Sincronizado
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Sincronizado em: {plan.synced_at ? new Date(plan.synced_at).toLocaleString('pt-BR') : 'N/A'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex flex-col gap-1">
+          <Badge variant="outline" className="gap-1 border-green-500 text-green-600 bg-green-50">
+            <CheckCircle className="w-3 h-3" />
+            Servidor B
+          </Badge>
+          {syncDate && (
+            <span className="text-xs text-muted-foreground">
+              Última sync: {syncDate}
+            </span>
+          )}
+        </div>
       );
     }
 
