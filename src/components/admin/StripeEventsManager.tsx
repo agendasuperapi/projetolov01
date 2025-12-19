@@ -39,7 +39,7 @@ interface Stats {
   failed: number;
   expired: number;
   production: number;
-  needsAttention: number;
+  syncErrors: number;
 }
 
 const EVENT_TYPES = [
@@ -66,7 +66,7 @@ export default function StripeEventsManager() {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<StripeEvent | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [stats, setStats] = useState<Stats>({ total: 0, success: 0, failed: 0, expired: 0, production: 0, needsAttention: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, success: 0, failed: 0, expired: 0, production: 0, syncErrors: 0 });
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -91,8 +91,8 @@ export default function StripeEventsManager() {
       return query;
     }
     
-    if (activeQuickFilter === 'needsAttention') {
-      query = query.ilike('event_type', '%failed%').or('sync_status.eq.error,sync_status.eq.pending');
+    if (activeQuickFilter === 'syncErrors') {
+      query = query.eq('event_type', 'checkout.session.completed').or('sync_status.eq.error,sync_status.eq.pending');
       return query;
     }
 
@@ -105,7 +105,7 @@ export default function StripeEventsManager() {
     }
 
     if (filters.syncStatus !== 'all') {
-      query = query.eq('sync_status', filters.syncStatus);
+      query = query.eq('event_type', 'checkout.session.completed').eq('sync_status', filters.syncStatus);
     }
 
     if (filters.dateFrom) {
@@ -195,11 +195,11 @@ export default function StripeEventsManager() {
         .select('*', { count: 'exact', head: true })
         .eq('environment', 'production');
 
-      // Events that need attention (failed + not synced)
-      const { count: needsAttention } = await supabase
+      // Sync errors (only checkout.session.completed events with sync issues)
+      const { count: syncErrors } = await supabase
         .from('stripe_events')
         .select('*', { count: 'exact', head: true })
-        .ilike('event_type', '%failed%')
+        .eq('event_type', 'checkout.session.completed')
         .or('sync_status.eq.error,sync_status.eq.pending');
 
       setStats({
@@ -208,7 +208,7 @@ export default function StripeEventsManager() {
         failed: failed || 0,
         expired: expired || 0,
         production: production || 0,
-        needsAttention: needsAttention || 0,
+        syncErrors: syncErrors || 0,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -293,12 +293,25 @@ export default function StripeEventsManager() {
     return <Badge variant="outline">Teste</Badge>;
   };
 
-  const getSyncStatusBadge = (status: string | null) => {
+  const getSyncStatusBadge = (eventType: string, status: string | null, syncedAt: string | null) => {
+    // Only show sync status for checkout.session.completed events
+    if (eventType !== 'checkout.session.completed') {
+      return <Badge variant="outline" className="text-muted-foreground">N/A</Badge>;
+    }
+    
     if (status === 'synced') {
-      return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Sincronizado</Badge>;
+      const syncDate = syncedAt ? new Date(syncedAt).toLocaleString('pt-BR') : null;
+      return (
+        <div className="flex flex-col gap-0.5">
+          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Servidor B</Badge>
+          {syncDate && (
+            <span className="text-[10px] text-muted-foreground">{syncDate}</span>
+          )}
+        </div>
+      );
     }
     if (status === 'error') {
-      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Erro</Badge>;
+      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Erro Sync</Badge>;
     }
     if (status === 'pending') {
       return <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">Pendente</Badge>;
@@ -407,7 +420,7 @@ export default function StripeEventsManager() {
           <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
             <span className="text-sm text-muted-foreground">Filtro ativo:</span>
             <Badge variant="secondary">
-              {activeQuickFilter === 'expired' ? 'Checkouts Expirados' : 'Precisam de Atenção'}
+              {activeQuickFilter === 'expired' ? 'Checkouts Expirados' : 'Erros de Sync (Servidor B)'}
             </Badge>
             <Button variant="ghost" size="sm" onClick={clearQuickFilter} className="ml-auto">
               Limpar filtro
@@ -443,12 +456,12 @@ export default function StripeEventsManager() {
             </CardContent>
           </Card>
           <Card 
-            className={`bg-purple-500/10 cursor-pointer transition-all hover:bg-purple-500/20 ${activeQuickFilter === 'needsAttention' ? 'ring-2 ring-purple-500' : ''}`}
-            onClick={() => handleQuickFilter('needsAttention')}
+            className={`bg-purple-500/10 cursor-pointer transition-all hover:bg-purple-500/20 ${activeQuickFilter === 'syncErrors' ? 'ring-2 ring-purple-500' : ''}`}
+            onClick={() => handleQuickFilter('syncErrors')}
           >
             <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Precisam Atenção</p>
-              <p className="text-2xl font-bold text-purple-400">{stats.needsAttention.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Erros Sync (Servidor B)</p>
+              <p className="text-2xl font-bold text-purple-400">{stats.syncErrors.toLocaleString()}</p>
             </CardContent>
           </Card>
           <Card className="bg-orange-500/10">
@@ -504,7 +517,7 @@ export default function StripeEventsManager() {
                         <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">Pendente</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{getSyncStatusBadge(event.sync_status)}</TableCell>
+                    <TableCell>{getSyncStatusBadge(event.event_type, event.sync_status, event.synced_at)}</TableCell>
                     <TableCell className="text-right space-x-1">
                       {(event.sync_status === 'error' || event.sync_status === 'pending') && event.event_type === 'checkout.session.completed' && (
                         <Button
@@ -659,15 +672,9 @@ export default function StripeEventsManager() {
                       </div>
                     )}
                     <div>
-                      <p className="text-sm text-muted-foreground">Status Sync</p>
-                      {getSyncStatusBadge(selectedEvent.sync_status)}
+                      <p className="text-sm text-muted-foreground">Status Sync (Servidor B)</p>
+                      {getSyncStatusBadge(selectedEvent.event_type, selectedEvent.sync_status, selectedEvent.synced_at)}
                     </div>
-                    {selectedEvent.synced_at && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Data Sync</p>
-                        <p>{format(new Date(selectedEvent.synced_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</p>
-                      </div>
-                    )}
                   </div>
 
                   {selectedEvent.sync_payload && (
