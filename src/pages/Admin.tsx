@@ -431,13 +431,13 @@ export default function Admin() {
 
         {/* Alert for Sync Issues */}
         {syncIssuesCount > 0 && (
-          <Card className="mb-6 border-yellow-500/50 bg-yellow-500/10">
+          <Card className="mb-6 border-red-500/50 bg-red-500/10">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2 rounded-full bg-yellow-500/20">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              <div className="p-2 rounded-full bg-red-500/20">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-yellow-600 dark:text-yellow-400">
+                <p className="font-medium text-red-600 dark:text-red-400">
                   Sincronização com Servidor B pendente
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -447,7 +447,7 @@ export default function Admin() {
               <Button 
                 variant="outline" 
                 size="sm"
-                className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/20"
+                className="border-red-500/50 text-red-600 hover:bg-red-500/20"
                 onClick={() => {
                   const tabsElement = document.querySelector('[data-state="active"][value="stripe-events"]');
                   if (!tabsElement) {
