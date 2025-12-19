@@ -56,6 +56,7 @@ export default function Admin() {
   const [syncingPlanId, setSyncingPlanId] = useState<string | null>(null);
   const [pendingRechargesCount, setPendingRechargesCount] = useState(0);
   const [syncIssuesCount, setSyncIssuesCount] = useState(0);
+  const [activeTab, setActiveTab] = useState(editSection ? 'content' : 'accounts');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -448,13 +449,7 @@ export default function Admin() {
                 variant="outline" 
                 size="sm"
                 className="border-red-500/50 text-red-600 hover:bg-red-500/20"
-                onClick={() => {
-                  const tabsElement = document.querySelector('[data-state="active"][value="stripe-events"]');
-                  if (!tabsElement) {
-                    const trigger = document.querySelector('[value="stripe-events"]') as HTMLElement;
-                    trigger?.click();
-                  }
-                }}
+                onClick={() => setActiveTab('stripe-events')}
               >
                 Ver eventos
               </Button>
@@ -462,7 +457,7 @@ export default function Admin() {
           </Card>
         )}
 
-        <Tabs defaultValue={editSection ? 'content' : 'accounts'} className="space-y-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full max-w-6xl grid-cols-8">
             <TabsTrigger value="accounts" className="gap-2">
               <Package className="w-4 h-4" />
