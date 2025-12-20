@@ -420,6 +420,27 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_settings: {
+        Row: {
+          id: string
+          mode: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           attachment_url: string | null
