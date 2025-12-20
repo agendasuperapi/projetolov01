@@ -57,6 +57,7 @@ export default function Admin() {
   const [pendingRechargesCount, setPendingRechargesCount] = useState(0);
   const [syncIssuesCount, setSyncIssuesCount] = useState(0);
   const [activeTab, setActiveTab] = useState(editSection ? 'content' : 'accounts');
+  const [stripeMode, setStripeMode] = useState<'test' | 'live'>('test');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -72,6 +73,7 @@ export default function Admin() {
       fetchTransactions();
       fetchPendingRechargesCount();
       fetchSyncIssuesCount();
+      fetchStripeMode();
 
       // Real-time subscription para atualizar badge de recargas
       const rechargeChannel = supabase
@@ -121,13 +123,42 @@ export default function Admin() {
         )
         .subscribe();
 
+      // Real-time subscription para stripe_settings (modo)
+      const settingsChannel = supabase
+        .channel('admin-stripe-settings')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'stripe_settings'
+          },
+          () => {
+            fetchStripeMode();
+          }
+        )
+        .subscribe();
+
       return () => {
         supabase.removeChannel(rechargeChannel);
         supabase.removeChannel(transactionsChannel);
         supabase.removeChannel(syncChannel);
+        supabase.removeChannel(settingsChannel);
       };
     }
   }, [isAdmin]);
+
+  const fetchStripeMode = async () => {
+    const { data } = await supabase
+      .from('stripe_settings')
+      .select('mode')
+      .limit(1)
+      .single();
+    
+    if (data) {
+      setStripeMode(data.mode as 'test' | 'live');
+    }
+  };
 
   const fetchPendingRechargesCount = async () => {
     const { count } = await supabase
@@ -414,6 +445,28 @@ export default function Admin() {
             <span className="font-display font-bold text-xl">CreditsHub</span>
             <Badge variant="outline">Admin</Badge>
           </Link>
+          
+          {/* Stripe Mode Indicator */}
+          <div 
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer transition-colors ${
+              stripeMode === 'live' 
+                ? 'bg-green-500/10 border-green-500/50 text-green-600' 
+                : 'bg-yellow-500/10 border-yellow-500/50 text-yellow-600'
+            }`}
+            onClick={() => setActiveTab('plans')}
+          >
+            {stripeMode === 'live' ? (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                <span className="font-medium text-sm">Stripe: Produção</span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="w-4 h-4" />
+                <span className="font-medium text-sm">Stripe: Teste</span>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
