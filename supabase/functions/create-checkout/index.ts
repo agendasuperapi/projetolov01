@@ -36,10 +36,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
-
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
@@ -50,6 +46,24 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Fetch Stripe mode from settings
+    const { data: stripeSettings } = await supabaseAdmin
+      .from("stripe_settings")
+      .select("mode")
+      .limit(1)
+      .single();
+    
+    const stripeMode = stripeSettings?.mode || 'test';
+    logStep("Stripe mode", { mode: stripeMode });
+
+    // Use appropriate Stripe key based on mode
+    const stripeKey = stripeMode === 'live' 
+      ? Deno.env.get("STRIPE_SECRET_KEY_LIVE")
+      : Deno.env.get("STRIPE_SECRET_KEY");
+    
+    if (!stripeKey) throw new Error(`STRIPE_SECRET_KEY${stripeMode === 'live' ? '_LIVE' : ''} is not set`);
+    logStep("Stripe key verified", { mode: stripeMode });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");

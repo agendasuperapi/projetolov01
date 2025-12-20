@@ -84,19 +84,35 @@ serve(async (req) => {
   try {
     logStep("Webhook received");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+
+    // Fetch Stripe mode from settings
+    const { data: stripeSettings } = await supabaseAdmin
+      .from("stripe_settings")
+      .select("mode")
+      .limit(1)
+      .single();
+    
+    const stripeMode = stripeSettings?.mode || 'test';
+    logStep("Stripe mode", { mode: stripeMode });
+
+    // Use appropriate Stripe keys based on mode
+    const stripeKey = stripeMode === 'live' 
+      ? Deno.env.get("STRIPE_SECRET_KEY_LIVE")
+      : Deno.env.get("STRIPE_SECRET_KEY");
+    
+    const webhookSecret = stripeMode === 'live'
+      ? Deno.env.get("STRIPE_WEBHOOK_SECRET_LIVE")
+      : Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    
+    if (!stripeKey) throw new Error(`STRIPE_SECRET_KEY${stripeMode === 'live' ? '_LIVE' : ''} is not set`);
+    logStep("Stripe key verified", { mode: stripeMode });
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
@@ -121,9 +137,8 @@ serve(async (req) => {
 
     logStep("Event type", { type: event.type });
 
-    // Detect environment based on Stripe key
-    const stripeKeyPrefix = stripeKey?.substring(0, 8) || '';
-    const environment = stripeKeyPrefix === 'sk_live_' ? 'production' : 'test';
+    // Environment based on mode setting
+    const environment = stripeMode === 'live' ? 'production' : 'test';
     logStep("Environment detected", { environment });
 
     // Extract metadata from event object
