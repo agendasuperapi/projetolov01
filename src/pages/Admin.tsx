@@ -26,6 +26,8 @@ interface CreditPlan {
   credits: number;
   price_cents: number;
   stripe_price_id: string | null;
+  stripe_price_id_test: string | null;
+  stripe_price_id_live: string | null;
   competitor_price_cents: number | null;
   active: boolean;
   plan_type: 'new_account' | 'recharge';
@@ -837,8 +839,8 @@ export default function Admin() {
                             <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant={plan.stripe_price_id ? 'default' : 'secondary'}>
-                              {plan.stripe_price_id ? 'Configurado' : 'Pendente'}
+                            <Badge variant={(plan.stripe_price_id_test || plan.stripe_price_id_live) ? 'default' : 'secondary'}>
+                              {(plan.stripe_price_id_test || plan.stripe_price_id_live) ? 'Configurado' : 'Pendente'}
                             </Badge>
                             {getSyncStatusBadge(plan)}
                             <Button
@@ -851,7 +853,7 @@ export default function Admin() {
                             </Button>
                           </div>
                         </div>
-                        <div className="grid sm:grid-cols-3 gap-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>Preço (R$)</Label>
                             <Input
@@ -880,15 +882,36 @@ export default function Admin() {
                               }}
                             />
                           </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Stripe Price ID</Label>
+                            <Label className="flex items-center gap-2">
+                              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500"></span>
+                              Price ID (Teste)
+                            </Label>
                             <Input
-                              placeholder="price_..."
-                              defaultValue={plan.stripe_price_id || ''}
+                              placeholder="price_test_..."
+                              defaultValue={plan.stripe_price_id_test || ''}
                               onBlur={(e) => {
                                 const value = e.target.value;
-                                if (value !== plan.stripe_price_id) {
-                                  handleUpdatePlan(plan.id, { stripe_price_id: value || null });
+                                if (value !== plan.stripe_price_id_test) {
+                                  handleUpdatePlan(plan.id, { stripe_price_id_test: value || null });
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                              Price ID (Produção)
+                            </Label>
+                            <Input
+                              placeholder="price_live_..."
+                              defaultValue={plan.stripe_price_id_live || ''}
+                              onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value !== plan.stripe_price_id_live) {
+                                  handleUpdatePlan(plan.id, { stripe_price_id_live: value || null });
                                 }
                               }}
                             />
@@ -923,8 +946,8 @@ export default function Admin() {
                             <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant={plan.stripe_price_id ? 'default' : 'secondary'}>
-                              {plan.stripe_price_id ? 'Configurado' : 'Pendente'}
+                            <Badge variant={(plan.stripe_price_id_test || plan.stripe_price_id_live) ? 'default' : 'secondary'}>
+                              {(plan.stripe_price_id_test || plan.stripe_price_id_live) ? 'Configurado' : 'Pendente'}
                             </Badge>
                             {getSyncStatusBadge(plan)}
                             <Button
@@ -937,7 +960,7 @@ export default function Admin() {
                             </Button>
                           </div>
                         </div>
-                        <div className="grid sm:grid-cols-3 gap-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>Preço (R$)</Label>
                             <Input
@@ -966,15 +989,36 @@ export default function Admin() {
                               }}
                             />
                           </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Stripe Price ID</Label>
+                            <Label className="flex items-center gap-2">
+                              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500"></span>
+                              Price ID (Teste)
+                            </Label>
                             <Input
-                              placeholder="price_..."
-                              defaultValue={plan.stripe_price_id || ''}
+                              placeholder="price_test_..."
+                              defaultValue={plan.stripe_price_id_test || ''}
                               onBlur={(e) => {
                                 const value = e.target.value;
-                                if (value !== plan.stripe_price_id) {
-                                  handleUpdatePlan(plan.id, { stripe_price_id: value || null });
+                                if (value !== plan.stripe_price_id_test) {
+                                  handleUpdatePlan(plan.id, { stripe_price_id_test: value || null });
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                              Price ID (Produção)
+                            </Label>
+                            <Input
+                              placeholder="price_live_..."
+                              defaultValue={plan.stripe_price_id_live || ''}
+                              onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value !== plan.stripe_price_id_live) {
+                                  handleUpdatePlan(plan.id, { stripe_price_id_live: value || null });
                                 }
                               }}
                             />

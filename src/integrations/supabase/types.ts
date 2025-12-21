@@ -77,6 +77,8 @@ export type Database = {
           plan_type: string
           price_cents: number
           stripe_price_id: string | null
+          stripe_price_id_live: string | null
+          stripe_price_id_test: string | null
           sync_payload: Json | null
           sync_response: string | null
           sync_status: string | null
@@ -92,6 +94,8 @@ export type Database = {
           plan_type?: string
           price_cents: number
           stripe_price_id?: string | null
+          stripe_price_id_live?: string | null
+          stripe_price_id_test?: string | null
           sync_payload?: Json | null
           sync_response?: string | null
           sync_status?: string | null
@@ -107,6 +111,8 @@ export type Database = {
           plan_type?: string
           price_cents?: number
           stripe_price_id?: string | null
+          stripe_price_id_live?: string | null
+          stripe_price_id_test?: string | null
           sync_payload?: Json | null
           sync_response?: string | null
           sync_status?: string | null
