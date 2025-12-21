@@ -21,6 +21,7 @@ import StripeEventsManager from '@/components/admin/StripeEventsManager';
 import UsersManager from '@/components/admin/UsersManager';
 import SupportManager from '@/components/admin/SupportManager';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
+import AdminMobileSidebar from '@/components/admin/AdminMobileSidebar';
 interface CreditPlan {
   id: string;
   name: string;
@@ -550,18 +551,26 @@ export default function Admin() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-6xl grid-cols-9">
+          {/* Mobile Sidebar */}
+          <AdminMobileSidebar 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+            pendingRechargesCount={pendingRechargesCount}
+          />
+
+          {/* Desktop Tabs */}
+          <TabsList className="hidden md:grid w-full max-w-6xl grid-cols-9">
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="w-4 h-4" />
-              Analytics
+              <span className="hidden lg:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="accounts" className="gap-2">
               <Package className="w-4 h-4" />
-              Contas
+              <span className="hidden lg:inline">Contas</span>
             </TabsTrigger>
             <TabsTrigger value="recharges" className="gap-2 relative">
               <Zap className="w-4 h-4" />
-              Recargas
+              <span className="hidden lg:inline">Recargas</span>
               {pendingRechargesCount > 0 && (
                 <Badge 
                   variant="destructive" 
@@ -573,27 +582,27 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <UserCheck className="w-4 h-4" />
-              Usuários
+              <span className="hidden lg:inline">Usuários</span>
             </TabsTrigger>
             <TabsTrigger value="support" className="gap-2">
               <HeadphonesIcon className="w-4 h-4" />
-              Suporte
+              <span className="hidden lg:inline">Suporte</span>
             </TabsTrigger>
             <TabsTrigger value="transactions" className="gap-2">
               <Users className="w-4 h-4" />
-              Transações
+              <span className="hidden lg:inline">Transações</span>
             </TabsTrigger>
             <TabsTrigger value="stripe-events" className="gap-2">
               <Activity className="w-4 h-4" />
-              Stripe
+              <span className="hidden lg:inline">Stripe</span>
             </TabsTrigger>
             <TabsTrigger value="plans" className="gap-2">
               <DollarSign className="w-4 h-4" />
-              Planos
+              <span className="hidden lg:inline">Planos</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="gap-2">
               <FileText className="w-4 h-4" />
-              Conteúdo
+              <span className="hidden lg:inline">Conteúdo</span>
             </TabsTrigger>
           </TabsList>
 
