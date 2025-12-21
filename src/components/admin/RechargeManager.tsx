@@ -360,101 +360,193 @@ export default function RechargeManager() {
             Mostrando {filteredRecharges.length} de {recharges.length} recargas
           </div>
 
-          {/* Table */}
+          {/* Table / Cards */}
           {filteredRecharges.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhuma recarga encontrada.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Plano</TableHead>
-                    <TableHead>Créditos</TableHead>
-                    <TableHead>Link</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRecharges.map((recharge) => (
-                    <TableRow key={recharge.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{recharge.user?.name || 'Usuário'}</p>
-                          <p className="text-sm text-muted-foreground">{recharge.user?.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">{recharge.user?.phone || '-'}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">+{recharge.credits_added}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {recharge.recharge_link ? (
-                          <a 
-                            href={recharge.recharge_link} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-primary hover:underline text-sm"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Abrir
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(recharge.status)}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell>
-                        {recharge.status !== 'pending_link' ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" disabled={loading}>
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {recharge.status !== 'pending' && (
-                                <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'pending')}>
-                                  <Clock className="w-4 h-4 mr-2 text-yellow-500" />
-                                  Marcar como Pendente
-                                </DropdownMenuItem>
-                              )}
-                              {recharge.status !== 'completed' && (
-                                <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'completed')}>
-                                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                                  Marcar como Concluído
-                                </DropdownMenuItem>
-                              )}
-                              {recharge.status !== 'canceled' && (
-                                <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'canceled')}>
-                                  <XCircle className="w-4 h-4 mr-2 text-red-500" />
-                                  Marcar como Cancelado
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </TableCell>
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead>Plano</TableHead>
+                      <TableHead>Créditos</TableHead>
+                      <TableHead>Link</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRecharges.map((recharge) => (
+                      <TableRow key={recharge.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{recharge.user?.name || 'Usuário'}</p>
+                            <p className="text-sm text-muted-foreground">{recharge.user?.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{recharge.user?.phone || '-'}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">+{recharge.credits_added}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {recharge.recharge_link ? (
+                            <a 
+                              href={recharge.recharge_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-primary hover:underline text-sm"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              Abrir
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(recharge.status)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          {recharge.status !== 'pending_link' ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" disabled={loading}>
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {recharge.status !== 'pending' && (
+                                  <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'pending')}>
+                                    <Clock className="w-4 h-4 mr-2 text-yellow-500" />
+                                    Marcar como Pendente
+                                  </DropdownMenuItem>
+                                )}
+                                {recharge.status !== 'completed' && (
+                                  <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'completed')}>
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                    Marcar como Concluído
+                                  </DropdownMenuItem>
+                                )}
+                                {recharge.status !== 'canceled' && (
+                                  <DropdownMenuItem onClick={() => handleChangeStatus(recharge.id, 'canceled')}>
+                                    <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                                    Marcar como Cancelado
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-3">
+                {filteredRecharges.map((recharge) => (
+                  <div key={recharge.id} className="p-4 border rounded-lg bg-card space-y-3">
+                    {/* Header: Nome, status e badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">{recharge.user?.name || 'Usuário'}</p>
+                        <p className="text-sm text-muted-foreground truncate">{recharge.user?.email}</p>
+                        {recharge.user?.phone && (
+                          <p className="text-xs text-muted-foreground">{recharge.user?.phone}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {getStatusBadge(recharge.status)}
+                      </div>
+                    </div>
+
+                    {/* Info row: Plano e Créditos */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline">{recharge.plan?.name || 'Plano'}</Badge>
+                      <Badge variant="secondary">+{recharge.credits_added} créditos</Badge>
+                    </div>
+
+                    {/* Link e Data */}
+                    <div className="flex items-center justify-between text-sm">
+                      {recharge.recharge_link ? (
+                        <a 
+                          href={recharge.recharge_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Abrir Link
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">Sem link</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(recharge.created_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    {recharge.status !== 'pending_link' && (
+                      <div className="pt-2 border-t flex gap-2 flex-wrap">
+                        {recharge.status !== 'pending' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleChangeStatus(recharge.id, 'pending')}
+                            disabled={loading}
+                            className="flex-1 gap-1"
+                          >
+                            <Clock className="w-3 h-3 text-yellow-500" />
+                            Pendente
+                          </Button>
+                        )}
+                        {recharge.status !== 'completed' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleChangeStatus(recharge.id, 'completed')}
+                            disabled={loading}
+                            className="flex-1 gap-1"
+                          >
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                            Concluído
+                          </Button>
+                        )}
+                        {recharge.status !== 'canceled' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleChangeStatus(recharge.id, 'canceled')}
+                            disabled={loading}
+                            className="flex-1 gap-1"
+                          >
+                            <XCircle className="w-3 h-3 text-red-500" />
+                            Cancelado
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
