@@ -41,13 +41,36 @@ async function generateJWT(clientEmail: string, privateKey: string): Promise<str
   const payloadB64 = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
   const unsignedToken = `${headerB64}.${payloadB64}`;
 
-  // Import the private key
-  const pemContents = privateKey
-    .replace('-----BEGIN PRIVATE KEY-----', '')
-    .replace('-----END PRIVATE KEY-----', '')
-    .replace(/\n/g, '');
+  // Process the private key - handle both literal \n and actual newlines
+  // Also handle keys that might be wrapped in quotes
+  let processedKey = privateKey;
   
-  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+  // Remove surrounding quotes if present
+  if (processedKey.startsWith('"') && processedKey.endsWith('"')) {
+    processedKey = processedKey.slice(1, -1);
+  }
+  
+  // Replace literal \n with actual newlines
+  processedKey = processedKey.replace(/\\n/g, '\n');
+  
+  console.log('Processing private key, starts with:', processedKey.substring(0, 30));
+  
+  // Extract the base64 content from the PEM format
+  const pemContents = processedKey
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/[\r\n\s]/g, '');
+  
+  console.log('PEM contents length:', pemContents.length);
+  
+  // Decode base64 to binary
+  const binaryString = atob(pemContents);
+  const binaryKey = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    binaryKey[i] = binaryString.charCodeAt(i);
+  }
+  
+  console.log('Binary key length:', binaryKey.length);
   
   const cryptoKey = await crypto.subtle.importKey(
     'pkcs8',
@@ -158,7 +181,7 @@ serve(async (req) => {
     console.log(`Fetching analytics for period: ${period} days`);
 
     // Get access token
-    const accessToken = await getAccessToken(clientEmail, privateKey.replace(/\\n/g, '\n'));
+    const accessToken = await getAccessToken(clientEmail, privateKey);
 
     // Fetch different reports in parallel
     const [overviewData, dailyData, devicesData, sourcesData, pagesData] = await Promise.all([
