@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock, HeadphonesIcon, AlertTriangle } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock, HeadphonesIcon, AlertTriangle, Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import ContentEditor from '@/components/admin/ContentEditor';
@@ -58,6 +59,8 @@ export default function Admin() {
   const [syncIssuesCount, setSyncIssuesCount] = useState(0);
   const [activeTab, setActiveTab] = useState(editSection ? 'content' : 'accounts');
   const [stripeMode, setStripeMode] = useState<'test' | 'live'>('test');
+  const [loadingStripeMode, setLoadingStripeMode] = useState(true);
+  const [savingStripeMode, setSavingStripeMode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -149,14 +152,47 @@ export default function Admin() {
   }, [isAdmin]);
 
   const fetchStripeMode = async () => {
-    const { data } = await supabase
-      .from('stripe_settings')
-      .select('mode')
-      .limit(1)
-      .single();
+    setLoadingStripeMode(true);
+    try {
+      const { data } = await supabase
+        .from('stripe_settings')
+        .select('mode')
+        .limit(1)
+        .single();
+      
+      if (data) {
+        setStripeMode(data.mode as 'test' | 'live');
+      }
+    } finally {
+      setLoadingStripeMode(false);
+    }
+  };
+
+  const handleStripeModeChange = async (isLive: boolean) => {
+    const newMode = isLive ? 'live' : 'test';
+    setSavingStripeMode(true);
     
-    if (data) {
-      setStripeMode(data.mode as 'test' | 'live');
+    try {
+      const { error } = await supabase
+        .from('stripe_settings')
+        .update({ mode: newMode, updated_at: new Date().toISOString() })
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (error) throw error;
+      
+      setStripeMode(newMode);
+      toast({ 
+        title: 'Modo atualizado!', 
+        description: `Stripe agora está em modo ${newMode === 'live' ? 'PRODUÇÃO' : 'TESTE'}.`
+      });
+    } catch (error: any) {
+      toast({ 
+        title: 'Erro', 
+        description: error.message || 'Erro ao atualizar modo.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setSavingStripeMode(false);
     }
   };
 
@@ -635,6 +671,62 @@ export default function Admin() {
 
           {/* Plans Tab - Combined New Account and Recharge */}
           <TabsContent value="plans" className="space-y-6">
+            {/* Stripe Mode Toggle Card */}
+            <Card className={`shadow-card border-2 ${stripeMode === 'live' ? 'border-green-500 bg-green-500/5' : 'border-yellow-500 bg-yellow-500/5'}`}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {stripeMode === 'live' ? (
+                      <CheckCircle className="w-6 h-6 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="w-6 h-6 text-yellow-500" />
+                    )}
+                    <div>
+                      <CardTitle className="text-lg">Modo Stripe</CardTitle>
+                      <CardDescription>
+                        {stripeMode === 'live' 
+                          ? 'Processando pagamentos reais' 
+                          : 'Modo de teste - pagamentos simulados'}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className={`text-sm font-medium ${stripeMode === 'test' ? 'text-yellow-600' : 'text-muted-foreground'}`}>
+                      Teste
+                    </span>
+                    {loadingStripeMode || savingStripeMode ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Switch
+                        checked={stripeMode === 'live'}
+                        onCheckedChange={handleStripeModeChange}
+                        className="data-[state=checked]:bg-green-500"
+                      />
+                    )}
+                    <span className={`text-sm font-medium ${stripeMode === 'live' ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      Produção
+                    </span>
+                  </div>
+                </div>
+              </CardHeader>
+              {stripeMode === 'live' && (
+                <CardContent className="pt-0">
+                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-500/10 p-3 rounded-lg">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Usando chaves de produção (STRIPE_SECRET_KEY_LIVE)</span>
+                  </div>
+                </CardContent>
+              )}
+              {stripeMode === 'test' && (
+                <CardContent className="pt-0">
+                  <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-500/10 p-3 rounded-lg">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Usando chaves de teste (STRIPE_SECRET_KEY)</span>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
             <div className="flex justify-end gap-2">
               <Button 
                 variant="outline" 
