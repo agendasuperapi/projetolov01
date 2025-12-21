@@ -10,6 +10,7 @@ import { Sparkles, CheckCircle, ArrowRight, RefreshCw, Loader2, ChevronDown, Cre
 import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import confetti from 'canvas-confetti';
+import { trackPurchase } from '@/lib/analytics';
 
 import instructionStep1 from '@/assets/instruction-step1.png';
 import instructionStep2 from '@/assets/instruction-step2.png';
@@ -116,13 +117,17 @@ export default function PaymentSuccess() {
 
       if (!error && transaction) {
         const plan = transaction.credit_plans as { name: string; plan_type: string; credits: number } | null;
-        setPurchaseDetails({
+        const details = {
           planName: plan?.name || 'Plano',
           credits: transaction.credits_added,
           amount: transaction.amount_cents / 100,
           purchaseType: (plan?.plan_type as 'new_account' | 'recharge') || 'new_account',
           date: new Date(transaction.created_at || '').toLocaleDateString('pt-BR'),
-        });
+        };
+        setPurchaseDetails(details);
+        
+        // Track purchase event in Google Analytics
+        trackPurchase(details.planName, details.credits, details.amount, details.purchaseType);
       }
     } catch (error) {
       console.error('Error fetching purchase details:', error);

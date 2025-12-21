@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Zap, Tag } from 'lucide-react';
+import { trackViewPlan, trackBeginCheckout } from '@/lib/analytics';
 
 interface CouponDiscount {
   type: 'percentage' | 'fixed';
@@ -59,6 +61,20 @@ export default function PlanCard({
     : null;
 
   const hasCouponDiscount = couponDiscount && priceCents > 0 && finalPriceCents < priceCents;
+
+  // Track plan view when component mounts
+  useEffect(() => {
+    if (priceCents > 0) {
+      trackViewPlan(planName, planType, credits, finalPriceCents / 100);
+    }
+  }, [planName, planType, credits, finalPriceCents, priceCents]);
+
+  const handleBuyClick = () => {
+    if (priceCents > 0) {
+      trackBeginCheckout(planName, planType, credits, finalPriceCents / 100);
+    }
+    onBuy();
+  };
 
   const badgeLabel = planType === 'new_account' ? 'Conta Nova' : 'Recarga';
   const titleText = planType === 'new_account' ? 'NOVA CONTA' : 'RECARREGUE SUA CONTA';
@@ -161,7 +177,7 @@ export default function PlanCard({
         {/* Action Buttons */}
         <div className="flex gap-1 md:gap-2 pt-1 md:pt-2">
           <Button 
-            onClick={onBuy}
+            onClick={handleBuyClick}
             disabled={isLoading || priceCents === 0 || isDisabled}
             className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium text-[10px] md:text-sm h-8 md:h-10 px-2 md:px-4"
           >
@@ -170,7 +186,7 @@ export default function PlanCard({
           <Button 
             variant="outline" 
             size="icon"
-            onClick={onBuy}
+            onClick={handleBuyClick}
             disabled={isLoading || priceCents === 0 || isDisabled}
             className="border-border hover:bg-accent h-8 w-8 md:h-10 md:w-10"
           >
