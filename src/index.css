@@ -308,3 +308,8 @@
   animation: shimmer 4s ease-in-out infinite;
   animation-delay: 3s;
 }
+
+/* Safe area padding for mobile bottom navigation */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
