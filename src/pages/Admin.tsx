@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock, HeadphonesIcon, AlertTriangle, Loader2 } from 'lucide-react';
+import { Sparkles, Plus, ArrowLeft, Users, DollarSign, Trash2, FileText, RefreshCw, Package, Zap, Activity, UserCheck, CheckCircle, AlertCircle, Clock, HeadphonesIcon, AlertTriangle, Loader2, BarChart3 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,7 @@ import RechargeManager from '@/components/admin/RechargeManager';
 import StripeEventsManager from '@/components/admin/StripeEventsManager';
 import UsersManager from '@/components/admin/UsersManager';
 import SupportManager from '@/components/admin/SupportManager';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 interface CreditPlan {
   id: string;
   name: string;
@@ -549,7 +550,11 @@ export default function Admin() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-6xl grid-cols-8">
+          <TabsList className="grid w-full max-w-6xl grid-cols-9">
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </TabsTrigger>
             <TabsTrigger value="accounts" className="gap-2">
               <Package className="w-4 h-4" />
               Contas
@@ -592,6 +597,11 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <AnalyticsDashboard />
+          </TabsContent>
 
           {/* Accounts Tab */}
           <TabsContent value="accounts" className="space-y-6">
