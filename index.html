@@ -3,6 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HJEXRHSR1L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-HJEXRHSR1L', {
+        cookie_domain: 'auto',
+        cookie_flags: 'SameSite=None;Secure',
+        linker: {
+          domains: ['maiscreditos.com.br', 'maiscreditos.lovable.app']
+        }
+      });
+    </script>
     <!-- TODO: Set the document title to the name of your application -->
     <title>Mais Créditos</title>
     <meta name="description" content="Compre créditos mais barato e coloque seus projetos para rodar." />

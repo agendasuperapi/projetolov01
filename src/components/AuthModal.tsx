@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { trackSignUp, trackLogin } from '@/lib/analytics';
 
 // Função para aplicar máscara de telefone brasileiro
 const formatPhone = (value: string): string => {
@@ -190,6 +191,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
         }
 
         toast({ title: 'Bem-vindo!', description: 'Login realizado com sucesso.' });
+        trackLogin('email');
         onSuccess();
       } else {
         const { data: signUpData, error } = await supabase.auth.signUp({
@@ -229,6 +231,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
         }
 
         toast({ title: 'Conta criada!', description: 'Cadastro realizado com sucesso.' });
+        trackSignUp('email');
         onSuccess();
       }
     } catch {
