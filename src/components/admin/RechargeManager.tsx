@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { RefreshCw, CheckCircle, Clock, ExternalLink, Bell, Search, Filter, MoreHorizontal, XCircle } from 'lucide-react';
+import { RefreshCw, CheckCircle, Clock, ExternalLink, Bell, Search, Filter, MoreHorizontal, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface RechargeRequest {
@@ -114,6 +114,8 @@ export default function RechargeManager() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
   const previousPendingCount = useRef<number>(0);
   const isInitialLoad = useRef(true);
 
@@ -274,16 +276,30 @@ export default function RechargeManager() {
   };
 
   // Filter recharges based on search and status
-  const filteredRecharges = recharges.filter(r => {
-    const matchesSearch = searchTerm === '' || 
-      r.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.user?.phone?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredRecharges = useMemo(() => {
+    return recharges.filter(r => {
+      const matchesSearch = searchTerm === '' || 
+        r.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.user?.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [recharges, searchTerm, statusFilter]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredRecharges.length / pageSize);
+  const paginatedRecharges = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRecharges.slice(start, start + pageSize);
+  }, [filteredRecharges, page, pageSize]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
 
   // Count by status
   const counts = {
@@ -356,8 +372,11 @@ export default function RechargeManager() {
           </div>
 
           {/* Results count */}
-          <div className="text-sm text-muted-foreground">
-            Mostrando {filteredRecharges.length} de {recharges.length} recargas
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Mostrando {paginatedRecharges.length} de {filteredRecharges.length} recargas</span>
+            {totalPages > 1 && (
+              <span>Página {page} de {totalPages}</span>
+            )}
           </div>
 
           {/* Table / Cards */}
@@ -381,7 +400,7 @@ export default function RechargeManager() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRecharges.map((recharge) => (
+                    {paginatedRecharges.map((recharge) => (
                       <TableRow key={recharge.id}>
                         <TableCell>
                           <div>
@@ -460,7 +479,7 @@ export default function RechargeManager() {
 
               {/* Mobile Cards */}
               <div className="md:hidden space-y-3">
-                {filteredRecharges.map((recharge) => (
+                {paginatedRecharges.map((recharge) => (
                   <div key={recharge.id} className="p-4 border rounded-lg bg-card space-y-3">
                     {/* Header: Nome, status e badge */}
                     <div className="flex items-start justify-between gap-2">
@@ -546,6 +565,33 @@ export default function RechargeManager() {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-2">
+                    Página {page} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Próxima
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </CardContent>
