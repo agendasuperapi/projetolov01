@@ -474,42 +474,81 @@ export default function Dashboard() {
                 <CardDescription>Histórico de créditos comprados</CardDescription>
               </CardHeader>
               <CardContent>
-                {transactions.length === 0 ? <div className="text-center py-12">
+                {transactions.length === 0 ? (
+                  <div className="text-center py-12">
                     <History className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground mb-4">Nenhuma compra realizada ainda.</p>
                     <Link to="/#plans">
                       <Button className="gradient-primary">Comprar Créditos</Button>
                     </Link>
-                  </div> : <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Plano</TableHead>
-                        <TableHead>Créditos</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {transactions.map(tx => <TableRow key={tx.id}>
-                          <TableCell className="font-medium">{tx.plan?.name || 'Plano'}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{tx.credits_added}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
-                          </TableCell>
-                          <TableCell>
+                  </div>
+                ) : (
+                  <>
+                    {/* Desktop Table */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Plano</TableHead>
+                            <TableHead>Créditos</TableHead>
+                            <TableHead>Valor</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Data</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {transactions.map(tx => (
+                            <TableRow key={tx.id}>
+                              <TableCell className="font-medium">{tx.plan?.name || 'Plano'}</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">{tx.credits_added}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
+                                  {tx.status === 'completed' ? 'Concluído' : tx.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {new Date(tx.created_at).toLocaleDateString('pt-BR')}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
+                      {transactions.map(tx => (
+                        <div key={tx.id} className="p-4 border rounded-lg bg-card/50 space-y-2">
+                          {/* Header: Plano e Status */}
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold">{tx.plan?.name || 'Plano'}</p>
                             <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
                               {tx.status === 'completed' ? 'Concluído' : tx.status}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
+                          </div>
+
+                          {/* Info row: Créditos e Valor */}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{tx.credits_added} créditos</Badge>
+                            <span className="text-sm font-medium">
+                              R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
+                            </span>
+                          </div>
+
+                          {/* Data */}
+                          <p className="text-xs text-muted-foreground">
                             {new Date(tx.created_at).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                        </TableRow>)}
-                    </TableBody>
-                  </Table>}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
