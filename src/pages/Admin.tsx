@@ -54,6 +54,8 @@ export default function Admin() {
   const editSection = searchParams.get('edit');
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const transactionsPageSize = 15;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newPlan, setNewPlan] = useState({ name: '', credits: 0, price_cents: 0, stripe_price_id: '', plan_type: 'new_account' as 'new_account' | 'recharge' });
   const [creating, setCreating] = useState(false);
@@ -67,6 +69,13 @@ export default function Admin() {
   const [savingStripeMode, setSavingStripeMode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Transactions pagination
+  const transactionsTotalPages = Math.ceil(transactions.length / transactionsPageSize);
+  const paginatedTransactions = transactions.slice(
+    (transactionsPage - 1) * transactionsPageSize,
+    transactionsPage * transactionsPageSize
+  );
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -632,47 +641,142 @@ export default function Admin() {
                 <CardTitle>Transações Recentes</CardTitle>
                 <CardDescription>Histórico de pagamentos e créditos adicionados</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Results count */}
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Mostrando {paginatedTransactions.length} de {transactions.length} transações</span>
+                  {transactionsTotalPages > 1 && (
+                    <span className="hidden sm:inline">Página {transactionsPage} de {transactionsTotalPages}</span>
+                  )}
+                </div>
+
                 {transactions.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Nenhuma transação registrada.</p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Usuário</TableHead>
-                        <TableHead>Créditos</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {transactions.map((tx) => (
-                        <TableRow key={tx.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{tx.profiles?.name || 'Usuário'}</p>
-                              <p className="text-sm text-muted-foreground">{tx.profiles?.email}</p>
+                  <>
+                    {/* Desktop Table */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Usuário</TableHead>
+                            <TableHead>Créditos</TableHead>
+                            <TableHead>Valor</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Data</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedTransactions.map((tx) => (
+                            <TableRow key={tx.id}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{tx.profiles?.name || 'Usuário'}</p>
+                                  <p className="text-sm text-muted-foreground">{tx.profiles?.email}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">{tx.credits_added}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
+                                  {tx.status === 'completed' ? 'Concluído' : tx.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {new Date(tx.created_at).toLocaleDateString('pt-BR')}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
+                      {paginatedTransactions.map((tx) => (
+                        <div key={tx.id} className="p-4 border rounded-lg bg-card space-y-2">
+                          {/* Header: Usuário e Status */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold truncate">{tx.profiles?.name || 'Usuário'}</p>
+                              <p className="text-sm text-muted-foreground truncate">{tx.profiles?.email}</p>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{tx.credits_added}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
-                          </TableCell>
-                          <TableCell>
                             <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
                               {tx.status === 'completed' ? 'Concluído' : tx.status}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
+                          </div>
+
+                          {/* Info row: Créditos e Valor */}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{tx.credits_added} créditos</Badge>
+                            <span className="text-sm font-medium">
+                              R$ {(tx.amount_cents / 100).toFixed(2).replace('.', ',')}
+                            </span>
+                          </div>
+
+                          {/* Data */}
+                          <p className="text-xs text-muted-foreground">
                             {new Date(tx.created_at).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                        </TableRow>
+                          </p>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </div>
+
+                    {/* Pagination */}
+                    {transactionsTotalPages > 1 && (
+                      <div className="flex justify-center pt-4">
+                        {/* Mobile: Simple prev/next */}
+                        <div className="flex sm:hidden items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTransactionsPage(p => Math.max(1, p - 1))}
+                            disabled={transactionsPage === 1}
+                          >
+                            Anterior
+                          </Button>
+                          <span className="text-sm text-muted-foreground px-2">
+                            {transactionsPage} / {transactionsTotalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTransactionsPage(p => Math.min(transactionsTotalPages, p + 1))}
+                            disabled={transactionsPage >= transactionsTotalPages}
+                          >
+                            Próxima
+                          </Button>
+                        </div>
+
+                        {/* Desktop: Simple pagination */}
+                        <div className="hidden sm:flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTransactionsPage(p => Math.max(1, p - 1))}
+                            disabled={transactionsPage === 1}
+                          >
+                            Anterior
+                          </Button>
+                          <span className="text-sm text-muted-foreground px-4">
+                            Página {transactionsPage} de {transactionsTotalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTransactionsPage(p => Math.min(transactionsTotalPages, p + 1))}
+                            disabled={transactionsPage >= transactionsTotalPages}
+                          >
+                            Próxima
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
