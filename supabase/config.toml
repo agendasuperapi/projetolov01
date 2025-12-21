@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.sync-plans-to-external]
 verify_jwt = false
+
+[functions.ga-analytics]
+verify_jwt = true
