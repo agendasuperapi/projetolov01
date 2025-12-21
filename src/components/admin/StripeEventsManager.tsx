@@ -472,78 +472,131 @@ export default function StripeEventsManager() {
           </Card>
         </div>
 
-        {/* Table */}
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Ambiente</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Sync</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    Carregando eventos...
-                  </TableCell>
-                </TableRow>
-              ) : events.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    Nenhum evento encontrado.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                events.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell className="whitespace-nowrap">
-                      {format(new Date(event.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell>{getEventTypeBadge(event.event_type)}</TableCell>
-                    <TableCell>{getEnvironmentBadge(event.environment)}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {event.email || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {event.processed ? (
-                        <Badge variant="outline" className="text-green-400 border-green-500/30">Processado</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">Pendente</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{getSyncStatusBadge(event.event_type, event.sync_status, event.synced_at)}</TableCell>
-                    <TableCell className="text-right space-x-1">
-                      {(event.sync_status === 'error' || event.sync_status === 'pending') && event.event_type === 'checkout.session.completed' && (
+        {/* Loading / Empty State */}
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Carregando eventos...</div>
+        ) : events.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">Nenhum evento encontrado.</div>
+        ) : (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Ambiente</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Sync</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {events.map((event) => (
+                    <TableRow key={event.id}>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(event.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell>{getEventTypeBadge(event.event_type)}</TableCell>
+                      <TableCell>{getEnvironmentBadge(event.environment)}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {event.email || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {event.processed ? (
+                          <Badge variant="outline" className="text-green-400 border-green-500/30">Processado</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">Pendente</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{getSyncStatusBadge(event.event_type, event.sync_status, event.synced_at)}</TableCell>
+                      <TableCell className="text-right space-x-1">
+                        {(event.sync_status === 'error' || event.sync_status === 'pending') && event.event_type === 'checkout.session.completed' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRetrySync(event)}
+                            disabled={retrying === event.id}
+                            title="Retentar sincronização"
+                          >
+                            <RotateCcw className={`w-4 h-4 ${retrying === event.id ? 'animate-spin' : ''}`} />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleRetrySync(event)}
-                          disabled={retrying === event.id}
-                          title="Retentar sincronização"
+                          onClick={() => setSelectedEvent(event)}
                         >
-                          <RotateCcw className={`w-4 h-4 ${retrying === event.id ? 'animate-spin' : ''}`} />
+                          <Eye className="w-4 h-4" />
                         </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {events.map((event) => (
+                <div 
+                  key={event.id} 
+                  className="p-4 border rounded-lg bg-card space-y-3"
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  {/* Header: Tipo e badges */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex flex-wrap gap-1">
+                        {getEventTypeBadge(event.event_type)}
+                        {getEnvironmentBadge(event.environment)}
+                      </div>
+                      {event.email && (
+                        <p className="text-sm text-muted-foreground truncate">{event.email}</p>
                       )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      {event.processed ? (
+                        <Badge variant="outline" className="text-green-400 border-green-500/30 text-xs">Processado</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-yellow-400 border-yellow-500/30 text-xs">Pendente</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info row: Sync e Data */}
+                  <div className="flex items-center justify-between text-sm">
+                    <div>{getSyncStatusBadge(event.event_type, event.sync_status, event.synced_at)}</div>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(event.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  {(event.sync_status === 'error' || event.sync_status === 'pending') && event.event_type === 'checkout.session.completed' && (
+                    <div className="pt-2 border-t">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSelectedEvent(event)}
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRetrySync(event);
+                        }}
+                        disabled={retrying === event.id}
+                        className="w-full gap-2"
                       >
-                        <Eye className="w-4 h-4" />
+                        <RotateCcw className={`w-4 h-4 ${retrying === event.id ? 'animate-spin' : ''}`} />
+                        Retentar Sync
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
