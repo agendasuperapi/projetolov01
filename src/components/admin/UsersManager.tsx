@@ -285,7 +285,8 @@ export default function UsersManager() {
           <div className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado.</div>
         ) : (
           <>
-            <div className="rounded-md border">
+            {/* Desktop Table */}
+            <div className="hidden md:block rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -336,6 +337,60 @@ export default function UsersManager() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {users.map((user) => (
+                <div 
+                  key={user.id} 
+                  className="p-4 border rounded-lg bg-card space-y-3"
+                  onClick={() => setSelectedUser(user)}
+                >
+                  {/* Header: Nome e badges */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{user.name || '-'}</p>
+                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      {getRoleBadge(user.role)}
+                      {getSyncStatusBadge(user.sync_status)}
+                    </div>
+                  </div>
+
+                  {/* Info row */}
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-4">
+                      <span className="text-muted-foreground">
+                        Créditos: <span className="font-medium text-foreground">{user.credits?.toLocaleString() ?? 0}</span>
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  {(user.sync_status === 'error' || user.sync_status === 'pending') && (
+                    <div className="pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRetrySync(user.id);
+                        }}
+                        disabled={retrying === user.id}
+                        className="w-full gap-2"
+                      >
+                        <RotateCcw className={`w-4 h-4 ${retrying === user.id ? 'animate-spin' : ''}`} />
+                        Retentar Sync
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
             {/* Pagination */}
