@@ -599,31 +599,32 @@ export default function StripeEventsManager() {
         )}
 
         {/* Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Exibir</span>
-            <Select
-              value={pageSize.toString()}
-              onValueChange={(value) => {
-                setPageSize(Number(value));
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span>por página</span>
-          </div>
+        <div className="flex flex-col gap-4 pt-4">
+          {/* Results count and page size */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Exibir</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>por página</span>
+            </div>
 
-          <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
               {totalCount > 0 ? (
                 <>
@@ -635,43 +636,72 @@ export default function StripeEventsManager() {
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPage(1)}
-              disabled={page === 1 || loading}
-            >
-              <ChevronsLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1 || loading}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="px-3 text-sm">
-              Página {page} de {totalPages || 1}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages || loading}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPage(totalPages)}
-              disabled={page >= totalPages || loading}
-            >
-              <ChevronsRight className="w-4 h-4" />
-            </Button>
-          </div>
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center">
+              {/* Mobile: Simple prev/next */}
+              <div className="flex sm:hidden items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || loading}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm text-muted-foreground px-2">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages || loading}
+                >
+                  Próxima
+                </Button>
+              </div>
+
+              {/* Desktop: Full pagination */}
+              <div className="hidden sm:flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1 || loading}
+                >
+                  <ChevronsLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || loading}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="px-3 text-sm">
+                  Página {page} de {totalPages || 1}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages || loading}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage(totalPages)}
+                  disabled={page >= totalPages || loading}
+                >
+                  <ChevronsRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Event Detail Dialog */}
