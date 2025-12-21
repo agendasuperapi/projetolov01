@@ -291,67 +291,125 @@ export default function AccountsManager() {
                           Nenhuma conta cadastrada para este plano.
                         </p>
                       ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Dados da Conta</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Data</TableHead>
-                              <TableHead className="w-[150px]">Ações</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
+                        <>
+                          {/* Desktop Table */}
+                          <div className="hidden md:block">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Dados da Conta</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Data</TableHead>
+                                  <TableHead className="w-[150px]">Ações</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {planAccounts.map((account) => (
+                                  <TableRow key={account.id}>
+                                    <TableCell className="max-w-[300px]">
+                                      <p className="truncate text-sm font-mono">{account.account_data}</p>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant={account.is_used ? 'secondary' : 'default'}>
+                                        {account.is_used ? 'Utilizada' : 'Disponível'}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground">
+                                      {new Date(account.created_at).toLocaleDateString('pt-BR')}
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => openEditDialog(account)}
+                                          title="Editar"
+                                        >
+                                          <Edit className="w-4 h-4" />
+                                        </Button>
+                                        {!account.is_used && (
+                                          <>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              onClick={() => handleMarkAsUsed(account.id)}
+                                              title="Marcar como utilizada"
+                                              className="text-amber-500 hover:text-amber-600"
+                                            >
+                                              <CheckCircle className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              onClick={() => handleDeleteAccount(account.id)}
+                                              className="text-destructive hover:text-destructive"
+                                              title="Excluir"
+                                            >
+                                              <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+
+                          {/* Mobile Cards */}
+                          <div className="md:hidden space-y-3">
                             {planAccounts.map((account) => (
-                              <TableRow key={account.id}>
-                                <TableCell className="max-w-[300px]">
-                                  <p className="truncate text-sm font-mono">{account.account_data}</p>
-                                </TableCell>
-                                <TableCell>
+                              <div 
+                                key={account.id} 
+                                className="p-4 border rounded-lg bg-card space-y-3"
+                              >
+                                <div className="flex items-start justify-between gap-2">
                                   <Badge variant={account.is_used ? 'secondary' : 'default'}>
                                     {account.is_used ? 'Utilizada' : 'Disponível'}
                                   </Badge>
-                                </TableCell>
-                                <TableCell className="text-muted-foreground">
-                                  {new Date(account.created_at).toLocaleDateString('pt-BR')}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => openEditDialog(account)}
-                                      title="Editar"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </Button>
-                                    {!account.is_used && (
-                                      <>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => handleMarkAsUsed(account.id)}
-                                          title="Marcar como utilizada"
-                                          className="text-amber-500 hover:text-amber-600"
-                                        >
-                                          <CheckCircle className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => handleDeleteAccount(account.id)}
-                                          className="text-destructive hover:text-destructive"
-                                          title="Excluir"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                      </>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(account.created_at).toLocaleDateString('pt-BR')}
+                                  </span>
+                                </div>
+                                <p className="text-sm font-mono bg-muted p-2 rounded break-all">
+                                  {account.account_data}
+                                </p>
+                                <div className="flex items-center gap-2 pt-2 border-t">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openEditDialog(account)}
+                                    className="flex-1"
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar
+                                  </Button>
+                                  {!account.is_used && (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleMarkAsUsed(account.id)}
+                                        className="text-amber-500 border-amber-500/50"
+                                      >
+                                        <CheckCircle className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleDeleteAccount(account.id)}
+                                        className="text-destructive border-destructive/50"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                             ))}
-                          </TableBody>
-                        </Table>
+                          </div>
+                        </>
                       )}
                     </AccordionContent>
                   </AccordionItem>

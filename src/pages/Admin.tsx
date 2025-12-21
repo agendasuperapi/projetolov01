@@ -21,7 +21,7 @@ import StripeEventsManager from '@/components/admin/StripeEventsManager';
 import UsersManager from '@/components/admin/UsersManager';
 import SupportManager from '@/components/admin/SupportManager';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
-import AdminMobileSidebar from '@/components/admin/AdminMobileSidebar';
+import AdminBottomNav from '@/components/admin/AdminBottomNav';
 interface CreditPlan {
   id: string;
   name: string;
@@ -510,7 +510,7 @@ export default function Admin() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-24 md:pb-8">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="w-4 h-4" />
           Voltar
@@ -551,13 +551,6 @@ export default function Admin() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          {/* Mobile Sidebar */}
-          <AdminMobileSidebar 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab} 
-            pendingRechargesCount={pendingRechargesCount}
-          />
-
           {/* Desktop Tabs */}
           <TabsList className="hidden md:grid w-full max-w-6xl grid-cols-9">
             <TabsTrigger value="analytics" className="gap-2">
@@ -1057,6 +1050,13 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <AdminBottomNav 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        pendingRechargesCount={pendingRechargesCount}
+      />
     </div>
   );
 }
