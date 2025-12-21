@@ -41,11 +41,14 @@ interface CreditPlan {
   credits: number;
   price_cents: number;
   stripe_price_id: string | null;
+  stripe_price_id_test: string | null;
+  stripe_price_id_live: string | null;
   competitor_price_cents: number | null;
   plan_type: 'new_account' | 'recharge';
 }
 interface PlanWithAvailability extends CreditPlan {
   availableAccounts: number;
+  activePriceId: string | null; // The price ID to use based on current mode
 }
 interface CouponData {
   coupon_id: string;
@@ -120,6 +123,7 @@ export default function Index() {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponInitialized, setCouponInitialized] = useState(false);
+  const [stripeMode, setStripeMode] = useState<'test' | 'live'>('test');
 
 
   // Flash animation state for plan sections
@@ -248,7 +252,23 @@ export default function Index() {
     };
     initializeCoupon();
   }, [location.state, couponInitialized]);
+  const fetchStripeMode = async () => {
+    const { data } = await supabase
+      .from('stripe_settings')
+      .select('mode')
+      .limit(1)
+      .maybeSingle();
+    
+    if (data) {
+      setStripeMode(data.mode as 'test' | 'live');
+    }
+    return data?.mode || 'test';
+  };
+
   const fetchPlans = async () => {
+    // Fetch stripe mode first
+    const currentMode = await fetchStripeMode();
+    
     const {
       data: plansData
     } = await supabase.from('credit_plans').select('*').eq('active', true).order('credits', {
@@ -261,9 +281,16 @@ export default function Index() {
         } = await supabase.rpc('get_available_accounts_count', {
           p_plan_id: plan.id
         });
+        
+        // Determine active price ID based on mode
+        const activePriceId = currentMode === 'live' 
+          ? (plan.stripe_price_id_live || plan.stripe_price_id)
+          : (plan.stripe_price_id_test || plan.stripe_price_id);
+        
         return {
           ...plan,
-          availableAccounts: countData || 0
+          availableAccounts: countData || 0,
+          activePriceId
         };
       }));
       setNewAccountPlans(plansWithAvailability.filter(p => p.plan_type === 'new_account'));
@@ -295,7 +322,7 @@ export default function Index() {
     }
   };
   const handleBuyNewAccount = (plan: PlanWithAvailability) => {
-    if (!plan.stripe_price_id || plan.price_cents === 0) {
+    if (!plan.activePriceId || plan.price_cents === 0) {
       toast({
         title: 'Indisponível',
         description: 'Este plano ainda não está configurado para venda.',
@@ -314,7 +341,7 @@ export default function Index() {
     processPurchase(plan, 'new_account');
   };
   const handleBuyRecharge = (plan: PlanWithAvailability) => {
-    if (!plan.stripe_price_id || plan.price_cents === 0) {
+    if (!plan.activePriceId || plan.price_cents === 0) {
       toast({
         title: 'Indisponível',
         description: 'Este plano ainda não está configurado para venda.',
@@ -398,7 +425,7 @@ export default function Index() {
   const processPurchase = (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
     setPurchaseLoading(plan.id);
     
-    if (!plan.stripe_price_id) {
+    if (!plan.activePriceId) {
       toast({
         title: 'Erro',
         description: 'Plano não configurado.',
@@ -410,7 +437,7 @@ export default function Index() {
     
     // Navigate to checkout page
     const params = new URLSearchParams({
-      priceId: plan.stripe_price_id,
+      priceId: plan.activePriceId,
       planId: plan.id,
       purchaseType: type,
     });
@@ -812,7 +839,7 @@ Escolha seu plano ideal.</h2>
       setIsAuthModalOpen(false);
       setPendingPurchase(null);
       setAuthModalDefaultTab('login');
-    }} onSuccess={handleAuthSuccess} planId={pendingPurchase?.plan?.id} priceId={pendingPurchase?.plan?.stripe_price_id || undefined} defaultTab={authModalDefaultTab} />
+    }} onSuccess={handleAuthSuccess} planId={pendingPurchase?.plan?.id} priceId={pendingPurchase?.plan?.activePriceId || undefined} defaultTab={authModalDefaultTab} />
 
 
       {/* Footer */}
