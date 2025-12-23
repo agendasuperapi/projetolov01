@@ -273,10 +273,7 @@ export default function Dashboard() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="font-bold">{profile?.credits || 0} créditos</span>
-            </div>
+            
             <Link to="/#plans">
               <Button variant="outline" size="sm">Comprar Créditos</Button>
             </Link>
@@ -474,16 +471,13 @@ export default function Dashboard() {
                 <CardDescription>Histórico de créditos comprados</CardDescription>
               </CardHeader>
               <CardContent>
-                {transactions.length === 0 ? (
-                  <div className="text-center py-12">
+                {transactions.length === 0 ? <div className="text-center py-12">
                     <History className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground mb-4">Nenhuma compra realizada ainda.</p>
                     <Link to="/#plans">
                       <Button className="gradient-primary">Comprar Créditos</Button>
                     </Link>
-                  </div>
-                ) : (
-                  <>
+                  </div> : <>
                     {/* Desktop Table */}
                     <div className="hidden md:block">
                       <Table>
@@ -497,8 +491,7 @@ export default function Dashboard() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {transactions.map(tx => (
-                            <TableRow key={tx.id}>
+                          {transactions.map(tx => <TableRow key={tx.id}>
                               <TableCell className="font-medium">{tx.plan?.name || 'Plano'}</TableCell>
                               <TableCell>
                                 <Badge variant="secondary">{tx.credits_added}</Badge>
@@ -514,16 +507,14 @@ export default function Dashboard() {
                               <TableCell className="text-muted-foreground">
                                 {new Date(tx.created_at).toLocaleDateString('pt-BR')}
                               </TableCell>
-                            </TableRow>
-                          ))}
+                            </TableRow>)}
                         </TableBody>
                       </Table>
                     </div>
 
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
-                      {transactions.map(tx => (
-                        <div key={tx.id} className="p-4 border rounded-lg bg-card/50 space-y-2">
+                      {transactions.map(tx => <div key={tx.id} className="p-4 border rounded-lg bg-card/50 space-y-2">
                           {/* Header: Plano e Status */}
                           <div className="flex items-start justify-between gap-2">
                             <p className="font-semibold">{tx.plan?.name || 'Plano'}</p>
@@ -544,11 +535,9 @@ export default function Dashboard() {
                           <p className="text-xs text-muted-foreground">
                             {new Date(tx.created_at).toLocaleDateString('pt-BR')}
                           </p>
-                        </div>
-                      ))}
+                        </div>)}
                     </div>
-                  </>
-                )}
+                  </>}
               </CardContent>
             </Card>
           </TabsContent>
