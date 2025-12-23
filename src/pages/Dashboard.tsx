@@ -362,9 +362,27 @@ export default function Dashboard() {
                     </Link>
                   </div> : <div className="space-y-4">
                     {purchasedAccounts.map(account => {
-                      const lines = account.account_data.split('\n').filter(line => line.trim());
-                      const email = lines[0] || '';
-                      const password = lines[1] || '';
+                      const lines = account.account_data.split('\n').map(line => line.trim());
+                      let email = '';
+                      let password = '';
+                      
+                      // Parse format "Email:\nvalue\nSenha:\nvalue"
+                      const emailIndex = lines.findIndex(line => line.toLowerCase() === 'email:');
+                      const senhaIndex = lines.findIndex(line => line.toLowerCase() === 'senha:');
+                      
+                      if (emailIndex !== -1 && lines[emailIndex + 1]) {
+                        email = lines[emailIndex + 1];
+                      }
+                      if (senhaIndex !== -1 && lines[senhaIndex + 1]) {
+                        password = lines[senhaIndex + 1];
+                      }
+                      
+                      // Fallback: first two non-empty lines if no labels found
+                      if (!email && !password) {
+                        const nonEmptyLines = lines.filter(line => line && !line.toLowerCase().includes('email:') && !line.toLowerCase().includes('senha:'));
+                        email = nonEmptyLines[0] || '';
+                        password = nonEmptyLines[1] || '';
+                      }
                       return (
                         <Card key={account.id} className="border-2 border-primary/20 bg-gradient-to-br from-secondary/50 to-background shadow-lg">
                           <CardContent className="p-4">
