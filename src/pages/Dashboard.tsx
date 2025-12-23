@@ -293,17 +293,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="shadow-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Créditos Disponíveis</CardTitle>
-              <Zap className="w-5 h-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{profile?.credits || 0}</div>
-            </CardContent>
-          </Card>
-          
+        <div className="grid sm:grid-cols-2 gap-6 mb-8">
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Comprado</CardTitle>
@@ -317,11 +307,12 @@ export default function Dashboard() {
 
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Investido</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total de Pedidos</CardTitle>
               <History className="w-5 h-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">R$ {(totalSpent / 100).toFixed(2).replace('.', ',')}</div>
+              <div className="text-3xl font-bold">{transactions?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">pedidos realizados</p>
             </CardContent>
           </Card>
         </div>
