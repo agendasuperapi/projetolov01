@@ -361,26 +361,43 @@ export default function Dashboard() {
                       <Button className="gradient-primary">Comprar Conta</Button>
                     </Link>
                   </div> : <div className="space-y-4">
-                    {purchasedAccounts.map(account => <Card key={account.id} className="bg-secondary/50 border-border">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge variant="outline">{account.plan?.name || 'Plano'}</Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  {account.used_at && new Date(account.used_at).toLocaleDateString('pt-BR')}
-                                </span>
+                    {purchasedAccounts.map(account => {
+                      const lines = account.account_data.split('\n').filter(line => line.trim());
+                      const email = lines[0] || '';
+                      const password = lines[1] || '';
+                      return (
+                        <Card key={account.id} className="border-2 border-primary/20 bg-gradient-to-br from-secondary/50 to-background shadow-lg">
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Badge variant="outline" className="border-primary/30">{account.plan?.name || 'Plano'}</Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {account.used_at && new Date(account.used_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2 bg-background border border-border rounded-lg p-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-muted-foreground mb-1">Email</p>
+                                  <p className="font-mono text-sm truncate">{email}</p>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(email, `${account.id}-email`)} className="shrink-0">
+                                  {copiedId === `${account.id}-email` ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                </Button>
                               </div>
-                              <div className="bg-background p-3 rounded-lg font-mono text-sm whitespace-pre-wrap break-all">
-                                {account.account_data}
+                              <div className="flex items-center justify-between gap-2 bg-background border border-border rounded-lg p-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-muted-foreground mb-1">Senha</p>
+                                  <p className="font-mono text-sm truncate">{password}</p>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(password, `${account.id}-password`)} className="shrink-0">
+                                  {copiedId === `${account.id}-password` ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                </Button>
                               </div>
                             </div>
-                            <Button variant="outline" size="sm" onClick={() => copyToClipboard(account.account_data, account.id)} className="shrink-0">
-                              {copiedId === account.id ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>)}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>}
               </CardContent>
             </Card>
