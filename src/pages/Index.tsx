@@ -15,6 +15,7 @@ import HowItWorksSection from '@/components/HowItWorksSection';
 
 import confetti from 'canvas-confetti';
 import logoImage from '@/assets/logo.png';
+import WhatsAppFloat from '@/components/WhatsAppFloat';
 const AdminEditButton = ({
   section
 }: {
@@ -855,5 +856,7 @@ Escolha seu plano ideal.</h2>
         </div>
         {isAdmin && <AdminEditButton section="footer" />}
       </footer>
+      
+      <WhatsAppFloat />
     </div>;
 }
