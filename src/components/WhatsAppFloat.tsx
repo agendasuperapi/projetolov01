@@ -27,10 +27,18 @@ const WhatsAppFloat = () => {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] rounded-full shadow-lg hover:bg-[#20BA5C] transition-all duration-300 hover:scale-110 animate-flash-border"
+          className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] rounded-full shadow-lg hover:bg-[#20BA5C] transition-all duration-300 hover:scale-110 animate-bounce-subtle"
           aria-label="Contato via WhatsApp"
         >
           <WhatsAppIcon />
+          
+          {/* Badge de notificação */}
+          <span className="absolute -top-1 -right-1 flex h-5 w-5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 items-center justify-center text-[10px] font-bold text-white">
+              1
+            </span>
+          </span>
         </a>
       </TooltipTrigger>
       <TooltipContent side="left" className="bg-[#25D366] text-white border-none font-medium">
