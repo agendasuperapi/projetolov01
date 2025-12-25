@@ -253,22 +253,23 @@ export default function Index() {
     };
     initializeCoupon();
   }, [location.state, couponInitialized]);
-  const fetchStripeMode = async () => {
+  const fetchStripeMode = async (): Promise<'test' | 'live'> => {
     const { data } = await supabase
       .from('stripe_settings')
       .select('mode')
       .limit(1)
       .maybeSingle();
     
-    if (data) {
-      setStripeMode(data.mode as 'test' | 'live');
-    }
-    return data?.mode || 'test';
+    const mode = (data?.mode as 'test' | 'live') || 'test';
+    setStripeMode(mode);
+    console.log('[INDEX] Stripe mode fetched:', mode);
+    return mode;
   };
 
   const fetchPlans = async () => {
-    // Fetch stripe mode first
+    // Fetch stripe mode first - ensure we get the correct mode
     const currentMode = await fetchStripeMode();
+    console.log('[INDEX] Fetching plans with stripe mode:', currentMode);
     
     const {
       data: plansData
@@ -283,10 +284,15 @@ export default function Index() {
           p_plan_id: plan.id
         });
         
-        // Determine active price ID based on mode
-        const activePriceId = currentMode === 'live' 
-          ? (plan.stripe_price_id_live || plan.stripe_price_id)
-          : (plan.stripe_price_id_test || plan.stripe_price_id);
+        // Determine active price ID based on mode - prioritize mode-specific IDs
+        let activePriceId: string | null = null;
+        if (currentMode === 'live') {
+          activePriceId = plan.stripe_price_id_live || plan.stripe_price_id || null;
+        } else {
+          activePriceId = plan.stripe_price_id_test || plan.stripe_price_id || null;
+        }
+        
+        console.log(`[INDEX] Plan ${plan.name}: mode=${currentMode}, activePriceId=${activePriceId}, live=${plan.stripe_price_id_live}, test=${plan.stripe_price_id_test}`);
         
         return {
           ...plan,
