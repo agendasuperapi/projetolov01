@@ -6,7 +6,9 @@ const corsHeaders = {
 };
 
 interface AnalyticsRequest {
-  period: '7' | '30' | '90';
+  period: '7' | '30' | '90' | 'custom';
+  startDate?: string;
+  endDate?: string;
 }
 
 interface GAMetric {
@@ -172,13 +174,21 @@ serve(async (req) => {
       );
     }
 
-    const { period = '30' }: AnalyticsRequest = await req.json();
+    const { period = '30', startDate: customStartDate, endDate: customEndDate }: AnalyticsRequest = await req.json();
     
     // Calculate date range
-    const endDate = 'today';
-    const startDate = `${period}daysAgo`;
-
-    console.log(`Fetching analytics for period: ${period} days`);
+    let startDate: string;
+    let endDate: string;
+    
+    if (period === 'custom' && customStartDate && customEndDate) {
+      startDate = customStartDate;
+      endDate = customEndDate;
+      console.log(`Fetching analytics for custom period: ${startDate} to ${endDate}`);
+    } else {
+      endDate = 'today';
+      startDate = `${period}daysAgo`;
+      console.log(`Fetching analytics for period: ${period} days`);
+    }
 
     // Get access token
     const accessToken = await getAccessToken(clientEmail, privateKey);

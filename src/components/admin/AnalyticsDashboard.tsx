@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { 
   Users, 
   Eye, 
@@ -17,9 +21,11 @@ import {
   Tablet,
   Globe,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  CalendarIcon
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+import { cn } from '@/lib/utils';
 
 interface AnalyticsData {
   overview: {
@@ -65,7 +71,9 @@ export default function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<'7' | '30' | '90'>('30');
+  const [period, setPeriod] = useState<'7' | '30' | '90' | 'custom'>('30');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -77,8 +85,15 @@ export default function AnalyticsDashboard() {
         throw new Error('Não autenticado');
       }
 
+      const body: { period: string; startDate?: string; endDate?: string } = { period };
+      
+      if (period === 'custom' && startDate && endDate) {
+        body.startDate = format(startDate, 'yyyy-MM-dd');
+        body.endDate = format(endDate, 'yyyy-MM-dd');
+      }
+
       const { data: result, error: fnError } = await supabase.functions.invoke('ga-analytics', {
-        body: { period },
+        body,
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
         },
@@ -97,8 +112,14 @@ export default function AnalyticsDashboard() {
   };
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [period]);
+    if (period === 'custom') {
+      if (startDate && endDate) {
+        fetchAnalytics();
+      }
+    } else {
+      fetchAnalytics();
+    }
+  }, [period, startDate, endDate]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -156,8 +177,8 @@ export default function AnalyticsDashboard() {
           <h2 className="text-2xl font-bold">Google Analytics</h2>
           <p className="text-muted-foreground">Dados de tráfego do site</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={period} onValueChange={(v) => setPeriod(v as '7' | '30' | '90')}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Select value={period} onValueChange={(v) => setPeriod(v as '7' | '30' | '90' | 'custom')}>
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
@@ -165,9 +186,67 @@ export default function AnalyticsDashboard() {
               <SelectItem value="7">Últimos 7 dias</SelectItem>
               <SelectItem value="30">Últimos 30 dias</SelectItem>
               <SelectItem value="90">Últimos 90 dias</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={fetchAnalytics} disabled={loading}>
+          
+          {period === 'custom' && (
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[130px] justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "dd/MM/yyyy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    locale={ptBR}
+                    disabled={(date) => date > new Date() || (endDate ? date > endDate : false)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <span className="text-muted-foreground">até</span>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[130px] justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "dd/MM/yyyy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    locale={ptBR}
+                    disabled={(date) => date > new Date() || (startDate ? date < startDate : false)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+          
+          <Button variant="outline" size="icon" onClick={fetchAnalytics} disabled={loading || (period === 'custom' && (!startDate || !endDate))}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
