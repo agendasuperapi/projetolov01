@@ -50,8 +50,9 @@ interface Transaction {
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const editSection = searchParams.get('edit');
+  const tabFromUrl = searchParams.get('tab');
   const [plans, setPlans] = useState<CreditPlan[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionsPage, setTransactionsPage] = useState(1);
@@ -63,8 +64,12 @@ export default function Admin() {
   const [syncingPlanId, setSyncingPlanId] = useState<string | null>(null);
   const [pendingRechargesCount, setPendingRechargesCount] = useState(0);
   const [syncIssuesCount, setSyncIssuesCount] = useState(0);
-  const [activeTab, setActiveTab] = useState(editSection ? 'content' : 'accounts');
+  const activeTab = tabFromUrl || (editSection ? 'content' : 'accounts');
   const [stripeMode, setStripeMode] = useState<'test' | 'live'>('test');
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
   const [loadingStripeMode, setLoadingStripeMode] = useState(true);
   const [savingStripeMode, setSavingStripeMode] = useState(false);
   const { toast } = useToast();
@@ -502,7 +507,7 @@ export default function Admin() {
                 ? 'bg-green-500/10 border-green-500/50 text-green-600' 
                 : 'bg-yellow-500/10 border-yellow-500/50 text-yellow-600'
             }`}
-            onClick={() => setActiveTab('plans')}
+            onClick={() => handleTabChange('plans')}
           >
             {stripeMode === 'live' ? (
               <>
@@ -551,7 +556,7 @@ export default function Admin() {
                 variant="outline" 
                 size="sm"
                 className="border-red-500/50 text-red-600 hover:bg-red-500/20"
-                onClick={() => setActiveTab('stripe-events')}
+                onClick={() => handleTabChange('stripe-events')}
               >
                 Ver eventos
               </Button>
@@ -559,7 +564,7 @@ export default function Admin() {
           </Card>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
           {/* Desktop Tabs */}
           <TabsList className="hidden md:grid w-full max-w-6xl grid-cols-9">
             <TabsTrigger value="analytics" className="gap-2">
@@ -1158,7 +1163,7 @@ export default function Admin() {
       {/* Mobile Bottom Navigation */}
       <AdminBottomNav 
         activeTab={activeTab} 
-        onTabChange={setActiveTab} 
+        onTabChange={handleTabChange} 
         pendingRechargesCount={pendingRechargesCount}
       />
     </div>
