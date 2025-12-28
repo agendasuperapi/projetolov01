@@ -620,20 +620,20 @@ export default function Index() {
 
 
       {/* Coupon Section */}
-      <section className="py-12 bg-gradient-to-b from-card via-muted to-muted relative overflow-hidden">
+      <section className="py-6 bg-gradient-to-b from-card via-muted to-muted relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shadow-glow-sm">
-                  <Tag className="w-5 h-5 text-primary" />
+          <div className="max-w-xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Tag className="w-4 h-4 text-primary" />
                 </div>
+                <h2 className="font-display text-lg md:text-xl font-bold">
+                  Tem cupom?
+                </h2>
               </div>
-              <h2 className="font-display text-2xl md:text-3xl font-bold mb-2">
-                Tem cupom de desconto?
-              </h2>
-              <p className="text-muted-foreground">
-                Aplique seu código e economize ainda mais!
+              <p className="text-muted-foreground text-sm">
+                Aplique e economize!
               </p>
             </div>
             
