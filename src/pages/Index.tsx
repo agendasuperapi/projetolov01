@@ -620,7 +620,7 @@ export default function Index() {
 
 
       {/* Coupon Section */}
-      <section className="py-12 bg-muted relative overflow-hidden">
+      <section className="py-12 bg-gradient-to-b from-card via-muted to-muted relative overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
@@ -786,7 +786,7 @@ Escolha seu plano ideal.</h2>
       <HowItWorksSection />
 
       {/* Features Section */}
-      <section className="py-14 lg:py-20 bg-card relative group overflow-hidden">
+      <section className="py-14 lg:py-20 bg-gradient-to-b from-muted via-card to-muted relative group overflow-hidden">
         {/* Shimmer light effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer-delay-3" />
@@ -817,7 +817,7 @@ Escolha seu plano ideal.</h2>
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-14 bg-muted relative overflow-hidden">
+      <section className="py-14 bg-gradient-to-b from-muted via-muted to-background relative overflow-hidden">
         {/* Shimmer light effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer-delay-3" />
