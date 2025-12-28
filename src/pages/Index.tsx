@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
 import { Sparkles, Zap, Shield, Download, ArrowRight, User, Settings, Pencil, Star, LucideIcon, UserPlus, RefreshCw, Check, Tag, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
@@ -806,12 +808,31 @@ Escolha seu plano ideal.</h2>
             </p>
           </div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto items-stretch">
-            {featuresData.map((feature, index) => {
-            const IconComponent = iconMap[feature.icon] || Zap;
-            return <FeatureCard key={index} icon={IconComponent} title={feature.title} description={feature.description} index={index} />;
-          })}
-          </div>
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 3000,
+                stopOnInteraction: false,
+                stopOnMouseEnter: true,
+              }),
+            ]}
+            className="w-full max-w-5xl mx-auto"
+          >
+            <CarouselContent className="-ml-4">
+              {featuresData.map((feature, index) => {
+                const IconComponent = iconMap[feature.icon] || Zap;
+                return (
+                  <CarouselItem key={index} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+                    <FeatureCard icon={IconComponent} title={feature.title} description={feature.description} index={index} />
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+          </Carousel>
         </div>
         {isAdmin && <AdminEditButton section="features" />}
       </section>
