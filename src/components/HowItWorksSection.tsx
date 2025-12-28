@@ -1,5 +1,5 @@
 import { UserPlus, CreditCard, Download, ArrowRight } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Carousel,
   CarouselContent,
@@ -70,6 +70,10 @@ function StepCard({ step, index, showArrow = false }: { step: typeof steps[0]; i
 export default function HowItWorksSection() {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  
+  const autoplayPlugin = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
+  );
 
   useEffect(() => {
     if (!api) return;
@@ -122,13 +126,7 @@ export default function HowItWorksSection() {
                 align: 'center',
                 loop: true,
               }}
-              plugins={[
-                Autoplay({
-                  delay: 4000,
-                  stopOnInteraction: true,
-                  stopOnMouseEnter: true,
-                }),
-              ]}
+              plugins={[autoplayPlugin.current]}
               className="w-full"
             >
               <CarouselContent className="-ml-2">
