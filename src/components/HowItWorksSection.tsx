@@ -89,7 +89,7 @@ export default function HowItWorksSection() {
   }, [api]);
 
   return (
-    <section className="py-10 lg:py-14 bg-gradient-to-b from-muted via-muted to-background relative overflow-hidden">
+    <section className="py-10 lg:py-14 bg-gradient-to-b from-card via-muted to-background relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
