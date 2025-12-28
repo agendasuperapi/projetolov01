@@ -619,9 +619,6 @@ export default function Index() {
       </section>
 
 
-      {/* How It Works Section */}
-      <HowItWorksSection />
-
       {/* Coupon Section */}
       <section className="py-12 bg-muted relative overflow-hidden">
         <div className="container mx-auto px-4">
@@ -784,6 +781,9 @@ Escolha seu plano ideal.</h2>
           </svg>
         </div>
       </section>
+
+      {/* How It Works Section */}
+      <HowItWorksSection />
 
       {/* Features Section */}
       <section className="py-14 lg:py-20 bg-card relative group overflow-hidden">
