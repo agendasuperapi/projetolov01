@@ -72,7 +72,7 @@ export default function HowItWorksSection() {
   const [current, setCurrent] = useState(0);
   
   const autoplayPlugin = useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
 
   useEffect(() => {
@@ -116,53 +116,38 @@ export default function HowItWorksSection() {
           </p>
         </div>
         
-        {/* Steps */}
+        {/* Steps - Carousel for all screens */}
         <div className="max-w-5xl mx-auto">
-          {/* Mobile: Carousel */}
-          <div className="md:hidden">
-            <Carousel
-              setApi={setApi}
-              opts={{
-                align: 'center',
-                loop: true,
-              }}
-              plugins={[autoplayPlugin.current]}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-2">
-                {steps.map((step, index) => (
-                  <CarouselItem key={step.number} className="pl-2 basis-[85%]">
-                    <StepCard step={step} index={index} />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-            
-            {/* Dot indicators */}
-            <div className="flex justify-center gap-2 mt-6">
-              {steps.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => scrollTo(index)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                    current === index
-                      ? 'bg-primary w-6'
-                      : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                  }`}
-                  aria-label={`Ir para passo ${index + 1}`}
-                />
+          <Carousel
+            setApi={setApi}
+            opts={{
+              align: 'center',
+              loop: true,
+            }}
+            plugins={[autoplayPlugin.current]}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {steps.map((step, index) => (
+                <CarouselItem key={step.number} className="pl-4 basis-[85%] sm:basis-1/2 lg:basis-1/3">
+                  <StepCard step={step} index={index} />
+                </CarouselItem>
               ))}
-            </div>
-          </div>
-
-          {/* Desktop: Grid */}
-          <div className="hidden md:grid md:grid-cols-3 gap-8 lg:gap-12">
-            {steps.map((step, index) => (
-              <StepCard 
-                key={step.number} 
-                step={step} 
-                index={index} 
-                showArrow={index < steps.length - 1} 
+            </CarouselContent>
+          </Carousel>
+          
+          {/* Progress indicators */}
+          <div className="flex justify-center gap-2 mt-8">
+            {steps.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => scrollTo(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  current === index
+                    ? 'bg-primary w-8'
+                    : 'bg-muted-foreground/30 hover:bg-muted-foreground/50 w-2'
+                }`}
+                aria-label={`Ir para passo ${index + 1}`}
               />
             ))}
           </div>
