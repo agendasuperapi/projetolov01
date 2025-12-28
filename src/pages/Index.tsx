@@ -659,8 +659,8 @@ export default function Index() {
                 </div>
               </div> : <div className="flex gap-3">
                 <div className="relative flex-1">
-                  <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input placeholder="Digite o código do cupom" value={couponInput} onChange={e => setCouponInput(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && validateCoupon()} className="pl-12 h-14 text-lg bg-card border-2 border-border focus:border-primary rounded-xl" />
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input placeholder="Digite o código do cupom" value={couponInput} onChange={e => setCouponInput(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && validateCoupon()} className="pl-10 h-12 text-sm bg-card border-2 border-border focus:border-primary rounded-xl" />
                 </div>
                 <Button onClick={validateCoupon} disabled={couponLoading} size="lg" className="h-14 px-8 gradient-primary shadow-lg">
                   {couponLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Aplicar'}
