@@ -953,10 +953,13 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-6">
                     {plans.filter(p => p.plan_type === 'new_account').map((plan) => (
-                      <div key={plan.id} className="p-4 border rounded-lg space-y-4">
+                      <div key={plan.id} className={`p-4 border rounded-lg space-y-4 transition-opacity ${!plan.active ? 'opacity-60 bg-muted/50' : ''}`}>
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div>
-                            <h3 className="font-semibold">{plan.name}</h3>
+                            <h3 className="font-semibold flex items-center gap-2">
+                              {plan.name}
+                              {!plan.active && <Badge variant="secondary">Inativo</Badge>}
+                            </h3>
                             <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -964,14 +967,15 @@ export default function Admin() {
                               {(plan.stripe_price_id_test || plan.stripe_price_id_live) ? 'Configurado' : 'Pendente'}
                             </Badge>
                             {getSyncStatusBadge(plan)}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeletePlan(plan.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-2 ml-2">
+                              <span className="text-xs text-muted-foreground">
+                                {plan.active ? 'Ativo' : 'Inativo'}
+                              </span>
+                              <Switch
+                                checked={plan.active}
+                                onCheckedChange={(checked) => handleUpdatePlan(plan.id, { active: checked })}
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="grid sm:grid-cols-2 gap-4">
@@ -1060,10 +1064,13 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-6">
                     {plans.filter(p => p.plan_type === 'recharge').map((plan) => (
-                      <div key={plan.id} className="p-4 border rounded-lg space-y-4">
+                      <div key={plan.id} className={`p-4 border rounded-lg space-y-4 transition-opacity ${!plan.active ? 'opacity-60 bg-muted/50' : ''}`}>
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div>
-                            <h3 className="font-semibold">{plan.name}</h3>
+                            <h3 className="font-semibold flex items-center gap-2">
+                              {plan.name}
+                              {!plan.active && <Badge variant="secondary">Inativo</Badge>}
+                            </h3>
                             <p className="text-sm text-muted-foreground">{plan.credits.toLocaleString()} créditos</p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1071,14 +1078,15 @@ export default function Admin() {
                               {(plan.stripe_price_id_test || plan.stripe_price_id_live) ? 'Configurado' : 'Pendente'}
                             </Badge>
                             {getSyncStatusBadge(plan)}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeletePlan(plan.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-2 ml-2">
+                              <span className="text-xs text-muted-foreground">
+                                {plan.active ? 'Ativo' : 'Inativo'}
+                              </span>
+                              <Switch
+                                checked={plan.active}
+                                onCheckedChange={(checked) => handleUpdatePlan(plan.id, { active: checked })}
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="grid sm:grid-cols-2 gap-4">
