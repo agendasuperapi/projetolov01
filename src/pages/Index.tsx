@@ -13,7 +13,7 @@ import AuthModal from '@/components/AuthModal';
 import PlanCard from '@/components/PlanCard';
 import HeroMockup from '@/components/HeroMockup';
 import FeatureCard from '@/components/FeatureCard';
-import HowItWorksSection from '@/components/HowItWorksSection';
+
 import confetti from 'canvas-confetti';
 import logoImage from '@/assets/logo.png';
 import WhatsAppFloat from '@/components/WhatsAppFloat';
@@ -772,8 +772,6 @@ Escolha seu plano ideal.</h2>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <HowItWorksSection />
 
       {/* Features Section */}
       <section className="py-14 lg:py-20 bg-gradient-to-b from-muted via-card to-muted relative group overflow-hidden">
