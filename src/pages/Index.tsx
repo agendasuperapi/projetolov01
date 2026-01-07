@@ -14,7 +14,6 @@ import PlanCard from '@/components/PlanCard';
 import HeroMockup from '@/components/HeroMockup';
 import FeatureCard from '@/components/FeatureCard';
 import HowItWorksSection from '@/components/HowItWorksSection';
-
 import confetti from 'canvas-confetti';
 import logoImage from '@/assets/logo.png';
 import WhatsAppFloat from '@/components/WhatsAppFloat';
@@ -127,7 +126,6 @@ export default function Index() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponInitialized, setCouponInitialized] = useState(false);
   const [stripeMode, setStripeMode] = useState<'test' | 'live'>('test');
-
 
   // Flash animation state for plan sections
   const [flashingSection, setFlashingSection] = useState<'new_account' | 'recharge' | null>(null);
@@ -256,23 +254,18 @@ export default function Index() {
     initializeCoupon();
   }, [location.state, couponInitialized]);
   const fetchStripeMode = async (): Promise<'test' | 'live'> => {
-    const { data } = await supabase
-      .from('stripe_settings')
-      .select('mode')
-      .limit(1)
-      .maybeSingle();
-    
-    const mode = (data?.mode as 'test' | 'live') || 'test';
+    const {
+      data
+    } = await supabase.from('stripe_settings').select('mode').limit(1).maybeSingle();
+    const mode = data?.mode as 'test' | 'live' || 'test';
     setStripeMode(mode);
     console.log('[INDEX] Stripe mode fetched:', mode);
     return mode;
   };
-
   const fetchPlans = async () => {
     // Fetch stripe mode first - ensure we get the correct mode
     const currentMode = await fetchStripeMode();
     console.log('[INDEX] Fetching plans with stripe mode:', currentMode);
-    
     const {
       data: plansData
     } = await supabase.from('credit_plans').select('*').eq('active', true).order('credits', {
@@ -285,7 +278,7 @@ export default function Index() {
         } = await supabase.rpc('get_available_accounts_count', {
           p_plan_id: plan.id
         });
-        
+
         // Determine active price ID based on mode - prioritize mode-specific IDs
         let activePriceId: string | null = null;
         if (currentMode === 'live') {
@@ -293,9 +286,7 @@ export default function Index() {
         } else {
           activePriceId = plan.stripe_price_id_test || plan.stripe_price_id || null;
         }
-        
         console.log(`[INDEX] Plan ${plan.name}: mode=${currentMode}, activePriceId=${activePriceId}, live=${plan.stripe_price_id_live}, test=${plan.stripe_price_id_test}`);
-        
         return {
           ...plan,
           availableAccounts: countData || 0,
@@ -433,7 +424,6 @@ export default function Index() {
   };
   const processPurchase = (plan: PlanWithAvailability, type: 'recharge' | 'new_account') => {
     setPurchaseLoading(plan.id);
-    
     if (!plan.activePriceId) {
       toast({
         title: 'Erro',
@@ -443,18 +433,16 @@ export default function Index() {
       setPurchaseLoading(null);
       return;
     }
-    
+
     // Navigate to checkout page
     const params = new URLSearchParams({
       priceId: plan.activePriceId,
       planId: plan.id,
-      purchaseType: type,
+      purchaseType: type
     });
-    
     if (appliedCoupon?.custom_code || appliedCoupon?.code) {
       params.set('couponCode', appliedCoupon.custom_code || appliedCoupon.code);
     }
-    
     navigate(`/checkout?${params.toString()}`);
     setPurchaseLoading(null);
   };
@@ -808,29 +796,21 @@ Escolha seu plano ideal.</h2>
             </p>
           </div>
           
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            plugins={[
-              Autoplay({
-                delay: 3000,
-                stopOnInteraction: false,
-                stopOnMouseEnter: true,
-              }),
-            ]}
-            className="w-full max-w-5xl mx-auto"
-          >
+          <Carousel opts={{
+          align: "start",
+          loop: true
+        }} plugins={[Autoplay({
+          delay: 3000,
+          stopOnInteraction: false,
+          stopOnMouseEnter: true
+        })]} className="w-full max-w-5xl mx-auto">
             <CarouselContent className="-ml-4">
               {featuresData.map((feature, index) => {
-                const IconComponent = iconMap[feature.icon] || Zap;
-                return (
-                  <CarouselItem key={index} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+              const IconComponent = iconMap[feature.icon] || Zap;
+              return <CarouselItem key={index} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
                     <FeatureCard icon={IconComponent} title={feature.title} description={feature.description} index={index} />
-                  </CarouselItem>
-                );
-              })}
+                  </CarouselItem>;
+            })}
             </CarouselContent>
           </Carousel>
         </div>
@@ -849,9 +829,7 @@ Escolha seu plano ideal.</h2>
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
               Pronto para começar?
             </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              Escolha seu plano e comece a usar seus créditos agora mesmo.
-            </p>
+            <p className="text-muted-foreground text-lg mb-8">Escolha seu plano e comece a usar seus créditos agora mesmo..</p>
             <a href="#plans">
               <Button size="lg" className="gradient-primary text-lg px-10 shadow-hero hover:shadow-xl transition-all duration-300 hover:scale-105">
                 Ver Planos
