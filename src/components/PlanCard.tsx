@@ -162,7 +162,7 @@ export default function PlanCard({
             )}
           </div>
           
-          <p className="text-[9px] md:text-xs text-muted-foreground">À vista no PIX</p>
+          
         </div>
 
         {/* Availability for new accounts */}
