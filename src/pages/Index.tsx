@@ -771,7 +771,7 @@ Escolha seu plano ideal.</h2>
           </svg>
         </div>
         {/* Gradient fade into next section */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 md:h-32 bg-gradient-to-b from-transparent via-muted/30 to-muted backdrop-blur-sm pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-28 md:h-40 bg-gradient-to-b from-transparent via-muted/20 via-30% via-muted/50 via-60% to-muted backdrop-blur-md pointer-events-none"></div>
       </section>
 
       {/* Features Section */}
