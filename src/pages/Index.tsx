@@ -773,7 +773,7 @@ Escolha seu plano ideal.</h2>
       </section>
 
       {/* Gradient divider between Plans and Features */}
-      <div className="h-0 bg-gradient-to-b from-card to-muted"></div>
+      <div className="h-16 md:h-24 bg-gradient-to-b from-card via-card/50 to-muted"></div>
 
       {/* Features Section */}
       <section className="py-14 lg:py-20 bg-muted relative group overflow-hidden">
