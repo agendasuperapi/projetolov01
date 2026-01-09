@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { trackSignUp, trackLogin } from '@/lib/analytics';
+import { trackSignUp, trackLogin, trackAuthModalOpen, trackAuthModalTabChange } from '@/lib/analytics';
 
 // Função para aplicar máscara de telefone brasileiro
 const formatPhone = (value: string): string => {
@@ -84,6 +84,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
       }
     };
   }, []);
+
+  // Track modal open
+  useEffect(() => {
+    if (isOpen) {
+      trackAuthModalOpen(isLogin ? 'login' : 'signup');
+    }
+  }, [isOpen]); // Only track on open, not on tab change
 
   // Detectar teclado virtual via VisualViewport API
   useEffect(() => {
@@ -352,7 +359,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
                 Não tem conta?{' '}
                 <button
                   type="button"
-                  onClick={() => setIsLogin(false)}
+                  onClick={() => {
+                    trackAuthModalTabChange('login', 'signup');
+                    setIsLogin(false);
+                  }}
                   className="text-primary hover:underline font-medium"
                 >
                   Cadastre-se
@@ -363,7 +373,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess, planId, priceId,
                 Já tem conta?{' '}
                 <button
                   type="button"
-                  onClick={() => setIsLogin(true)}
+                  onClick={() => {
+                    trackAuthModalTabChange('signup', 'login');
+                    setIsLogin(true);
+                  }}
                   className="text-primary hover:underline font-medium"
                 >
                   Entrar

@@ -91,3 +91,22 @@ export const trackPageView = (pagePath: string, pageTitle?: string) => {
     page_title: pageTitle || document.title
   });
 };
+
+/**
+ * Track auth modal open
+ */
+export const trackAuthModalOpen = (authType: 'login' | 'signup') => {
+  trackEvent('auth_modal_open', {
+    auth_type: authType
+  });
+};
+
+/**
+ * Track auth modal tab change
+ */
+export const trackAuthModalTabChange = (fromTab: 'login' | 'signup', toTab: 'login' | 'signup') => {
+  trackEvent('auth_modal_tab_change', {
+    from_tab: fromTab,
+    to_tab: toTab
+  });
+};
