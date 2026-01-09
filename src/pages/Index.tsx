@@ -773,10 +773,10 @@ Escolha seu plano ideal.</h2>
       </section>
 
       {/* Gradient divider between Plans and Features */}
-      <div className="h-24 md:h-32 bg-gradient-to-b from-card via-primary/20 to-muted"></div>
+      <div className="h-32 md:h-48 bg-gradient-to-b from-card via-card/80 via-40% via-muted/60 via-60% to-muted"></div>
 
       {/* Features Section */}
-      <section className="py-14 lg:py-20 bg-gradient-to-b from-muted via-card to-muted relative group overflow-hidden">
+      <section className="py-14 lg:py-20 bg-muted relative group overflow-hidden">
         {/* Shimmer light effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer-delay-3" />
