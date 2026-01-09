@@ -770,10 +770,9 @@ Escolha seu plano ideal.</h2>
             <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z" fill="hsl(var(--card))" />
           </svg>
         </div>
+        {/* Gradient fade into next section */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 md:h-24 bg-gradient-to-b from-transparent to-muted pointer-events-none"></div>
       </section>
-
-      {/* Gradient divider between Plans and Features */}
-      <div className="h-8 md:h-12 bg-gradient-to-b from-card via-card/50 to-muted"></div>
 
       {/* Features Section */}
       <section className="py-14 lg:py-20 bg-muted relative group overflow-hidden">
