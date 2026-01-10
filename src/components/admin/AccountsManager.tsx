@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Trash2, Edit, CheckCircle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Plus, Trash2, Edit, CheckCircle, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CreditPlan {
@@ -160,6 +161,39 @@ export default function AccountsManager() {
     return { available, total };
   };
 
+  // Preview component that simulates customer view
+  const AccountPreview = ({ accountData }: { accountData: string }) => {
+    const lines = accountData.split('\n').map(line => line.trim());
+    let email = '';
+    let password = '';
+    
+    const emailIndex = lines.findIndex(line => line.toLowerCase() === 'email:');
+    const senhaIndex = lines.findIndex(line => line.toLowerCase() === 'senha:');
+    
+    if (emailIndex !== -1 && lines[emailIndex + 1]) {
+      email = lines[emailIndex + 1];
+    }
+    if (senhaIndex !== -1 && lines[senhaIndex + 1]) {
+      password = lines[senhaIndex + 1];
+    }
+    
+    return (
+      <div className="border-2 border-primary/20 rounded-lg p-4 bg-gradient-to-br from-secondary/50 to-background">
+        <p className="text-xs text-muted-foreground mb-3 font-medium">👁 Prévia (como o cliente verá):</p>
+        <div className="space-y-2">
+          <div className="bg-background border rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">Email</p>
+            <p className="font-mono text-sm">{email || <span className="text-destructive">(não detectado)</span>}</p>
+          </div>
+          <div className="bg-background border rounded-lg p-3">
+            <p className="text-xs text-muted-foreground mb-1">Senha</p>
+            <p className="font-mono text-sm">{password || <span className="text-destructive">(não detectado)</span>}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -198,11 +232,14 @@ export default function AccountsManager() {
                 <Textarea
                   value={accountData}
                   onChange={(e) => setAccountData(e.target.value)}
-                  placeholder="Digite os dados da conta que serão enviados ao usuário (login, senha, instruções, etc.)"
+                  placeholder="Email:&#10;exemplo@email.com&#10;Senha:&#10;senha123"
                   rows={5}
                   required
                 />
               </div>
+              {accountData.trim() && (
+                <AccountPreview accountData={accountData} />
+              )}
               <Button type="submit" className="w-full gradient-primary" disabled={creating}>
                 {creating ? 'Cadastrando...' : 'Cadastrar Conta'}
               </Button>
@@ -225,11 +262,14 @@ export default function AccountsManager() {
                 <Textarea
                   value={editAccountData}
                   onChange={(e) => setEditAccountData(e.target.value)}
-                  placeholder="Digite os dados da conta"
+                  placeholder="Email:&#10;exemplo@email.com&#10;Senha:&#10;senha123"
                   rows={5}
                   required
                 />
               </div>
+              {editAccountData.trim() && (
+                <AccountPreview accountData={editAccountData} />
+              )}
               <Button type="submit" className="w-full gradient-primary">
                 Salvar Alterações
               </Button>
@@ -319,6 +359,16 @@ export default function AccountsManager() {
                                     </TableCell>
                                     <TableCell>
                                       <div className="flex items-center gap-1">
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="ghost" size="icon" title="Ver prévia">
+                                              <Eye className="w-4 h-4" />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-80">
+                                            <AccountPreview accountData={account.account_data} />
+                                          </PopoverContent>
+                                        </Popover>
                                         <Button
                                           variant="ghost"
                                           size="icon"
@@ -375,6 +425,7 @@ export default function AccountsManager() {
                                 <p className="text-sm font-mono bg-muted p-2 rounded break-all">
                                   {account.account_data}
                                 </p>
+                                <AccountPreview accountData={account.account_data} />
                                 <div className="flex items-center gap-2 pt-2 border-t">
                                   <Button
                                     variant="outline"
