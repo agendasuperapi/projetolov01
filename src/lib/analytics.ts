@@ -4,8 +4,32 @@ declare global {
   interface Window {
     gtag: (...args: unknown[]) => void;
     dataLayer: unknown[];
+    fbq: (...args: unknown[]) => void;
   }
 }
+
+/**
+ * Send a Facebook Pixel event
+ */
+export const trackFBEvent = (eventName: string, params?: Record<string, unknown>) => {
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('track', eventName, params);
+  }
+};
+
+/**
+ * Track Facebook InitiateCheckout event
+ */
+export const trackFBInitiateCheckout = (value: number, currency: string = 'BRL') => {
+  trackFBEvent('InitiateCheckout', { value, currency });
+};
+
+/**
+ * Track Facebook Purchase event
+ */
+export const trackFBPurchase = (value: number, currency: string = 'BRL') => {
+  trackFBEvent('Purchase', { value, currency });
+};
 
 /**
  * Send a custom event to Google Analytics
